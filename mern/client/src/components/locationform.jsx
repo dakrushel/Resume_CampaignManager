@@ -134,7 +134,7 @@ export default function LocationForm({ campaignID, parentLocationID, locationTyp
                 return;
             }
     
-            console.log(`Navigating to /locations/${locationID}`);
+            // console.log(`Navigating to /locations/${locationID}`);
             navigate(`/locations/${locationID}`, { state: { forceRefresh: true } });  // Pass a state flag
         }
     };

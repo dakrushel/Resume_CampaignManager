@@ -10,7 +10,7 @@ import CampaignList from "./components/campaignlist";
 import CampaignOverview from "./components/campaignoverview";
 import LocationItem from "./components/locationitem";
 import CharacterOverview from "./components/characteroverview";
-import Notes from "./components/notes";
+// import Notes from "./components/notes";
 import MonsterOverview from "./components/monsteroverview";
 import APISearch from "./components/search";
 import Rulebook from "./components/rulebook";
@@ -32,10 +32,10 @@ const router = createBrowserRouter([
         path: "/locations/:id",
         element: <LocationItem />
       },
-      {
-        path: "/notes",
-        element: <Notes />,
-      },
+      // {
+      //   path: "/notes",
+      //   element: <Notes />,
+      // },
       {
         path: "/characters",
         element: <CharacterOverview />,

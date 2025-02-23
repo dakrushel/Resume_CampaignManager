@@ -8,7 +8,8 @@ import characters from "./routes/pcRoute.js";
 import npcs from "./routes/npcRoute.js";
 import campaigns from "./routes/campaignsRoute.js";
 import monsters from "./routes/monsters.js";
-import notes from "./routes/notes.js";
+import notes from "./routes/notesRoute.js";
+import events from "./routes/eventsRoute.js";
 import items from "./routes/items.js";
 import locations from "./routes/locationsRoute.js";
 
@@ -44,6 +45,7 @@ app.use("/characters", characters);
 app.use("/campaigns", campaigns);
 app.use("/monsters", monsters);
 app.use("/notes", notes);
+app.use("/events", events);
 app.use("/locations", locations);
 app.use("/items", items);
 

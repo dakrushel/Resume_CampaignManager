@@ -3,7 +3,7 @@ import { useParams, useNavigate, useLocation } from "react-router-dom";
 import LocationList from "./locationlist";
 import LocationForm from "./locationform";
 import PropTypes from "prop-types";
-// import NotesList from "./noteslist";
+import NotesList from "./noteslist";
 
 export default function LocationItem() {
     const { id } = useParams(); // Get IDs from the URL
@@ -46,19 +46,6 @@ export default function LocationItem() {
 
         return locationHierarchy[locationType] || null;
     };
-
-    // const getParentLocationType = (locationType) => {
-
-    //     const locationHierarchy = {
-    //         Plane: "Realm",
-    //         Realm: "Country",
-    //         Country: "Region",
-    //         Region: "Site",
-    //         Site: "Site",  // Nested sites allowed
-    //     };
-
-    //     return locationHierarchy[locationType] || null;
-    // };
 
     // Expand/collapse states
     const [showNotes, setShowNotes] = useState(false);
@@ -176,7 +163,8 @@ export default function LocationItem() {
             
         }
     };
-    
+    // console.log("Location campaignID: ", location.campaignID)
+    // console.log("formData.campaignID: ", formData.campaignID)
     if (loading || !location) return <p className="text-gray-600">Loading location details...</p>;
     if (error) return <p className="text-red-500">{error}</p>;
     if (!location) {
@@ -217,7 +205,9 @@ export default function LocationItem() {
                     <button onClick={() => setShowNotes(!showNotes)} className="mt-2 text-blue-600 underline">
                         Notes {showNotes ? "▲" : "▼"}
                     </button>
-                    {/* {showNotes && <NotesList listOfNotes={notesList} />} */}
+                    {
+                        showNotes && <NotesList parentLocationID={location?._id} campaignID={formData.campaignID} />
+                    }
 
                     {/* Events Section */}
                     <button onClick={() => setShowEvents(!showEvents)} className="mt-2 text-blue-600 underline">

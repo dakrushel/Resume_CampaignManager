@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import LocationList from "./locationlist";
+import NotesList from "./noteslist";
 
 export default function CampaignOverview() {
     const { id } = useParams();
@@ -13,6 +14,7 @@ export default function CampaignOverview() {
     const [editMode, setEditMode] = useState(isNew);
     const [formData, setFormData] = useState({ title: "", description: "", createdBy: "DungeonMaster123" });
     const [saving, setSaving] = useState(false); // Prevent duplicate submissions
+    const [showNotes, setShowNotes] = useState(false);
 
     const [showPlanes, setShowPlanes] = useState(false);
     const [showRealms, setShowRealms] = useState(false);
@@ -175,6 +177,14 @@ export default function CampaignOverview() {
                     </div>
                 </>
             )}
+
+            {/* Notes Section */}
+            <button onClick={() => setShowNotes(!showNotes)} className="mt-2 text-blue-600 underline">
+                Notes {showNotes ? "▲" : "▼"}
+            </button>
+            {
+                showNotes && <NotesList campaignID={id} />
+            }
 
             {!isNew && (
                 <>

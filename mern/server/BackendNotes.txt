@@ -2,3 +2,7 @@ Additional Stuff that was installed in the backend:
  - Joi for validation
  - Helmet.js
  - Express Rate Limit
+
+ Connecting to MongoDB with mongosh:
+ mongosh "mongodb+srv://<credentials>@cluster0.vyo9i.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0" --username GoblinGang
+        --> you'll have to take the connection string from the env file.
