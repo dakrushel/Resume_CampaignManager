@@ -1,8 +1,11 @@
+import dotenv from 'dotenv';
+dotenv.config({ path: './config.env' });
 import express from "express";
 import cors from "cors";
 import helmet from "helmet";
 import rateLimit from "express-rate-limit";
 import db from "./db/connection.js";
+import { auth } from "express-oauth2-jwt-bearer"
 
 import characters from "./routes/pcRoute.js";
 import npcs from "./routes/npcRoute.js";
@@ -31,7 +34,7 @@ app.use(express.json());
 //Rate limiting DoS and Brute Force shield
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, //15 minutes
-  max: 500,   //100 requests per IP per WindowMS
+  max: 500,   //100 requests per IP per WindowMS was a little to low for development
   handler: (req, res, next) => {
     console.warn(`Rate limit exceeded for IP: ${req.ip}`);
     res.status(429).json({ error: "Too many requests. Please try again later." });
@@ -39,6 +42,14 @@ const limiter = rateLimit({
 });
 
 app.use(limiter);
+
+// Configure Auth0 JWT middleware
+const checkJWT = auth({
+  audience: process.env.AUTH0_AUDIENCE,
+  issuerBaseURL: `https://${process.env.AUTH0_DOMAIN}/`,
+})
+
+app.use(checkJWT)
 
 app.use("/npcs", npcs);
 app.use("/characters", characters);

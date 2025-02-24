@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import LocationList from "./locationlist";
 import NotesList from "./noteslist";
+import { useAuth0 } from "@auth0/auth0-react";
 
 export default function CampaignOverview() {
     const { id } = useParams();
@@ -20,13 +21,19 @@ export default function CampaignOverview() {
     const [showRealms, setShowRealms] = useState(false);
     const [showCountries, setShowCountries] = useState(false);
     const [showRegions, setShowRegions] = useState(false);
+    const { getAccessTokenSilently } = useAuth0();
 
     useEffect(() => {
         if (isNew) return;
 
         const fetchCampaign = async () => {
             try {
-                const response = await fetch(`http://localhost:5050/campaigns/${id}`);
+                const token = await getAccessTokenSilently({ audience: "https://campaignapi.com" });
+                const response = await fetch(`http://localhost:5050/campaigns/${id}`, {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                });
                 if (!response.ok) throw new Error(`Error fetching campaign: ${response.statusText}`);
                 const data = await response.json();
                 setCampaign(data);
@@ -40,7 +47,7 @@ export default function CampaignOverview() {
         };
 
         fetchCampaign();
-    }, [id, isNew]);
+    }, [id, isNew, getAccessTokenSilently]);
 
     const handleChange = (e) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -52,9 +59,12 @@ export default function CampaignOverview() {
         setSaving(true);
 
         try {
+            const token = await getAccessTokenSilently({ audience: "https://campaignapi.com" });
             const response = await fetch("http://localhost:5050/campaigns", {
                 method: "POST",
-                headers: { "Content-Type": "application/json" },
+                headers: { "Content-Type": "application/json",
+                    Authorization: `Bearer ${token}`,
+                 },
                 body: JSON.stringify(formData),
             });
 
@@ -82,9 +92,12 @@ export default function CampaignOverview() {
         }
 
         try {
+            const token = await getAccessTokenSilently({ audience: "https://campaignapi.com" });
             const response = await fetch(`http://localhost:5050/campaigns/${id}`, {
                 method: "PUT",
-                headers: { "Content-Type": "application/json" },
+                headers: { "Content-Type": "application/json",
+                    Authorization: `Bearer ${token}`,
+                 },
                 body: JSON.stringify({ ...formData, createdBy: campaign.createdBy || "DungeonMaster123" }),
             });
 
@@ -102,7 +115,11 @@ export default function CampaignOverview() {
     const handleDelete = async () => {
         if (!window.confirm("Are you sure you want to delete this campaign?")) return;
         try {
-            const response = await fetch(`http://localhost:5050/campaigns/${id}`, { method: "DELETE" });
+            const token = await getAccessTokenSilently({ audience: "https://campaignapi.com" });
+            const response = await fetch(`http://localhost:5050/campaigns/${id}`, { 
+                method: "DELETE",
+                Authorization: `Bearer ${token}`,
+            });
             if (!response.ok) throw new Error("Failed to delete campaign");
             navigate("/campaigns");
         } catch (error) {
@@ -123,42 +140,53 @@ export default function CampaignOverview() {
             </div>
         );
 
-    console.log("CampaignOverview - campaignID: ", id);
+    // console.log("CampaignOverview - campaignID: ", id);
 
     return (
-        <div className="p-4 bg-white rounded-lg shadow-md">
+        <div className="p-4 bg-cream rounded-lg shadow-md shadow-amber-800 mt-16">
             {editMode ? (
                 <form className="space-y-3">
-                    <input
-                        type="text"
-                        name="title"
-                        value={formData.title}
-                        onChange={handleChange}
-                        className="border p-2 w-full rounded"
-                        required
-                    />
-                    <textarea
-                        name="description"
-                        value={formData.description}
-                        onChange={handleChange}
-                        className="border p-2 w-full rounded"
-                    />
-                    <div className="flex space-x-2">
-                        <button 
-                            onClick={isNew ? handleSave : handleUpdate} 
-                            className={`px-4 py-2 rounded ${saving ? "bg-gray-400" : "bg-blue-600 text-white"}`}
-                            disabled={saving}
-                        >
-                            {saving ? "Saving..." : "Save"}
-                        </button>
-                        <button 
-                            onClick={handleCancel} 
-                            className="bg-gray-400 text-white px-4 py-2 rounded"
-                        >
-                            Cancel
-                        </button>
-                    </div>
-                </form>
+                <h2 className="text-2xl text-brown underline mb-4">Create New Campaign</h2>
+                <label
+                    className="text-xl text-brown inline text-left"
+                    htmlFor="title">
+                    Name*
+                </label>
+                <input
+                    type="text"
+                    name="title"
+                    value={formData.title}
+                    onChange={handleChange}
+                    className="border border-brown text-brown p-2 w-full rounded bg-cream mb-4 outline-none"
+                    required
+                />
+                <label className="text-brown text-xl mt-8">
+                    Description*
+                </label>
+                <textarea
+                    name="description"
+                    value={formData.description}
+                    onChange={handleChange}
+                    className="border border-brown text-brown p-2 w-full rounded bg-cream outline-none"
+                    required
+                />
+                <p className="text-brown">* indicates a required field</p>
+                <div className="flex space-x-2">
+                    <button 
+                        onClick={isNew ? handleSave : handleUpdate} 
+                        className={`px-4 py-2 rounded ${saving ? "bg-gray-400" : "bg-goblin-green text-gold"}`}
+                        disabled={saving}
+                    >
+                        {saving ? "Saving..." : "Save"}
+                    </button>
+                    <button 
+                        onClick={handleCancel} 
+                        className="bg-cancel-red text-gold px-4 py-2 rounded"
+                    >
+                        Cancel
+                    </button>
+                </div>
+            </form>
             ) : (
                 <>
                     <h1 className="text-3xl font-bold">{campaign?.title}</h1>

@@ -1,11 +1,13 @@
 import { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import PropTypes from "prop-types";
+import { useAuth0 } from "@auth0/auth0-react";
 
 export default function LocationForm({ campaignID, parentLocationID, locationType, existingLocation, onSave, onCancel }) {
     // const navigate = useNavigate();
     const location = useLocation();
     const navigate = useNavigate();
+    const { getAccessTokenSilently } = useAuth0();
     const params = new URLSearchParams(location.search);
     
     const [formData, setFormData] = useState(() => {
@@ -35,40 +37,69 @@ export default function LocationForm({ campaignID, parentLocationID, locationTyp
                 campaignID: existingLocation.campaignID || campaignID,
                 parentLocationID: existingLocation.parentLocationID || parentLocationID,
             });
-        }
-
-        // if (!parentLocation || !parentLocation.locationType) return;
-
-        fetch("http://localhost:5050/campaigns")
-            .then(response => response.json())
-            .then(data => {
-                console.log("Fetched campaigns: ", data);
-                setCampaigns(Array.isArray(data) ? data: []);
-            })
-            .catch(error => console.error("Failed to fetch Campaign: ", error));
-            
+          }
         }, [existingLocation, locationType, campaignID, parentLocationID]);
 
-    useEffect(() => {
-        if (!parentLocationID) return;
-        
-            fetch(`http://localhost:5050/locations/${parentLocationID}`)
-                .then(response => response.json())
-                .then(data => setParentLocation(data))
-                .catch(error => console.error("Failed to fetch parent location: ", error));
+  //Fetch all campaigns
+  useEffect(() => {
+      async function fetchCampaigns() {
+        try {
+          const token = await getAccessTokenSilently({ audience: "https://campaignapi.com" });
+          const response = await fetch("http://localhost:5050/campaigns", {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          });
+          const data = await response.json();
+          console.log("Fetched campaigns: ", data);
+          setCampaigns(Array.isArray(data) ? data : []);
+        } catch (error) {
+          console.error("Failed to fetch Campaign: ", error);
+        }
+      }
+      fetchCampaigns();
+    }, [getAccessTokenSilently]);
+          
 
-    }, [parentLocationID]);
+  // Fetch parent location data with authorization
+  useEffect(() => {
+    if (!parentLocationID) return;
+    async function fetchParentLocation() {
+      try {
+        const token = await getAccessTokenSilently({ audience: "https://campaignapi.com" });
+        const response = await fetch(`http://localhost:5050/locations/${parentLocationID}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const data = await response.json();
+        setParentLocation(data);
+      } catch (error) {
+        console.error("Failed to fetch parent location: ", error);
+      }
+    }
+    fetchParentLocation();
+  }, [parentLocationID, getAccessTokenSilently]);
 
-    useEffect(() => {
-        // if (parentLocation && parentLocation.locationType) {
-        if (!parentLocation || !parentLocation.locationType) return;
-
-        fetch(`http://localhost:5050/locations/campaign/${campaignID}/type/${parentLocation.locationType}`)
-            .then(response => response.json())
-            .then(data => setParentLocations(Array.isArray(data) ? data: []))
-            .catch(error => console.error("Failed to fetch parent location: ", error));
-        }, [parentLocation?.locationType, campaignID]);
-        //Apparently you don't need to track all of parentLocation if you're only using parentLocation.locationType
+  // Fetch parent locations based on the parent's location type with authorization
+  useEffect(() => {
+    if (!parentLocation || !parentLocation.locationType) return;
+    async function fetchParentLocations() {
+      try {
+        const token = await getAccessTokenSilently({ audience: "https://campaignapi.com" });
+        const response = await fetch(
+          `http://localhost:5050/locations/campaign/${campaignID}/type/${parentLocation.locationType}`,
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
+        const data = await response.json();
+        setParentLocations(Array.isArray(data) ? data : []);
+      } catch (error) {
+        console.error("Failed to fetch parent locations: ", error);
+      }
+    }
+    fetchParentLocations();
+  }, [parentLocation?.locationType, campaignID, getAccessTokenSilently]);
+    //Apparently you don't need to track all of parentLocation if you're only using parentLocation.locationType
     
     const handleChange = (e) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -86,20 +117,22 @@ export default function LocationForm({ campaignID, parentLocationID, locationTyp
             return;
         }
     
-        // console.log("Submitting location data:", JSON.stringify(formData, null, 2));
-    
         let databaseReady = false; // Flag to prevent navigation until data is confirmed
     
         try {
+            const token = await getAccessTokenSilently({ audience: "https://campaignapi.com" });
             const response = await fetch(
-                existingLocation
-                    ? `http://localhost:5050/locations/${existingLocation._id}`
-                    : "http://localhost:5050/locations",
-                {
-                    method: existingLocation ? "PUT" : "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify(formData),
-                }
+              existingLocation
+                ? `http://localhost:5050/locations/${existingLocation._id}`
+                : "http://localhost:5050/locations",
+              {
+                method: existingLocation ? "PUT" : "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                  Authorization: `Bearer ${token}`,
+                },
+                body: JSON.stringify(formData),
+              }
             );
     
             if (!response.ok) {
@@ -107,7 +140,7 @@ export default function LocationForm({ campaignID, parentLocationID, locationTyp
             }
     
             createdLocation = await response.json();
-            console.log("Database confirmed update:", createdLocation);
+            // console.log("Database confirmed update:", createdLocation);
     
             databaseReady = true; // Mark database as updated
             onSave(createdLocation); // Pass new location to parent component

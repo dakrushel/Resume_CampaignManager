@@ -2,12 +2,14 @@ import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import PropTypes from "prop-types";
 import LocationForm from "./locationform";
+import { useAuth0 } from "@auth0/auth0-react";
 
 export default function LocationList({ parentLocationID, locationType, campaignID, isOverview }) {
     const [locations, setLocations] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [showForm, setShowForm] = useState(false);
+    const { getAccessTokenSilently } = useAuth0();
     
     // console.log("LocationList - Received parentLocationID: ", parentLocationID);
     // console.log("LocationList - Revieved locationType: ", locationType);
@@ -24,13 +26,18 @@ export default function LocationList({ parentLocationID, locationType, campaignI
             }
 
             try {
+                const token = await getAccessTokenSilently({ audience: "https://campaignapi.com"});
                 let endpoint = parentLocationID
                     ? `http://localhost:5050/locations/parent/${parentLocationID}`
                     : `http://localhost:5050/locations/campaign/${campaignID}/type/${locationType}`;
 
                 // console.log(`LocationList - Fetching locations from: ${endpoint}`);
 
-                const response = await fetch(endpoint);
+                const response = await fetch(endpoint, {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    }
+                });
                 if (!response.ok) {
                     throw new Error(`Error fetching locations: ${response.statusText}`);
                 }
@@ -50,7 +57,7 @@ export default function LocationList({ parentLocationID, locationType, campaignI
         };
 
         fetchLocations();
-    }, [parentLocationID, campaignID, locationType]);
+    }, [parentLocationID, campaignID, locationType, getAccessTokenSilently]);
 
     const handleSaveLocation = (newLocation) => {
         setLocations([...locations, newLocation]); // Update state with new location

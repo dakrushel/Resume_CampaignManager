@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import PropTypes from "prop-types";
+import { useAuth0 } from "@auth0/auth0-react";
 
 export default function NoteForm({ campaignID, parentLocationID, existingNote, onSave, onCancel }) {
     const [formData, setFormData] = useState({
@@ -11,6 +12,7 @@ export default function NoteForm({ campaignID, parentLocationID, existingNote, o
 
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState(null);
+    const { getAccessTokenSilently } = useAuth0();
 
     // Update formData when props change
     useEffect(() => {
@@ -52,13 +54,16 @@ export default function NoteForm({ campaignID, parentLocationID, existingNote, o
         // console.log("Request payload: ", JSON.stringify(finalFormData, null, 2));
 
         try {
+            const token = await getAccessTokenSilently({ audience: "https://campaignapi.com"});
             const response = await fetch(
                 existingNote
                     ? `http://localhost:5050/notes/${existingNote._id}`
                     : "http://localhost:5050/notes",
                 {
                     method: existingNote ? "PUT" : "POST",
-                    headers: { "Content-Type": "application/json" },
+                    headers: { "Content-Type": "application/json",
+                        Authorization: `Bearer ${token}`,
+                     },
                     body: JSON.stringify(finalFormData),
                 }
             );
@@ -67,23 +72,27 @@ export default function NoteForm({ campaignID, parentLocationID, existingNote, o
                 throw new Error(`Failed to ${existingNote ? "update" : "create"} note`);
             }
 
-            const apiResponse = await response.json();
-            console.log("Note saved successfully:", apiResponse);
+            // const apiResponse = await response.json();
+            // console.log("Note saved successfully:", apiResponse);
 
             //Now fetch the updated note to ensure the correct data is passed
-            const updatedNoteResponse = await fetch(`http://localhost:5050/notes/${existingNote?._id}`);
+            const updatedNoteResponse = await fetch(`http://localhost:5050/notes/${existingNote?._id}`, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            });
             if (!updatedNoteResponse.ok) {
                 throw new Error("Failed to fetch updated note data");
             }
 
             const updatedNote = await updatedNoteResponse.json();
-            console.log("Fetched updated note: ", updatedNote);
+            // console.log("Fetched updated note: ", updatedNote);
 
             if (typeof onSave === "function") {
-                console.log("Calling onSave with: ", updatedNote);
+                // console.log("Calling onSave with: ", updatedNote);
                 onSave(updatedNote);
             } else {
-                console.error("Error: onSave is not a function")
+                // console.error("Error: onSave is not a function")
             }
             // onSave(savedNote);
         } catch (error) {

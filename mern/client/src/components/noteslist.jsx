@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import PropTypes from "prop-types";
 import NoteItem from "./noteitem";
 import NoteForm from "./noteform";
+import { useAuth0 } from "@auth0/auth0-react";
 
 export default function NoteList({ parentLocationID, campaignID }) {
     
@@ -12,6 +13,7 @@ export default function NoteList({ parentLocationID, campaignID }) {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [showForm, setShowForm] = useState(false);
+    const { getAccessTokenSilently } = useAuth0();
 
     const fetchNotes = useCallback(async () => {
         if (!campaignID) {
@@ -22,13 +24,18 @@ export default function NoteList({ parentLocationID, campaignID }) {
         setLoading(true);
 
         try {
+            const token = await getAccessTokenSilently({ audience: "https://campaignapi.com"});
             let endpoint = parentLocationID
                 ? `http://localhost:5050/notes/location/${parentLocationID}`
                 : `http://localhost:5050/notes/campaign/${campaignID}`;
 
-            console.log("Fetching notes from: ", endpoint);
+            // console.log("Fetching notes from: ", endpoint);
 
-            const response = await fetch(endpoint);
+            const response = await fetch(endpoint, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                }
+            });
             if (!response.ok) {
                 throw new Error(`Error fetching notes: ${response.statusText}`);
             }
@@ -46,7 +53,7 @@ export default function NoteList({ parentLocationID, campaignID }) {
         } finally {
             setLoading(false);
         }
-    }, [campaignID, parentLocationID]);
+    }, [campaignID, parentLocationID, getAccessTokenSilently]);
 
     useEffect(() => {
         console.log("useEffect triggered - Fetching notes...");

@@ -4,6 +4,7 @@ import LocationList from "./locationlist";
 import LocationForm from "./locationform";
 import PropTypes from "prop-types";
 import NotesList from "./noteslist";
+import { useAuth0 } from "@auth0/auth0-react";
 
 export default function LocationItem() {
     const { id } = useParams(); // Get IDs from the URL
@@ -11,6 +12,7 @@ export default function LocationItem() {
     const isNew = id === "new";
     const locationData = useLocation();
     const locationState = useLocation();
+    const { getAccessTokenSilently } = useAuth0();
     // console.log("window.location:", window.location.href); // Debug full URL
     // console.log("locationData.search:", locationData.search);
     const params = new URLSearchParams(locationData.search);
@@ -68,23 +70,40 @@ export default function LocationItem() {
             return;
         }
 
-            if (formData.campaignID) {
-                fetch(`http://localhost:5050/campaigns/${formData.campaignID}`)
-                    .then(response => response.json())
-                    .then(data => setCampaignName(data.title))
-                    .catch(error => console.error("Failed to fetch campaign: ", error));
-            }
-        
-            if (formData.parentLocationID) {
-                fetch(`http://localhost:5050/locations/${formData.parentLocationID}`)
-                    .then(response => response.json())
-                    .then(data => setParentLocationName(data.name))
-                    .catch(error => console.error("Failed to fetch parent location: ", error));
-            }
-
         const fetchLocation = async () => {
             try {
-                const response = await fetch(`http://localhost:5050/locations/${id}`);
+                const token = await getAccessTokenSilently({ audience: "https://campaignapi.com"});
+                
+                //Fetch campaign data if campaignID exists
+                if (formData.campaignID) {
+                    fetch(`http://localhost:5050/campaigns/${formData.campaignID}`, {
+                        headers: {
+                            Authorization: `Bearer ${token}`
+                        }
+                    })
+                        .then(response => response.json())
+                        .then(data => setCampaignName(data.title))
+                        .catch(error => console.error("Failed to fetch campaign: ", error));
+                }
+
+                //Fetch parent location data if it exists
+                if (formData.parentLocationID) {
+                    fetch(`http://localhost:5050/locations/${formData.parentLocationID}`, {
+                        headers: {
+                            Authorization: `Bearer ${token}`
+                        }
+                    })
+                        .then(response => response.json())
+                        .then(data => setParentLocationName(data.name))
+                        .catch(error => console.error("Failed to fetch parent location: ", error));
+                }
+
+                //Fetch current location
+                const response = await fetch(`http://localhost:5050/locations/${id}`, {
+                    headers: {
+                        Authorization: `Bearer ${token}`
+                    }
+                });
                 if (!response.ok) {
                     throw new Error(`Error fetching location: ${response.statusText}`);
                 }
@@ -98,13 +117,13 @@ export default function LocationItem() {
                     campaignID: data.campaignID ? data.campaignID.toString() : "",
                     parentLocationID: data.parentLocationID ? data.parentLocationID.toString() : null,
                 });
-                console.log("Setting formData with:", {
-                    name: data.name,
-                    description: data.description || "",
-                    locationType: data.locationType || "Region",
-                    campaignID: data.campaignID ? data.campaignID.toString() : "",
-                    parentLocationID: data.parentLocationID ? data.parentLocationID.toString() : null,
-                });
+                // console.log("Setting formData with:", {
+                //     name: data.name,
+                //     description: data.description || "",
+                //     locationType: data.locationType || "Region",
+                //     campaignID: data.campaignID ? data.campaignID.toString() : "",
+                //     parentLocationID: data.parentLocationID ? data.parentLocationID.toString() : null,
+                // });
                 
             } catch (err) {
                 console.error("Failed to fetch location:", err);
@@ -115,7 +134,15 @@ export default function LocationItem() {
         };
 
         fetchLocation();
-    }, [id, isNew, campaignID, formData.campaignID, parentLocationID, formData.parentLocationID, locationType, locationState.state?.forceRefresh]);
+    }, [id,
+        isNew,
+        campaignID,
+        formData.campaignID,
+        parentLocationID,
+        formData.parentLocationID,
+        locationType,
+        locationState.state?.forceRefresh,
+        getAccessTokenSilently]);
     
     const handleSave = async (newLocation) => {
         setEditMode(false);
@@ -125,13 +152,20 @@ export default function LocationItem() {
 
     const handleDelete = async () => {
         if (deleting) return; //no duplicate requests
-        setDeleting(true);
+
+        //Are you sure?
         if (!window.confirm("Are you sure you want to delete this location?")) return;
         
         setDeleting(true);
 
         try {
-            const response = await fetch(`http://localhost:5050/locations/${id}`, { method: "DELETE" });
+            const token = await getAccessTokenSilently({ audience: "https://campaignapi.com"});
+            const response = await fetch(`http://localhost:5050/locations/${id}`, {
+                method: "DELETE",
+                headers: {
+                    Authorization: `Bearer ${token}`
+                },
+            });
             if (!response.ok) {
                 const errorResponse = await response.json();
                 throw new Error(errorResponse.error || "Failed to delete location");

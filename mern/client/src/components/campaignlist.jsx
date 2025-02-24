@@ -1,19 +1,27 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { useAuth0 } from "@auth0/auth0-react";
 
 export default function CampaignList() {
     const [campaigns, setCampaigns] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const { getAccessTokenSilently } = useAuth0();
     const navigate = useNavigate();
 
     useEffect(() => {
         const fetchCampaigns = async () => {
             try {
-                const response = await fetch("http://localhost:5050/campaigns");
+                const token = await getAccessTokenSilently({ audience: "https://campaignapi.com"});
+                const response = await fetch("http://localhost:5050/campaigns", {
+                    headers: {
+                        Authorization: `Bearer ${token}`
+                    }
+                });
                 if (!response.ok) {
                     throw new Error(`Error fetching campaigns: ${response.statusText}`);
                 }
+
                 const data = await response.json();
                 setCampaigns(data);
             } catch (err) {
@@ -25,7 +33,7 @@ export default function CampaignList() {
         };
 
         fetchCampaigns();
-    }, []);
+    }, [getAccessTokenSilently]);
 
     const handleCreateCampaign = async () => {
         navigate("/campaigns/new");
@@ -39,27 +47,27 @@ export default function CampaignList() {
             </div>
         );
 
-    console.log("CampaignList - campaignlist did stuff")
+    // console.log("CampaignList - campaignlist did stuff")
 
     return (
-        <div className="flex-1 flex-col justify-center max-w-6xl min-w-96 rounded-lg p-2" style={{ background: "#e9bf69" }}>
+        <div className="flex-1 flex-col justify-center max-w-6xl min-w-96 rounded-lg p-2 bg-cream mt-16 shadow-md shadow-amber-800">
             {campaigns.length === 0 ? (
                 <div className="text-center">
                     <p className="text-lg">No campaigns available.</p>
-                    <button onClick={handleCreateCampaign} className="mt-2 bg-green-600 text-white px-4 py-2 rounded">
+                    <button onClick={handleCreateCampaign} className="mt-2 bg-goblin-green text-gold px-4 py-2 rounded">
                         Create One
                     </button>
                 </div>
             ) : (
                 campaigns.map((campaign) => (
-                    <div key={campaign._id} className="p-2 border-b">
-                        <Link to={`/campaigns/${campaign._id}`} className="text-xl font-bold hover:underline">
+                    <div key={campaign._id} className="p-2 border-b border-brown rounded">
+                        <Link to={`/campaigns/${campaign._id}`} className="text-xl text-brown font-bold hover:underline">
                             {campaign.title}
                         </Link>
                     </div>
                 ))
             )}
-            <button onClick={handleCreateCampaign} className="bg-green-600 text-white px-4 py-2 rounded mt-2">
+            <button onClick={handleCreateCampaign} className="mt-2 bg-goblin-green text-xl text-gold px-4 py-2 rounded-full">
                 +
             </button>
         </div>

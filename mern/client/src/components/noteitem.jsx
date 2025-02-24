@@ -1,11 +1,13 @@
 import { useState } from "react";
 import PropTypes from "prop-types";
 import NoteForm from "./noteform";
+import { useAuth0 } from "@auth0/auth0-react";
 
 export default function NoteItem({ note, campaignID, parentLocationID, onNoteUpdate, onNoteDelete }) {
     const [expanded, setExpanded] = useState(false);
     const [editMode, setEditMode] = useState(false);
     const [deleting, setDeleting] = useState(false);
+    const { getAccessTokenSilently } = useAuth0();
 
     const handleEditClick = () => {
         setEditMode(true);
@@ -21,8 +23,12 @@ export default function NoteItem({ note, campaignID, parentLocationID, onNoteUpd
         setDeleting(true);
 
         try {
+            const token = await getAccessTokenSilently({ audience: "https://campaignapi.com"});
             const response = await fetch(`http://localhost:5050/notes/${note._id}`, {
                 method: "DELETE",
+                headers: {
+                    Authorization: `Bearer ${token}`
+                }
             });
 
             if (!response.ok) {

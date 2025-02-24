@@ -5,42 +5,44 @@
   text-align: center;
 }
 
-.logo {
-  height: 6em;
-  padding: 1.5em;
-  will-change: filter;
-  transition: filter 300ms;
-}
-.logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
-}
-.logo.react:hover {
-  filter: drop-shadow(0 0 2em #61dafbaa);
+.sancreek-regular {
+  font-family: "Sancreek", serif;
+  font-weight: 400;
+  font-style: normal;
 }
 
-@keyframes logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+.bg-goblin-green {
+  background-color: oklch(41.19% 0.1276 142.82);
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  a:nth-of-type(2) .logo {
-    animation: logo-spin infinite 20s linear;
-  }
+.bg-cancel-red {
+  background-color: oklch(26.18% 0.0994 31.76);
 }
 
-@theme {
-  --color-jade-400: "#105b10"
+.bg-dark-green {
+  background-color: oklch(32.63% 0.0755 143.6);
 }
 
-.card {
-  padding: 2em;
+.bg-cream {
+  background-color: oklch(90.29% 0.1088 87.06);
 }
 
-.read-the-docs {
-  color: #888;
+.bg-light-tan {
+  background-color: oklch(82.42% 0.1152 83.77);
+}
+
+.bg-tan {
+  background-color: oklch(68.99% 0.1085 72.11);
+}
+
+.text-gold {
+  color: oklch(81.88% 0.1636 76.31);
+}
+
+.text-brown {
+  color: oklch(27.9% 0.0747 46.46)
+}
+
+.border-brown {
+  border-color: oklch(27.9% 0.0747 46.46)
 }
