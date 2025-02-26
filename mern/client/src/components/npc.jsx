@@ -39,11 +39,11 @@ export default function NPC({ npc, campaignID, locationID, onUpdateNPC, onDelete
 
     return (
         <div className="p-2 border-b bg-white rounded-md shadow">
-            <button onClick={() => setExpanded(!expanded)} className="text-lg font-semibold">
-                {expanded ? "▼" : "▶"} {npc.charName || "Unnamed NPC"}
-            </button>
+        <button onClick={() => setExpanded(!expanded)} className="text-lg font-semibold">
+            {expanded ? "▼" : "▶"} {npc.charName || "Unnamed NPC"}
+        </button>
 
-            {expanded && (
+        {expanded && (
             <div className="mt-2">
                 {editMode ? (
                     <NPCForm
@@ -58,7 +58,12 @@ export default function NPC({ npc, campaignID, locationID, onUpdateNPC, onDelete
                         <p><strong>Race:</strong> {npc.race}</p>
                         <p><strong>Alignment:</strong> {npc.alignment}</p>
                         <p><strong>Class:</strong> {npc.className || "N/A"}</p>
-                
+                        <p><strong>Age:</strong> {npc.age || "Unknown"}</p>
+                        <p><strong>Gender:</strong> {npc.gender || "Unspecified"}</p>
+                        <p><strong>Level:</strong> {npc.level || "N/A"}</p>
+                        <p><strong>Size:</strong> {npc.size || "Medium"}</p>
+                        <p><strong>Speed:</strong> {npc.speed || "Unknown"} ft</p>
+                        
                         <div className="npc-stats">
                             <label>Stats:</label>
                             <div className="stat-block">
@@ -69,7 +74,13 @@ export default function NPC({ npc, campaignID, locationID, onUpdateNPC, onDelete
                                 ))}
                             </div>
                         </div>
-                            
+
+                        <p><strong>Quirks:</strong> {npc.quirks || "None"}</p>
+                        <p><strong>Features:</strong> {npc.features || "None"}</p>
+                        <p><strong>Vices:</strong> {npc.vices || "None"}</p>
+                        <p><strong>Virtues:</strong> {npc.virtues || "None"}</p>
+                        <p><strong>Ideals:</strong> {npc.ideals || "None"}</p>
+
                         <button onClick={handleEditClick} className="mt-2 bg-blue-600 text-white px-3 py-1 rounded">
                             Edit
                         </button>
@@ -83,8 +94,8 @@ export default function NPC({ npc, campaignID, locationID, onUpdateNPC, onDelete
                     </>
                 )}
             </div>
-            )}
-        </div>
+        )}
+    </div>
     );
 }
 
@@ -95,6 +106,16 @@ NPC.propTypes = {
         race: PropTypes.string.isRequired,
         alignment: PropTypes.string.isRequired,
         className: PropTypes.string,
+        age: PropTypes.number,
+        gender: PropTypes.string,
+        level: PropTypes.number,
+        size: PropTypes.string,
+        speed: PropTypes.number,
+        quirks: PropTypes.string,
+        features: PropTypes.string,
+        vices: PropTypes.string,
+        virtues: PropTypes.string,
+        ideals: PropTypes.string,
         stats: PropTypes.shape({
             strength: PropTypes.number.isRequired,
             dexterity: PropTypes.number.isRequired,
@@ -108,5 +129,4 @@ NPC.propTypes = {
     locationID: PropTypes.string.isRequired,
     onUpdateNPC: PropTypes.func.isRequired,
     onDeleteNPC: PropTypes.func.isRequired,
-
 };
