@@ -1,118 +1,117 @@
-import { useState } from 'react';
-import PropTypes from 'prop-types';
-import NPCSheet from './NPCSheet';
-import './npcStyles.css';
+import { useState, useEffect, useCallback } from "react";
+import PropTypes from "prop-types";
+import NPC from "./npc";
+import NPCForm from "./npcform";
+import { useAuth0 } from "@auth0/auth0-react";
 
-const NPCList = ({ npcs, onSaveNPC, onDeleteNPC }) => {
-  const [isAdding, setIsAdding] = useState(false);
+export default function NPCList({ campaignID, locationID }) {
+    const [npcs, setNpcs] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+    const [showForm, setShowForm] = useState(false);
+    const { getAccessTokenSilently } = useAuth0();
 
-  const handleCreateNPC = () => {
-    setIsAdding(true);
-  };
+    // Fetch NPCs from the backend
+    const fetchNPCs = useCallback(async () => {
+        if (!campaignID) {
+            setError("Missing campaignID. Cannot fetch NPCs.");
+            return;
+        }
 
-  const handleSaveNewNPC = async (npc) => {
-    const npcWithDefaults = {
-      ...npc,
-      campaignID: npc.campaignID || 1,
-      locationID: npc.locationID || 1,
-      characterID: npc.characterID || 1,
+        setLoading(true);
+
+        try {
+            const token = await getAccessTokenSilently();
+
+            if (!locationID) {
+              setError("Missing locationID. Cannot fetch NPCs");
+              setLoading(false);
+              return;
+            }
+            let endpoint = `http://localhost:5050/npcs/location/${locationID}`
+                // : `http://localhost:5050/npcs/campaign/${campaignID}`;
+
+            const response = await fetch(endpoint, {
+                headers: { Authorization: `Bearer ${token}` },
+            });
+
+            if (!response.ok) throw new Error(`Error fetching NPCs: ${response.statusText}`);
+
+            const data = await response.json();
+            if (!Array.isArray(data)) throw new Error("Invalid response: Expected an array of NPCs.");
+
+            setNpcs(data);
+        } catch (err) {
+            console.error("Failed to fetch NPCs:", err);
+            setError(err.message);
+        } finally {
+            setLoading(false);
+        }
+    }, [campaignID, locationID, getAccessTokenSilently]);
+
+    useEffect(() => {
+        fetchNPCs();
+    }, [fetchNPCs]);
+
+    // Handle Saving a New or Updated NPC
+    const handleSaveNPC = async (savedNPC) => {
+        if (!savedNPC || !savedNPC._id) {
+            console.error("Invalid saved NPC received:", savedNPC);
+            return;
+        }
+
+        setNpcs((prevNPCs) => {
+            const exists = prevNPCs.some((npc) => npc._id === savedNPC._id);
+            return exists
+                ? prevNPCs.map((npc) => (npc._id === savedNPC._id ? savedNPC : npc)) // Update existing NPC
+                : [...prevNPCs, savedNPC]; // Add new NPC
+        });
+
+        setShowForm(false);
     };
-  
-    console.log("NPC being sent to the server:", JSON.stringify(npcWithDefaults, null, 2));
-  
-    try {
-      const response = await fetch('http://localhost:5050/npcs', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(npcWithDefaults),
-      });
-  
-      if (response.ok) {
-        const savedNPC = await response.json();
-        onSaveNPC(savedNPC);
-      } else {
-        console.error('Failed to save NPC:', await response.text());
-      }
-    } catch (error) {
-      console.error('Error saving NPC:', error);
-    }
-  
-    setIsAdding(false);
-  };
-  
-  
 
-const handleCancel = () => {
-  setIsAdding(false);
+    // Handle Deleting an NPC
+    const handleDeleteNPC = (deletedNPCID) => {
+        setNpcs((prevNPCs) => prevNPCs.filter((npc) => npc._id !== deletedNPCID));
+    };
+
+    if (loading) return <p>Loading NPCs...</p>;
+    if (error) return <p className="text-red-500">{error}</p>;
+
+    return (
+        <div className="p-2 bg-yellow-200 rounded-lg">
+            {npcs.length === 0 && !showForm ? (
+                <p>No NPCs found. Try adding one!</p>
+            ) : (
+                npcs.map((npc) => (
+                    <NPC
+                        key={npc._id}
+                        npc={npc}
+                        campaignID={campaignID}
+                        locationID={locationID}
+                        onUpdateNPC={handleSaveNPC}  // Supposed to handle updates immediately
+                        onDeleteNPC={handleDeleteNPC}
+                    />
+                ))
+            )}
+
+            {showForm ? (
+                <NPCForm
+                    campaignID={campaignID}
+                    locationID={locationID}
+                    onSave={handleSaveNPC} // Ensure NPCs update immediately
+                    onCancel={() => setShowForm(false)}
+                />
+            ) : (
+                <button onClick={() => setShowForm(true)} className="bg-green-600 text-white px-4 py-2 rounded mt-4">
+                    +
+                </button>
+            )}
+        </div>
+    );
 }
 
-  const handleDeleteNPC = (npc) => {
-    onDeleteNPC(npc);
-    setIsAdding(false);
-  };
-
-  return (
-    <div className="npc-list">
-      <h2>NPC List</h2>
-      <ul>
-        {npcs
-          .filter(npc => npc.campaignID === 1 && npc.locationID === 1)
-          .map((npc, index) => (
-          <li key={index} className="npc-item">
-            <button>
-              {npc.charName || `NPC ${index + 1}`}
-            </button>
-            <button className="delete-btn" onClick={() => handleDeleteNPC(npc)}>Delete</button>
-          </li>
-        ))}
-      </ul>
-      {isAdding && (
-        <div className="npc-details">
-          <NPCSheet 
-            npc={{
-              charName: '',
-              race: '',
-              gender: '',
-              alignment: '',
-              age: 0,
-              className: '',
-              quirks: '',
-              vices: '',
-              virtues: '',
-              ideals: '',
-              campaignID: 1,
-              locationID: 1,
-              stats: {
-                strength: 10,
-                dexterity: 10,
-                constitution: 10,
-                intelligence: 10,
-                wisdom: 10,
-                charisma: 10,
-              },
-            }} 
-            onSave={handleSaveNewNPC}
-            onCancel={handleCancel}
-            isNew={true}
-          />
-        </div>
-      )}
-      <button className="add-npc-btn" onClick={handleCreateNPC}>+</button>
-    </div>
-  );
-};
-
 NPCList.propTypes = {
-  npcs: PropTypes.arrayOf(PropTypes.shape({
-    charName: PropTypes.string,
-    campaignID: PropTypes.number,
-    locationID: PropTypes.number,
-  })).isRequired,
-  onSaveNPC: PropTypes.func.isRequired,
-  onCreateNPC: PropTypes.func.isRequired,
-  onDeleteNPC: PropTypes.func.isRequired,
+    campaignID: PropTypes.string.isRequired,
+    locationID: PropTypes.string.isRequired,
 };
-
-export default NPCList;

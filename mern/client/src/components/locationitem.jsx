@@ -4,7 +4,10 @@ import LocationList from "./locationlist";
 import LocationForm from "./locationform";
 import PropTypes from "prop-types";
 import NotesList from "./noteslist";
+import EventList from "./eventlist";
+import NPCList from "./NPCList";
 import { useAuth0 } from "@auth0/auth0-react";
+
 
 export default function LocationItem() {
     const { id } = useParams(); // Get IDs from the URL
@@ -78,7 +81,7 @@ export default function LocationItem() {
                 if (formData.campaignID) {
                     fetch(`http://localhost:5050/campaigns/${formData.campaignID}`, {
                         headers: {
-                            Authorization: `Bearer ${token}`
+                            Authorization: `Bearer ${token}`,
                         }
                     })
                         .then(response => response.json())
@@ -247,6 +250,9 @@ export default function LocationItem() {
                     <button onClick={() => setShowEvents(!showEvents)} className="mt-2 text-blue-600 underline">
                         Events {showEvents ? "▲" : "▼"}
                     </button>
+                    {
+                        showEvents && <EventList parentLocationID={location?._id} campaignID={formData.campaignID} />
+                    }
 
                     {/* NPCs & Items (Only for Regions and Sites) */}
                     {["Region", "Site"].includes(formData.locationType) && (
@@ -254,6 +260,9 @@ export default function LocationItem() {
                             <button onClick={() => setShowNPCs(!showNPCs)} className="mt-2 text-blue-600 underline">
                                 NPCs {showNPCs ? "▲" : "▼"}
                             </button>
+                            {
+                                showNPCs && <NPCList locationID={location?._id} campaignID={formData.campaignID} />
+                            }
 
                             <button onClick={() => setShowItems(!showItems)} className="mt-2 text-blue-600 underline">
                                 Items {showItems ? "▲" : "▼"}
