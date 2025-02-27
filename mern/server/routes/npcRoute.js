@@ -1,5 +1,5 @@
 import express from "express";
-import { getAllNPCs, getNPCById, addNPC, updateNPC, deleteNPC } from "../models/npcModel.js";
+import { getAllNPCs, getNPCsByLocation, getNPCById, addNPC, updateNPC, deleteNPC } from "../models/npcModel.js";
 import Joi from "joi";
 import { sanitizeInput } from "../utils/sanitization.js";
 import { ObjectId } from "mongodb";
@@ -8,13 +8,13 @@ const router = express.Router();
 
 //Joi validation schema
 const npcSchema = Joi.object({
-  campaignID: Joi.number().integer().required(),  // Ensuring it's a number
-  locationID: Joi.number().integer().required(),          // Allowing null for player-characters
-  characterID: Joi.number().integer().required(),
+  campaignID: Joi.string().required(),  // It's a string, like all the other routes
+  locationID: Joi.string().required(),          // Required, all NPCs must have a parent location
+  // characterID: Joi.number().integer().required(),  //This needs to be the ObjectId, not an int
   charName: Joi.string().required(),
   age: Joi.number().integer().min(0).required(),  // Age should be a positive integer
   race: Joi.string().required(),
-  gender: Joi.string().valid("Male", "Female", "Other").required(),  // Ensuring only valid gender values
+  gender: Joi.string().allow(null),
   alignment: Joi.string().required(),
   className: Joi.string().optional(),
   level: Joi.number().integer().optional(),
@@ -39,7 +39,7 @@ const npcSchema = Joi.object({
 // Validate MongoDB ObjectId
 const validateObjectId = (id) => ObjectId.isValid(id);
 
-// Get all NPCs
+// Get all NPCs (for testing)
 router.get("/", async (req, res) => {
     try {
       const npcs = await getAllNPCs();
@@ -49,6 +49,29 @@ router.get("/", async (req, res) => {
     }
   });
   
+// Get NPCs by locationID
+router.get("/location/:locationID", async (req, res) => {
+  try {
+      const { locationID } = req.params;
+
+      if (!locationID) {
+          return res.status(400).json({ error: "Missing locationID parameter" });
+      }
+
+      const npcs = await getNPCsByLocation(locationID);
+
+      if (!npcs.length) {
+          return res.status(404).json({ error: "No NPCs found for this location" });
+      }
+
+      res.json(npcs);
+  } catch (error) {
+      console.error("Failed to fetch NPCs by locationID:", error);
+      res.status(500).json({ error: "Failed to fetch NPCs" });
+  }
+});
+
+
 // Get NPC by ID with sanitization and validation
 router.get("/:id", async (req, res) => {
   try {

@@ -51,6 +51,7 @@ const checkJWT = auth({
 
 app.use(checkJWT)
 
+//Secured Routes
 app.use("/npcs", npcs);
 app.use("/characters", characters);
 app.use("/campaigns", campaigns);
