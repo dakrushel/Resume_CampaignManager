@@ -2,7 +2,8 @@ export const sanitizeInput = (input) => {
     if (typeof input === "string") {
       
         // Remove potentially harmful characters in a string to prevent NoSQL injection
-      return input.replace(/[\$\.]/g, "");
+        input = input.replace(/\./, "\u002E")
+      return input.replace(/[\$]/g, "");
     } else if (typeof input === "object" && input !== null) {
       
         // Recursively sanitize each field in the object

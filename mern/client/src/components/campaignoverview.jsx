@@ -3,6 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import LocationList from "./locationlist";
 import NotesList from "./noteslist";
 import { useAuth0 } from "@auth0/auth0-react";
+import SanitizeData from "../utils/santitization.mjs";
 
 export default function CampaignOverview() {
     const { id } = useParams();
@@ -50,7 +51,8 @@ export default function CampaignOverview() {
     }, [id, isNew, getAccessTokenSilently]);
 
     const handleChange = (e) => {
-        setFormData({ ...formData, [e.target.name]: e.target.value });
+        let sanitized = SanitizeData(e.target.value)
+        setFormData({ ...formData, [e.target.name]: sanitized });
     };
 
     const handleSave = async (e) => {
