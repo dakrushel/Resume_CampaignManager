@@ -1,8 +1,8 @@
-/*=========================== 
-*   Title: PlayerCharacterStats
+/*============================================================================== 
+*   Title: Spell Modal Logic for displaying list of spells and their information
 *   Author: Grimm_mmirG
 *   Date: 2025-26-02
-=============================*/
+================================================================================*/
 
 import React from "react";
 

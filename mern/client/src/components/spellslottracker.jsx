@@ -1,8 +1,8 @@
-/*=========================== 
-*   Title: PlayerCharacterStats
+/*======================================
+*   Title: Spell Slot Tracker Logic Page 
 *   Author: Grimm_mmirG
 *   Date: 2025-26-02
-=============================*/
+========================================*/
 
 import React from "react";
 

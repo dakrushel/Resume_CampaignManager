@@ -1,15 +1,17 @@
-/*=========================== 
-*   Title: PlayerCharacterStats
+/*=============================================
+*   Title: Player Character Stats Logic (Heavy)
 *   Author: Grimm_mmirG
-*   Date: 2025-25-01
-=============================*/
+*   Date: 2025-26-02
+===============================================*/
 
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import SpellSlotTracker from "./spellslottracker";
 import SpellModal from "./spellmodal";
+import { wizardSpellSlots } from "./spelldata";
 
-const CharacterStats = ({ onClassSelect, characterLevel, onLevelChange, onAddSpell, selectedSpells }) => {
+{/* CharacterStats use states, spells included */}
+const CharacterStats = ({ onClassSelect, characterLevel, onLevelChange }) => {
   const [races, setRaces] = useState([]);
   const [classes, setClasses] = useState([]);
   const [selectedRace, setSelectedRace] = useState(null);
@@ -19,7 +21,10 @@ const CharacterStats = ({ onClassSelect, characterLevel, onLevelChange, onAddSpe
   const [selectedSpellLevel, setSelectedSpellLevel] = useState(null);
   const [spellsByLevel, setSpellsByLevel] = useState({});
   const [error, setError] = useState(null);
+  const [selectedSpells, setSelectedSpells] = useState([]);
+  const [selectedSpellForDescription, setSelectedSpellForDescription] = useState(null); // Track selected spell for description
 
+  {/* Base Stats for character */}
   const [baseStats, setBaseStats] = useState({
     strength: 10,
     dexterity: 10,
@@ -53,7 +58,7 @@ const CharacterStats = ({ onClassSelect, characterLevel, onLevelChange, onAddSpe
   const [showClassProficiencies, setShowClassProficiencies] = useState(false);
   const [showClassFeatures, setShowClassFeatures] = useState(false);
 
-  // Fetch races and classes on mount
+  {/* Fetch races and classes on mount */} 
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -70,7 +75,7 @@ const CharacterStats = ({ onClassSelect, characterLevel, onLevelChange, onAddSpe
     fetchData();
   }, []);
 
-  // Handle race change
+  /* Handle race change */ 
   const handleRaceChange = async (index) => {
     if (index === "") {
       setSelectedRace(null);
@@ -87,7 +92,8 @@ const CharacterStats = ({ onClassSelect, characterLevel, onLevelChange, onAddSpe
       }));
       return;
     }
-
+  
+  {/* Fetch the race details from DnDAPI */}
     const raceDetails = await axios.get(`https://www.dnd5eapi.co/api/races/${index}`);
     setSelectedRace(raceDetails.data);
     setCharacter((prev) => ({
@@ -104,7 +110,7 @@ const CharacterStats = ({ onClassSelect, characterLevel, onLevelChange, onAddSpe
     applyRaceBonuses(raceDetails.data.ability_bonuses);
   };
 
-  // Handle class change
+  /* Handle class change */
   const handleClassChange = async (index) => {
     if (!index) {
       setSelectedClass(null);
@@ -121,6 +127,7 @@ const CharacterStats = ({ onClassSelect, characterLevel, onLevelChange, onAddSpe
       return;
     }
 
+      {/* Fetch the class details from DnDAPI */}
     const classDetails = await axios.get(`https://www.dnd5eapi.co/api/classes/${index}`);
     setSelectedClass(classDetails.data.index);
     setCharacter((prev) => ({
@@ -134,7 +141,7 @@ const CharacterStats = ({ onClassSelect, characterLevel, onLevelChange, onAddSpe
     onClassSelect(classDetails.data.index);
   };
 
-  // Apply race ability score bonuses
+  /* Apply race ability score bonuses when race is chosen */ 
   const applyRaceBonuses = (abilityBonuses) => {
     const statMap = {
       str: "strength",
@@ -158,7 +165,7 @@ const CharacterStats = ({ onClassSelect, characterLevel, onLevelChange, onAddSpe
     }));
   };
 
-  // Handle manual stat changes
+  /* Handle manual stat changes for player input */ 
   const handleStatChange = (stat, value) => {
     setCharacter((prev) => ({
       ...prev,
@@ -173,30 +180,6 @@ const CharacterStats = ({ onClassSelect, characterLevel, onLevelChange, onAddSpe
     }));
   };
 
-  /* spell slots for a specific level wizard is the only implemented class currently */
-  const wizardSpellSlots = {
-    1:  { 0: 3, 1: 2 },
-    2:  { 0: 3, 1: 3 },
-    3:  { 0: 3, 1: 4, 2: 2 },
-    4:  { 0: 4, 1: 4, 2: 3 },
-    5:  { 0: 4, 1: 4, 2: 3 },
-    6:  { 0: 4, 1: 4, 2: 3, 3: 2 },
-    7:  { 0: 4, 1: 4, 2: 3, 3: 3 }, 
-    8:  { 0: 4, 1: 4, 2: 3, 3: 3, 4: 1 }, 
-    9:  { 0: 4, 1: 4, 2: 3, 3: 3, 4: 2 },
-    10: { 0: 5, 1: 4, 2: 3, 3: 3, 4: 3, 5: 1 }, 
-    11: { 0: 5, 1: 4, 2: 3, 3: 3, 4: 3, 5: 2, 6: 1 },
-    12: { 0: 5, 1: 4, 2: 3, 3: 3, 4: 3, 5: 2, 6: 1 },
-    13: { 0: 5, 1: 4, 2: 3, 3: 3, 4: 3, 5: 2, 6: 1, 7: 1 }, 
-    14: { 0: 5, 1: 4, 2: 3, 3: 3, 4: 3, 5: 2, 6: 1, 7: 1 }, 
-    15: { 0: 5, 1: 4, 2: 3, 3: 3, 4: 3, 5: 2, 6: 1, 7: 1, 8: 1 }, 
-    16: { 0: 5, 1: 4, 2: 3, 3: 3, 4: 3, 5: 2, 6: 1, 7: 1, 8: 1 }, 
-    17: { 0: 5, 1: 4, 2: 3, 3: 3, 4: 3, 5: 2, 6: 1, 7: 1, 8: 1, 9: 1 },
-    18: { 0: 5, 1: 4, 2: 3, 3: 3, 4: 3, 5: 3, 6: 1, 7: 1, 8: 1, 9: 1 }, 
-    19: { 0: 5, 1: 4, 2: 3, 3: 3, 4: 3, 5: 3, 6: 2, 7: 1, 8: 1, 9: 1 }, 
-    20: { 0: 5, 1: 4, 2: 3, 3: 3, 4: 3, 5: 3, 6: 2, 7: 2, 8: 1, 9: 1 }, 
-  };
-  
   /* Calculate remaining spell slots for a specific level */
   const calculateRemainingSpellPoints = (level) => {
     const spellSlots = wizardSpellSlots[characterLevel] || {};
@@ -205,7 +188,7 @@ const CharacterStats = ({ onClassSelect, characterLevel, onLevelChange, onAddSpe
     return maxSpellPoints - usedSpellPoints;
   };
 
-  /* Update spell slots when character level or class changes adding more once approved  */
+  /* Update spell slots when character level or class changes */
   useEffect(() => {
     if (selectedClass === "wizard") {
       setSpellSlots(wizardSpellSlots[characterLevel] || {});
@@ -214,11 +197,42 @@ const CharacterStats = ({ onClassSelect, characterLevel, onLevelChange, onAddSpe
     }
   }, [selectedClass, characterLevel]);
 
-  const handleAddSpell = (spell) => {
-    const updatedSpells = [...selectedSpells, { ...spell, level: selectedSpellLevel }];
-    onAddSpell(updatedSpells); 
+  /* Add a spell to the selected spells list and reduce spell slots */
+  const addSpellToCharacter = (spell) => {
+    /* Check if the spell is already in the selected spells list */ 
+    const isSpellAlreadyAdded = selectedSpells.some(
+      (selectedSpell) => selectedSpell.name === spell.name
+    );
+    /* Alert if the selected spell is already chosen */
+    if (isSpellAlreadyAdded) {
+      alert(`You can only add one instance of ${spell.name}.`);
+      return;
+    }
+
+    /* Logic for calculating remainign spell points */
+    const remainingPoints = calculateRemainingSpellPoints(spell.level);
+    if (remainingPoints > 0) {
+      setSelectedSpells((prev) => [...prev, spell]);
+      setSpellSlots((prev) => ({
+        ...prev,
+        [spell.level]: (prev[spell.level] || 0) - 1,
+      }));
+    } else {
+      alert(`No remaining spell points for level ${spell.level} spells.`);
+    }
   };
 
+  /* Remove a spell from the selected spells list and restore spell slots */
+  const removeSpellFromCharacter = (spellIndex) => {
+    const spellToRemove = selectedSpells[spellIndex];
+    setSelectedSpells((prev) => prev.filter((_, index) => index !== spellIndex));
+    setSpellSlots((prev) => ({
+      ...prev,
+      [spellToRemove.level]: (prev[spellToRemove.level] || 0) + 1,
+    }));
+  };
+
+  /* Fetch all spells from the selected class if the selected class has access to spells */
   useEffect(() => {
     let isMounted = true;
     const fetchSpells = async () => {
@@ -232,8 +246,8 @@ const CharacterStats = ({ onClassSelect, characterLevel, onLevelChange, onAddSpe
             if (!spellResponse.ok) throw new Error("Failed to fetch spell details");
             return spellResponse.json();
           })
-        );        
-          
+        );
+
         if (isMounted) {
           const groupedSpells = spellDetails.reduce((acc, spell) => {
             acc[spell.level] = acc[spell.level] || [];
@@ -247,11 +261,13 @@ const CharacterStats = ({ onClassSelect, characterLevel, onLevelChange, onAddSpe
           console.error("Error fetching spells:", error);
         }
       }
-    };   
+    };
     if (selectedClass) {
       fetchSpells();
-    }   
-    return () => { isMounted = false };
+    }
+    return () => {
+      isMounted = false;
+    };
   }, [selectedClass]);
 
   /* Spending a spell slot */
@@ -268,209 +284,277 @@ const CharacterStats = ({ onClassSelect, characterLevel, onLevelChange, onAddSpe
     }
   }, [isSpellModalOpen]);
 
-// Handle level change
-const handleLevelChange = async (newLevel) => {
-  setCharacter((prev) => ({
-    ...prev,
-    level: newLevel,
-  }));
-  onLevelChange(newLevel);
+  {/* Spell description names need their own return code */}
+  const SpellDescriptionModal = ({ spell, onClose }) => {
+    if (!spell) return null;
+  
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
+        <div className="bg-white p-6 rounded-lg shadow-lg max-w-2xl w-full max-h-[80vh] overflow-y-auto">
+          <h3 className="font-bold text-xl mb-4">{spell.name}</h3>
+          <p className="text-gray-700">{spell.desc || "No description available."}</p>
+          <button
+            type="button"
+            onClick={onClose}
+            className="mt-4 p-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+          >
+            Close
+          </button>
+        </div>
+      </div>
+    );
+  };
 
-  if (selectedClass) {
-    await fetchClassFeatures(selectedClass, newLevel);
-  }
-};
+  /* Handle level change */
+  const handleLevelChange = async (newLevel) => {
+    setCharacter((prev) => ({
+      ...prev,
+      level: newLevel,
+    }));
+    onLevelChange(newLevel);
 
-// Fetch class features
-useEffect(() => {
-  const abortController = new AbortController();
-
-  const fetchClassFeatures = async (classIndex, level) => {
-    try {
-      const features = [];
-      for (let i = 1; i <= level; i++) {
-        const response = await axios.get(`https://www.dnd5eapi.co/api/2014/classes/${classIndex}/levels/${i}`, {
-          signal: abortController.signal,
-        });
-        if (response.data.features) {
-          features.push(...response.data.features.map((feature) => `Level ${i}: ${feature.name}`));
-        }
-      }
-
-      setCharacter((prev) => ({
-        ...prev,
-        classFeatures: features,
-      }));
-    } catch (error) {
-      if (error.name !== "AbortError") {
-        console.error("Error fetching class features:", error);
-        setError("Failed to load class features. Please try again later.");
-      }
+    if (selectedClass) {
+      await fetchClassFeatures(selectedClass, newLevel);
     }
   };
 
-  if (selectedClass) {
-    fetchClassFeatures(selectedClass, character.level);
-  }
+  /* Fetch class features into the list when level changes*/
+  useEffect(() => {
+    const abortController = new AbortController();
 
-  return () => {
-    abortController.abort();
-  };
-}, [selectedClass, character.level]);
+    const fetchClassFeatures = async (classIndex, level) => {
+      try {
+        const features = [];
+        for (let i = 1; i <= level; i++) {
+          const response = await axios.get(`https://www.dnd5eapi.co/api/2014/classes/${classIndex}/levels/${i}`, {
+            signal: abortController.signal,
+          });
+          if (response.data.features) {
+            features.push(...response.data.features.map((feature) => `Level ${i}: ${feature.name}`));
+          }
+        }
 
-return (
-  <div className="p-6 max-w-6xl mx-auto bg-gray-50 rounded-lg shadow-lg grid grid-cols-1 md:grid-cols-4 gap-6">
-    {/* Left Section - Race Details */}
-    <div className="bg-white p-6 rounded-lg shadow-md col-span-1">
-      <h2
-        className="text-xl font-bold mb-4 text-blue-600 cursor-pointer hover:text-blue-800 transition-colors"
-        onClick={() => setShowRaceDetails(!showRaceDetails)}
-      >
-        Race Details {showRaceDetails ? "▼" : "▲"}
-      </h2>
-      {showRaceDetails && (
-        <div className="space-y-3 text-gray-700">
-          <p><strong className="text-gray-800">Size:</strong> {character.size}</p>
-          <p><strong className="text-gray-800">Size Description:</strong> {character.size_description}</p>
-          <p><strong className="text-gray-800">Languages:</strong> {character.languages.join(", ")}</p>
-          <p><strong className="text-gray-800">Language Description:</strong> {character.language_desc}</p>
-          <p><strong className="text-gray-800">Traits:</strong> {character.traits.join(", ")}</p>
-        </div>
-      )}
-    </div>
+        setCharacter((prev) => ({
+          ...prev,
+          classFeatures: features,
+        }));
+      } catch (error) {
+        if (error.name !== "AbortError") {
+          console.error("Error fetching class features:", error);
+          setError("Failed to load class features. Please try again later.");
+        }
+      }
+    };
 
-    {/* Main Character Sheet Form */}
-    <div className="bg-white p-6 rounded-lg shadow-md col-span-2">
-      <h1 className="text-3xl font-bold mb-6 text-gray-800">D&D Character Sheet</h1>
-      <form className="space-y-6">
-        {/* Character Name Input */}
-        <div>
-          <label className="block text-lg font-medium text-gray-700 mb-2">Name:</label>
-          <input
-            type="text"
-            className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 hover:border-gray-400 transition-colors"
-            value={character.name}
-            onChange={(e) => setCharacter({ ...character, name: e.target.value })}
-            placeholder="Enter character name"
-          />
-        </div>
+    if (selectedClass) {
+      fetchClassFeatures(selectedClass, character.level);
+    }
 
-        {/* Race Dropdown */}
-        <div>
-          <label className="block text-lg font-medium text-gray-700 mb-2">Race:</label>
-          <select
-            className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 hover:border-gray-400 transition-colors"
-            onChange={(e) => handleRaceChange(e.target.value || "")}
-          >
-            <option value="">Select a Race</option>
-            {races.map((race) => (
-              <option key={race.index} value={race.index} className="text-gray-700">
-                {race.name}
-              </option>
-            ))}
-          </select>
-        </div>
+    return () => {
+      abortController.abort();
+    };
+  }, [selectedClass, character.level]);
 
-        {/* Class Dropdown */}
-        <div>
-          <label className="block text-lg font-medium text-gray-700 mb-2">Class:</label>
-          <select
-            className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 hover:border-gray-400 transition-colors"
-            onChange={(e) => handleClassChange(e.target.value || "")}
-          >
-            <option value="">Select a Class</option>
-            {classes.map((cls) => (
-              <option key={cls.index} value={cls.index} className="text-gray-700">
-                {cls.name}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        {/* Level Input */}
-        <div>
-          <label className="block text-lg font-medium text-gray-700 mb-2">Level:</label>
-          <input
-            type="number"
-            className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 hover:border-gray-400 transition-colors"
-            value={characterLevel}
-            onChange={(e) => handleLevelChange(parseInt(e.target.value) || 1)}
-            min="1"
-            max="20"
-          />
-        </div>
-
-        {/* Spell Slot Tracker */}
-        <SpellSlotTracker spellSlots={spellSlots} onSpendSlot={handleSpendSlot} />
-
-        {/* Spell Modal */}
-        {isSpellModalOpen && (
-          <SpellModal
-            level={selectedSpellLevel}
-            spells={spellsByLevel[selectedSpellLevel] || []}
-            onAddSpell={handleAddSpell}
-            onClose={() => setIsSpellModalOpen(false)}
-            remainingSpellPoints={calculateRemainingSpellPoints(selectedSpellLevel)}
-            selectedSpells={selectedSpells}
-          />
+  return (
+    <div className="p-6 max-w-6xl mx-auto bg-gray-50 rounded-lg shadow-lg grid grid-cols-1 md:grid-cols-4 gap-6">
+      {/* Left Section - Race Details */}
+      <div className="bg-white p-6 rounded-lg shadow-md col-span-1">
+        <h2
+          className="text-xl font-bold mb-4 text-blue-600 cursor-pointer hover:text-blue-800 transition-colors"
+          onClick={() => setShowRaceDetails(!showRaceDetails)}
+        >
+          Race Details {showRaceDetails ? "▼" : "▲"}
+        </h2>
+        {showRaceDetails && (
+          <div className="space-y-3 text-gray-700">
+            <p><strong className="text-gray-800">Size:</strong> {character.size}</p>
+            <p><strong className="text-gray-800">Size Description:</strong> {character.size_description}</p>
+            <p><strong className="text-gray-800">Languages:</strong> {character.languages.join(", ")}</p>
+            <p><strong className="text-gray-800">Language Description:</strong> {character.language_desc}</p>
+            <p><strong className="text-gray-800">Traits:</strong> {character.traits.join(", ")}</p>
+          </div>
         )}
+      </div>
 
-        {/* Stats Inputs */}
-        <div>
-          <label className="block text-lg font-medium text-gray-700 mb-2">Stats:</label>
-          <div className="grid grid-cols-2 gap-4">
-            {Object.keys(character.stats).map((stat) => (
-              <div key={stat}>
-                <label className="block text-sm font-medium text-gray-600 mb-1">
-                  {stat.charAt(0).toUpperCase() + stat.slice(1)}:
-                </label>
-                <input
-                  type="number"
-                  className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 hover:border-gray-400 transition-colors"
-                  value={character.stats[stat]}
-                  onChange={(e) => handleStatChange(stat, e.target.value)}
-                  placeholder={`Enter ${stat}`}
-                />
+      {/* Main Character Sheet Form */}
+      <div className="bg-white p-6 rounded-lg shadow-md col-span-2">
+        <h1 className="text-3xl font-bold mb-6 text-gray-800">D&D Character Sheet</h1>
+        <form className="space-y-6">
+          {/* Character Name Input */}
+          <div>
+            <label className="block text-lg font-medium text-gray-700 mb-2">Name:</label>
+            <input
+              type="text"
+              className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 hover:border-gray-400 transition-colors"
+              value={character.name}
+              onChange={(e) => setCharacter({ ...character, name: e.target.value })}
+              placeholder="Enter character name"
+            />
+          </div>
+
+          {/* Race Dropdown */}
+          <div>
+            <label className="block text-lg font-medium text-gray-700 mb-2">Race:</label>
+            <select
+              className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 hover:border-gray-400 transition-colors"
+              onChange={(e) => handleRaceChange(e.target.value || "")}
+            >
+              <option value="">Select a Race</option>
+              {races.map((race) => (
+                <option key={race.index} value={race.index} className="text-gray-700">
+                  {race.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Class Dropdown */}
+          <div>
+            <label className="block text-lg font-medium text-gray-700 mb-2">Class:</label>
+            <select
+              className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 hover:border-gray-400 transition-colors"
+              onChange={(e) => handleClassChange(e.target.value || "")}
+            >
+              <option value="">Select a Class</option>
+              {classes.map((cls) => (
+                <option key={cls.index} value={cls.index} className="text-gray-700">
+                  {cls.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Level Input */}
+          <div>
+            <label className="block text-lg font-medium text-gray-700 mb-2">Level:</label>
+            <input
+              type="number"
+              className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 hover:border-gray-400 transition-colors"
+              value={characterLevel}
+              onChange={(e) => handleLevelChange(parseInt(e.target.value) || 1)}
+              min="1"
+              max="20"
+            />
+          </div>
+
+          {/* Spell Slot Tracker */}
+          <SpellSlotTracker
+            spellSlots={spellSlots}
+            onSpendSlot={handleSpendSlot}
+          />
+
+          {/* Spell Modal */}
+          {isSpellModalOpen && (
+            <SpellModal
+              level={selectedSpellLevel}
+              spells={spellsByLevel[selectedSpellLevel] || []}
+              onAddSpell={addSpellToCharacter}
+              onClose={() => setIsSpellModalOpen(false)}
+              remainingSpellPoints={calculateRemainingSpellPoints(selectedSpellLevel)}
+              selectedSpells={selectedSpells}
+            />
+          )}
+
+          {/* Display Selected Spells */}
+          <div className="p-6 max-w-4xl mx-auto bg-gray-100 rounded-lg shadow-md mt-6">
+            <h2 className="text-xl font-bold mb-4">Selected Spells</h2>
+            {/* Display Remaining Spell Points for Each Level */}
+            {Object.keys(spellSlots).map((level) => (
+              <div key={level} className="mb-4">
+                <h3 className="font-bold">Level {level} Spells</h3>
+                <p>Remaining Points: {calculateRemainingSpellPoints(parseInt(level))}</p>
               </div>
             ))}
+            {/* Display Selected Spells */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {selectedSpells.map((spell, index) => (
+                <div key={index} className="p-4 border rounded shadow flex justify-between items-center">
+                  <div>
+                    <h3
+                      className="font-bold cursor-pointer hover:text-blue-600"
+                      onClick={() => setSelectedSpellForDescription(spell)}
+                    >
+                      {spell.name}
+                    </h3>
+                    <p>Level: {spell.level}</p>
+                    <p>School: {spell.school.name}</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => removeSpellFromCharacter(index)}
+                    className="p-2 bg-red-500 text-white rounded hover:bg-red-600"
+                  >
+                    Remove
+                  </button>
+                </div>
+              ))}
+            </div>
           </div>
-        </div>
 
-        {/* Speed and Passive Perception Inputs */}
-        <div className="flex items-center space-x-6">
+          {/* Spell Description Modal */}
+          {selectedSpellForDescription && (
+            <SpellDescriptionModal
+              spell={selectedSpellForDescription}
+              onClose={() => setSelectedSpellForDescription(null)}
+            />
+          )}
+
+          {/* Stats Inputs */}
           <div>
-            <label className="block text-sm font-medium text-gray-600 mb-1">Speed:</label>
+            <label className="block text-lg font-medium text-gray-700 mb-2">Stats:</label>
+            <div className="grid grid-cols-2 gap-4">
+              {Object.keys(character.stats).map((stat) => (
+                <div key={stat}>
+                  <label className="block text-sm font-medium text-gray-600 mb-1">
+                    {stat.charAt(0).toUpperCase() + stat.slice(1)}:
+                  </label>
+                  <input
+                    type="number"
+                    className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 hover:border-gray-400 transition-colors"
+                    value={character.stats[stat]}
+                    onChange={(e) => handleStatChange(stat, e.target.value)}
+                    placeholder={`Enter ${stat}`}
+                  />
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Speed and Passive Perception Inputs */}
+          <div className="flex items-center space-x-6">
+            <div>
+              <label className="block text-sm font-medium text-gray-600 mb-1">Speed:</label>
+              <input
+                type="text"
+                className="w-24 p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 hover:border-gray-400 transition-colors"
+                value={character.speed}
+                readOnly
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-600 mb-1">Passive Perception:</label>
+              <input
+                type="text"
+                className="w-24 p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 hover:border-gray-400 transition-colors"
+                value={10 + Math.floor((character.stats.wisdom - 10) / 2)}
+                readOnly
+              />
+            </div>
+          </div>
+
+          {/* Hit Dice Input */}
+          <div>
+            <label className="block text-lg font-medium text-gray-700 mb-2">Hit Dice:</label>
             <input
               type="text"
-              className="w-24 p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 hover:border-gray-400 transition-colors"
-              value={character.speed}
+              className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 hover:border-gray-400 transition-colors"
+              value={character.hitDice}
               readOnly
             />
           </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-600 mb-1">Passive Perception:</label>
-            <input
-              type="text"
-              className="w-24 p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 hover:border-gray-400 transition-colors"
-              value={10 + Math.floor((character.stats.wisdom - 10) / 2)}
-              readOnly
-            />
-          </div>
-        </div>
+        </form>
+      </div>
 
-        {/* Hit Dice Input */}
-        <div>
-          <label className="block text-lg font-medium text-gray-700 mb-2">Hit Dice:</label>
-          <input
-            type="text"
-            className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 hover:border-gray-400 transition-colors"
-            value={character.hitDice}
-            readOnly
-          />
-        </div>
-      </form>
-    </div>
-  
       {/* Right Section - Class Proficiencies and Features */}
       <div className="bg-white p-6 rounded-lg shadow-md col-span-1">
         {/* Class Proficiencies */}
@@ -488,7 +572,7 @@ return (
             </div>
           )}
         </div>
-  
+
         {/* Class Features */}
         <div>
           <h2
@@ -508,6 +592,6 @@ return (
       </div>
     </div>
   );
-};  
+};
 
 export default CharacterStats;
