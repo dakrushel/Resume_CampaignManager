@@ -26,6 +26,12 @@ export default function Navbar({showNav}) {
         <NavLink to="/rules" title="Look up some rules" alt="Rules" className={navButtonStyle}>
         <img src="/rules.svg"></img>
         </NavLink>
+        <NavLink to="/characterdisplay">
+          CharacterDisplay
+        </NavLink>
+        <NavLink to="/lootgenerator">
+          LootTable
+        </NavLink>
       </nav>
     </div>
   );

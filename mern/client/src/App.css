@@ -46,3 +46,9 @@
 .border-brown {
   border-color: oklch(27.9% 0.0747 46.46)
 }
+
+.no-scroll {
+  overflow: hidden;
+}
+
+
