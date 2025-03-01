@@ -4,7 +4,7 @@
 *   Date: 2025-26-02
 =============================*/
 
-import React, { useState } from "react";
+import { useState } from "react";
 import CharacterStats from "./characterstats";
 import SpellTable from "./spelltable";
 

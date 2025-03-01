@@ -277,7 +277,7 @@ const handleLevelChange = async (newLevel) => {
   onLevelChange(newLevel);
 
   if (selectedClass) {
-    await fetchClassFeatures(selectedClass, newLevel);
+    await fetchClassFeatures(selectedClass, newLevel);  //aparent that still works despite being out of scope...
   }
 };
 
