@@ -196,10 +196,10 @@ export default function CampaignOverview() {
                     <div className="flex space-x-2 mt-4 items-center justify-center mb-4">
                         {!isNew && (
                             <>
-                                <button onClick={() => setEditMode(true)} className="bg-goblin-green text-gold px-4 py-2 rounded shadow-sm shadow-amber-700">
+                                <button onClick={() => setEditMode(true)} className="bg-goblin-green text-gold font-bold px-4 py-2 rounded shadow-sm shadow-amber-700">
                                     Edit Campaign
                                 </button>
-                                <button onClick={handleDelete} className="bg-cancel-red text-gold px-4 py-2 rounded shadow-sm shadow-amber-700">
+                                <button onClick={handleDelete} className="bg-cancel-red text-gold px-4 py-2 font-bold rounded shadow-sm shadow-amber-700">
                                     Delete Campaign
                                 </button>
                             </>
