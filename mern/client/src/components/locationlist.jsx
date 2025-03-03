@@ -64,23 +64,23 @@ export default function LocationList({ parentLocationID, locationType, campaignI
         setShowForm(false); // Hide the form after saving
     };
 
-    if (loading) return <p className="text-lg text-gray-600">Loading campaigns...</p>;
+    if (loading) return <p className="text-lg text-brown">Loading campaigns...</p>;
     if (error)
         return (
-            <div className="bg-red-200 text-red-800 p-2 rounded">
+            <div className="bg-cancel-red text-gold p-2 rounded">
                 <p>Error: {error}</p>
             </div>
         );
 
     return (
-        <div style={{ background: "#e9bf69" }} className="flex-1 flex-col justify-center max-w-6xl min-w-96 rounded-lg p-2">
+        <div style={{ background: "#e9bf69" }} className="flex-1 flex-col justify-center rounded-lg p-2 pb-4">
             {locations.length === 0 && !showForm ? (
                 <p>No locations of type {locationType} available. Try creating one!</p>
             ) : (
                 locations.map((location) => (
-                    <div key={location._id} className="p-2 border-b">
+                    <div key={location._id} className="p-2 border-b border-brown rounded">
                         <Link to={`/locations/${location._id}`} className="text-xl font-bold hover:underline">
-                            {location.name} ({location.locationType})
+                            {location.name} ({location.parentLocationID})
                         </Link>
                     </div>
                 ))
@@ -93,7 +93,7 @@ export default function LocationList({ parentLocationID, locationType, campaignI
                     onSave={handleSaveLocation}
                     onCancel={() => setShowForm(false)}
                 />
-            ) : (!isOverview || locationType === "Plane" ? <button onClick={() => setShowForm(true)} className="bg-green-600 text-white px-4 py-2 rounded mt-4"> + </button> : ""
+            ) : (!isOverview || locationType === "Plane" ? <button onClick={() => setShowForm(true)} className="mt-2 bg-goblin-green text-xl text-gold px-4 py-2 rounded-full shadow-sm shadow-amber-800"> + </button> : ""
             )}
 
         </div>

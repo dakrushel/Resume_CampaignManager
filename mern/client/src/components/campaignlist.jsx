@@ -39,10 +39,10 @@ export default function CampaignList() {
         navigate("/campaigns/new");
     };
 
-    if (loading) return <p className="text-lg text-gray-600">Loading campaigns...</p>;
+    if (loading) return <p className="text-lg text-brown">Loading campaigns...</p>;
     if (error)
         return (
-            <div className="bg-red-200 text-red-800 p-2 rounded">
+            <div className="bg-cancel-red text-gold p-2 rounded">
                 <p>Error: {error}</p>
             </div>
         );
@@ -54,7 +54,7 @@ export default function CampaignList() {
             {campaigns.length === 0 ? (
                 <div className="text-center">
                     <p className="text-lg">No campaigns available.</p>
-                    <button onClick={handleCreateCampaign} className="mt-2 bg-goblin-green text-gold px-4 py-2 rounded">
+                    <button onClick={handleCreateCampaign} className="mt-2 bg-goblin-green text-gold px-4 py-2 rounded shadow-sm shadow-amber-800">
                         Create One
                     </button>
                 </div>
@@ -67,7 +67,7 @@ export default function CampaignList() {
                     </div>
                 ))
             )}
-            <button onClick={handleCreateCampaign} className="mt-2 bg-goblin-green text-xl text-gold px-4 py-2 rounded-full">
+            <button onClick={handleCreateCampaign} className="mt-2 bg-goblin-green text-xl text-gold px-4 py-2 rounded-full shadow-sm shadow-amber-800">
                 +
             </button>
         </div>
