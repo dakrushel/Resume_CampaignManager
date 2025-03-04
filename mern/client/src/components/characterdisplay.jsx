@@ -6,10 +6,13 @@
 
 import { useState } from "react";
 import CharacterStats from "./characterstats";
+import { useAuthToken } from "./characterAPIs/useauthtoken";
+import { PropTypes } from "prop-types";
 
-const CharacterDisplay = () => {
+const CharacterDisplay = ({ character }) => {
   const [selectedClass, setSelectedClass] = useState("");
   const [characterLevel, setCharacterLevel] = useState(1);
+  const token = useAuthToken(); // Get the authentication token
 
   return (
     <div>
@@ -18,9 +21,29 @@ const CharacterDisplay = () => {
         onClassSelect={setSelectedClass}
         characterLevel={characterLevel}
         onLevelChange={setCharacterLevel}
+        displayedCharacter={character}
+        token={token}
       />
     </div>
   );
+};
+
+CharacterDisplay.propTypes = {
+  character: PropTypes.shape({
+    _id: PropTypes.string.isRequired,
+    name: PropTypes.string.isRequired,
+    class: PropTypes.string.isRequired,
+    level: PropTypes.number.isRequired,
+    selectedSpells: PropTypes.arrayOf(
+      PropTypes.shape({
+        name: PropTypes.string.isRequired,
+        level: PropTypes.number.isRequired,
+        school: PropTypes.shape({
+          name: PropTypes.string.isRequired,
+        }).isRequired,
+      })
+    ),
+  }).isRequired,
 };
 
 export default CharacterDisplay;

@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import LocationList from "./locationlist";
 import NotesList from "./noteslist";
+import CharacterList from "./characterlist";
 import { useAuth0 } from "@auth0/auth0-react";
 import SanitizeData from "../utils/santitization.mjs";
 
@@ -17,7 +18,7 @@ export default function CampaignOverview() {
     const [formData, setFormData] = useState({ title: "", description: "", createdBy: "DungeonMaster123" });
     const [saving, setSaving] = useState(false); // Prevent duplicate submissions
     const [showNotes, setShowNotes] = useState(false);
-
+    const [showCharacters, setShowCharacters] = useState(false);
     const [showPlanes, setShowPlanes] = useState(false);
     const [showRealms, setShowRealms] = useState(false);
     const [showCountries, setShowCountries] = useState(false);
@@ -215,6 +216,12 @@ export default function CampaignOverview() {
             {
                 showNotes && <NotesList campaignID={id} />
             }
+
+            {/* Player Characters */}
+            <button onClick={() => setShowCharacters(!showCharacters)} className="mt-4 text-blue-600 underline">
+                Player Characters {showCharacters ? "▲" : "▼"}
+            </button>
+            {showCharacters && <CharacterList campaignID={id} />}
 
             {!isNew && (
                 <>

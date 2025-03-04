@@ -13,7 +13,7 @@ import "./index.css";
 import CampaignList from "./components/campaignlist";
 import CampaignOverview from "./components/campaignoverview";
 import LocationItem from "./components/locationitem";
-import CharacterOverview from "./components/characteroverview";
+// import CharacterOverview from "./components/characteroverview";
 import Notes from "./components/noteitem";
 import MonsterOverview from "./components/monsteroverview";
 import APISearch from "./components/search";
@@ -37,7 +37,7 @@ ReactDOM.createRoot(document.getElementById("root")).render(
           <Route path="/campaigns/:id" element={<CampaignOverview />} />
           <Route path="/locations/:id" element={<LocationItem />} />
           <Route path="/notes" element={<Notes />} />
-          <Route path="/characters" element={<CharacterOverview />} />
+          {/* <Route path="/characters" element={<CharacterOverview />} /> */}
           <Route path="/monsters" element={<MonsterOverview />} />
           <Route path="/search" element={<APISearch />} />
           <Route path="/rules" element={<Rulebook />} />
