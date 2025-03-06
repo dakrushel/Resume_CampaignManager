@@ -607,4 +607,3 @@ CharacterStats.propTypes = {
       ),
     }).isRequired,
 };
-

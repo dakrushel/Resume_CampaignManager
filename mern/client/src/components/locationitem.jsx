@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useParams, useNavigate, useLocation } from "react-router-dom";
+import { useParams, useNavigate, useLocation, Link } from "react-router-dom";
 import LocationList from "./locationlist";
 import LocationForm from "./locationform";
 import PropTypes from "prop-types";
@@ -202,16 +202,16 @@ export default function LocationItem() {
     };
     // console.log("Location campaignID: ", location.campaignID)
     // console.log("formData.campaignID: ", formData.campaignID)
-    if (loading || !location) return <p className="text-gray-600">Loading location details...</p>;
-    if (error) return <p className="text-red-500">{error}</p>;
+    if (loading || !location) return(<div><img src={require("/loader.gif")}/> <p className="mt-16 text-brown">Loading location details...</p></div>);
+    if (error) return <p className="mt-16 bg-cancel-red text-gold">{error}</p>;
     if (!location) {
         console.warn("Location data is missing, preventing incorrect render")
-        return <p className="text-gray-600">Fetching location...</p>;
+        return <p className="text-brown">Fetching location...</p>;
     }
 
     console.log("Rendering location item: ", location);
     return (
-        <div className="p-4 border rounded-lg bg-white shadow-md">
+        <div className="p-8 border-0 rounded-lg bg-cream shadow-md text-brown shadow-amber-800 mt-16">
             {editMode ? (
                     <LocationForm 
                     campaignID={formData.campaignID}
@@ -224,22 +224,22 @@ export default function LocationItem() {
                 />
             ) : (
                 <>
-                    <h1 className="text-3xl font-bold">{location.name || "Unknown Location"}</h1>
-                    <p className="text-lg italic">{location.description || "No description available."}</p>
+                    <h1 className="text-3xl sancreek-regular">{location.name || "Unknown Location"}</h1>
+                    <p className="text-lg italic px-4 py-2">{location.description || "No description available."}</p>
                     <p><strong>Campaign:</strong> {campaignName || "Unspecified Campaign"}</p>
                     {formData.locationType !== "Plane" && (<p><strong>Parent Location:</strong> {parentLocationName || "Unspecified Parent Location"}</p>)}
                     {/* <p><strong>Location Type:</strong> {formData.locationType}</p> */}
                     <div className="flex space-x-2 mt-4">
-                        <button onClick={() => setEditMode(true)} className="bg-blue-600 text-white px-4 py-2 rounded">
-                            Edit
+                        <button onClick={() => setEditMode(true)} className="bg-goblin-green text-gold px-4 py-2 rounded">
+                            Edit Location
                         </button>
-                        <button onClick={handleDelete} className="bg-red-600 text-white px-4 py-2 rounded">
+                        <button onClick={handleDelete} className="bg-cancel-red text-gold px-4 py-2 rounded">
                             Delete Location
                         </button>
                     </div>
 
                     {/* Notes Section */}
-                    <button onClick={() => setShowNotes(!showNotes)} className="mt-2 text-blue-600 underline">
+                    <button onClick={() => setShowNotes(!showNotes)} className="mt-2 underline">
                         Notes {showNotes ? "▲" : "▼"}
                     </button>
                     {
@@ -247,7 +247,7 @@ export default function LocationItem() {
                     }
 
                     {/* Events Section */}
-                    <button onClick={() => setShowEvents(!showEvents)} className="mt-2 text-blue-600 underline">
+                    <button onClick={() => setShowEvents(!showEvents)} className="mt-2 underline">
                         Events {showEvents ? "▲" : "▼"}
                     </button>
                     {
@@ -257,21 +257,21 @@ export default function LocationItem() {
                     {/* NPCs & Items (Only for Regions and Sites) */}
                     {["Region", "Site"].includes(formData.locationType) && (
                         <>
-                            <button onClick={() => setShowNPCs(!showNPCs)} className="mt-2 text-blue-600 underline">
+                            <button onClick={() => setShowNPCs(!showNPCs)} className="mt-2 underline">
                                 NPCs {showNPCs ? "▲" : "▼"}
                             </button>
                             {
                                 showNPCs && <NPCList locationID={location?._id} campaignID={formData.campaignID} />
                             }
 
-                            <button onClick={() => setShowItems(!showItems)} className="mt-2 text-blue-600 underline">
+                            <button onClick={() => setShowItems(!showItems)} className="mt-2 underline">
                                 Items {showItems ? "▲" : "▼"}
                             </button>
                         </>
                     )}
 
                     {/* Sublocations */}
-                    <button onClick={() => setShowSublocations(!showSublocations)} className="mt-2 text-blue-600 underline">
+                    <button onClick={() => setShowSublocations(!showSublocations)} className="mt-2 underline">
                         {getChildLocationType(formData.locationType) === "Country" ? ("Countries") : (`${getChildLocationType(formData.locationType)}s`)} {showSublocations ? "▲" : "▼"}
                     </button>
                     {showSublocations && <LocationList

@@ -135,10 +135,10 @@ export default function CampaignOverview() {
         navigate("/campaigns");
     };
 
-    if (loading) return <p className="text-lg text-gray-600">Loading campaign details...</p>;
+    if (loading) return <p className="text-lg text-brown">Loading campaign details...</p>;
     if (error)
         return (
-            <div className="bg-red-200 text-red-800 p-2 rounded">
+            <div className="bg-cancel-red text-gold p-2 rounded">
                 <p>Error: {error}</p>
             </div>
         );
@@ -146,10 +146,10 @@ export default function CampaignOverview() {
     // console.log("CampaignOverview - campaignID: ", id);
 
     return (
-        <div className="p-4 bg-cream rounded-lg shadow-md shadow-amber-800 mt-16">
+        <div className="p-8 bg-cream rounded-lg shadow-md shadow-amber-800 mt-16 text-brown">
             {editMode ? (
                 <form className="space-y-3">
-                <h2 className="text-2xl text-brown underline mb-4">Create New Campaign</h2>
+                <h2 className="text-2xl text-brown underline sancreek-regular mb-4">Create New Campaign</h2>
                 <label
                     className="text-xl text-brown inline text-left"
                     htmlFor="title">
@@ -177,7 +177,7 @@ export default function CampaignOverview() {
                 <div className="flex space-x-2">
                     <button 
                         onClick={isNew ? handleSave : handleUpdate} 
-                        className={`px-4 py-2 rounded ${saving ? "bg-gray-400" : "bg-goblin-green text-gold"}`}
+                        className={`px-4 py-2 rounded ${saving ? "bg-tan" : "bg-goblin-green text-gold"}`}
                         disabled={saving}
                     >
                         {saving ? "Saving..." : "Save"}
@@ -192,15 +192,15 @@ export default function CampaignOverview() {
             </form>
             ) : (
                 <>
-                    <h1 className="text-3xl font-bold">{campaign?.title}</h1>
-                    <p className="text-lg italic">{campaign?.description || "No description available."}</p>
-                    <div className="flex space-x-2 mt-4">
+                    <h1 className="text-3xl sancreek-regular">{campaign?.title}</h1>
+                    <p className="text-lg px-4 py-2 italic">{campaign?.description || "No description available."}</p>
+                    <div className="flex space-x-2 mt-4 items-center justify-center mb-4">
                         {!isNew && (
                             <>
-                                <button onClick={() => setEditMode(true)} className="bg-blue-600 text-white px-4 py-2 rounded">
-                                    Edit
+                                <button onClick={() => setEditMode(true)} className="bg-goblin-green text-gold font-bold px-4 py-2 rounded shadow-sm shadow-amber-700">
+                                    Edit Campaign
                                 </button>
-                                <button onClick={handleDelete} className="bg-red-600 text-white px-4 py-2 rounded">
+                                <button onClick={handleDelete} className="bg-cancel-red text-gold px-4 py-2 font-bold rounded shadow-sm shadow-amber-700">
                                     Delete Campaign
                                 </button>
                             </>
@@ -210,7 +210,7 @@ export default function CampaignOverview() {
             )}
 
             {/* Notes Section */}
-            <button onClick={() => setShowNotes(!showNotes)} className="mt-2 text-blue-600 underline">
+            <button onClick={() => setShowNotes(!showNotes)} className="mt-2 text-lg font-semibold">
                 Notes {showNotes ? "▲" : "▼"}
             </button>
             {
@@ -225,7 +225,7 @@ export default function CampaignOverview() {
 
             {!isNew && (
                 <>
-                    <div className="mt-6">
+                    <div>
                         <button onClick={() => setShowPlanes(!showPlanes)} className="text-lg font-semibold">
                             Planes {showPlanes ? "▲" : "▼"}
                         </button>

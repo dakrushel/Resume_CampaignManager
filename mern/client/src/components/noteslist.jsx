@@ -87,13 +87,13 @@ export default function NoteList({ parentLocationID, campaignID }) {
         setNotes((prevNotes) => prevNotes.filter((note) => note._id !== deletedNoteID));
     }
 
-    if (loading) return <p className="text-gray-600">Loading notes...</p>;
-    if (error) return <p className="text-red-500">{error}</p>;
+    if (loading) return <div><img src="/loader.gif" height="128" width="128"/><p className="text-brown text-lg">Loading notes...</p></div>;
+    if (error) return <p className="bg-light-tan text-red-800 font-bold text-lg">Error: {error}. Sorry!</p>;
 
     return (
-        <div className="p-2 bg-yellow-200 rounded-lg">
+        <div className="p-4 bg-light-tan rounded-lg">
             {notes.length === 0 && !showForm ? (
-                <p>No notes available. Try creating one!</p>
+                <p className="text-lg">No notes available. Try creating one!</p>
             ) : (
                 notes.map((note) => (
                     <NoteItem
@@ -122,7 +122,7 @@ export default function NoteList({ parentLocationID, campaignID }) {
                     onCancel={() => setShowForm(false)}
                 />
             ) : (
-                <button onClick={() => setShowForm(true)} className="bg-green-600 text-white px-4 py-2 rounded mt-4">
+                <button onClick={() => setShowForm(true)} className="mt-2 bg-goblin-green text-xl text-gold px-4 py-2 rounded-full shadow-sm shadow-amber-800">
                     +
                 </button>
             )}

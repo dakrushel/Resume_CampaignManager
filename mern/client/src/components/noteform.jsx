@@ -169,9 +169,9 @@ export default function NoteForm({ campaignID, parentLocationID, existingNote, o
     };
 
     return (
-        <div className="p-4 border rounded-lg bg-white shadow-md">
+        <div className="p-4 border-0 rounded-lg bg-cream shadow-md">
             <h2 className="text-xl font-bold">{existingNote ? "Edit Note" : "New Note"}</h2>
-            {error && <p className="text-red-500">{error}</p>}
+            {error && <p className="bg-cancel-red text-gold">{error}</p>}
 
             <form onSubmit={handleSave} className="space-y-3">
             <label>Campaign:</label>
@@ -179,7 +179,7 @@ export default function NoteForm({ campaignID, parentLocationID, existingNote, o
                   name="campaignID"
                   value={formData.campaignID}
                   onChange={handleChange}
-                  className="border p-2 w-full rounded"
+                  className="border border-brown outline-none p-2 w-full rounded bg-cream"
                 >
                   <option value="">Select a Campaign</option>
                   {campaigns.map((campaign) => (
@@ -193,7 +193,7 @@ export default function NoteForm({ campaignID, parentLocationID, existingNote, o
                   name="parentLocationType"
                   value={parentLocationType}
                   onChange={(e) => setParentLocationType(e.target.value)}
-                  className="border p-2 w-full rounded"
+                  className="border border-brown outline-none p-2 w-full rounded bg-cream"
                 >
                   <option value="">Select a Location Type</option>
                   <option value="Plane">Plane</option>
@@ -207,7 +207,7 @@ export default function NoteForm({ campaignID, parentLocationID, existingNote, o
                   name="parentLocationID"
                   value={formData.parentLocationID}
                   onChange={handleChange}
-                  className="border p-2 w-full rounded"
+                  className="border border-brown outline-none p-2 w-full rounded bg-cream"
                 >
                   <option value="">Select a Parent Location</option>
                   {parentLocations.map((location) => (
@@ -223,7 +223,7 @@ export default function NoteForm({ campaignID, parentLocationID, existingNote, o
                     onChange={handleChange}
                     placeholder="Note Title"
                     required
-                    className="border p-2 w-full rounded"
+                    className="border border-brown p-2 w-full rounded bg-cream placeholder-yellow-700 outline-none"
                 />
                 <textarea
                     name="body"
@@ -231,14 +231,14 @@ export default function NoteForm({ campaignID, parentLocationID, existingNote, o
                     onChange={handleChange}
                     placeholder="Write your note here..."
                     required
-                    className="border p-2 w-full rounded"
+                    className="border border-brown p-2 w-full rounded bg-cream placeholder-yellow-700 outline-none"
                 />
 
                 <div className="flex space-x-2">
-                    <button type="submit" className="bg-blue-600 text-white px-4 py-2 rounded">
+                    <button type="submit" className={saving ? "bg-tan text-brown px-4 py-2 rounded" : "bg-goblin-green text-gold px-4 py-2 rounded"}>
                         {saving ? "Saving..." : "Save"}
                     </button>
-                    <button type="button" onClick={onCancel} className="bg-gray-400 text-white px-4 py-2 rounded">
+                    <button type="button" onClick={onCancel} className="bg-cancel-red text-gold px-4 py-2 rounded">
                         Cancel
                     </button>
                 </div>
