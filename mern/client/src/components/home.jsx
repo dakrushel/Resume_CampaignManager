@@ -15,7 +15,7 @@ export default function Home(){
             {!isAuthenticated && <LoginButton/>}
             {isAuthenticated && <p className={textStyle}>Welcome back, dungeon master! Your campaigns await.</p>}
             {isAuthenticated && <div>
-                <NavLink className="inline-block text-xl rounded-lg py-4 mr-2 w-36 text-gold bg-goblin-green font-semibold"
+                <NavLink className="button shadow-md shadow-amber-800 inline-block text-xl rounded-lg py-4 mr-2 w-36 text-gold bg-goblin-green font-semibold"
                     to="/campaigns">Campaigns</NavLink> 
                 <LogoutButton/>
             </div>}

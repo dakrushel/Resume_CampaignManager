@@ -64,7 +64,9 @@ export default function LocationList({ parentLocationID, locationType, campaignI
         setShowForm(false); // Hide the form after saving
     };
 
-    if (loading) return (<div><img src="/loader.gif" height="128" width="128"/><p className="bg-light-tan text-lg p-2 text-brown rounded">Loading locations...</p></div>);
+    if (loading) return (<div>
+        {/* <img src="/loader.gif" height="128" width="128"/> */}
+        <p className="bg-light-tan text-lg p-2 text-brown rounded">Loading locations...</p></div>);
     if (error)
         return (
             <div className="bg-light-tan font-bold text-lg text-red-800 p-2 rounded">

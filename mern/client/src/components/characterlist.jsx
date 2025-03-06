@@ -35,15 +35,15 @@ const CharacterList = ({ campaignID }) => {
     };
 
     return (
-        <div className="p-4 bg-white rounded-lg shadow-md">
+        <div className="p-4 bg-light-tan text-lg rounded-lg">
             <h2 className="text-lg font-semibold mb-2">Player Characters</h2>
 
             {loading ? (
-                <p className="text-gray-600">Loading characters...</p>
+                <p className="text-brown">Loading characters...</p>
             ) : error ? (
-                <p className="text-red-600">{error}</p>
+                <p className="text-red-800">{error}</p>
             ) : characters.length === 0 ? (
-                <p className="text-gray-600 italic">No characters found for this campaign.</p>
+                <p className="text-brown italic">No characters found for this campaign.</p>
             ) : (
                 <ul className="divide-y divide-gray-300">
                     {characters.map((char) => (

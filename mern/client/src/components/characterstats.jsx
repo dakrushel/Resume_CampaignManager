@@ -285,18 +285,20 @@ const CharacterStats = ({ onClassSelect, characterLevel, onLevelChange, displaye
     }
   };
 
+  
+
   const SpellDescriptionModal = ({ spell, onClose }) => {
     if (!spell) return null;
 
     return (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
-            <div className="bg-white p-6 rounded-lg shadow-lg max-w-2xl w-full max-h-[80vh] overflow-y-auto">
+        <div className="fixed inset-0 bg-tan bg-opacity-50 flex items-center justify-center p-4">
+            <div className="bg-light-tan p-6 rounded-lg shadow-lg max-w-2xl w-full max-h-[80vh] overflow-y-auto">
                 <h3 className="font-bold text-xl mb-4">{spell.name}</h3>
-                <p className="text-gray-700">{spell.desc || "No description available."}</p>
+                <p>{spell.desc || "No description available."}</p>
                 <button
                     type="button"
                     onClick={onClose}
-                    className="mt-4 p-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+                    className="mt-4 p-2 bg-goblin-green text-gold rounded button"
                 >
                     Close
                 </button>
@@ -314,38 +316,40 @@ const CharacterStats = ({ onClassSelect, characterLevel, onLevelChange, displaye
         },
     }));
   };
+  
+  const formStyle = "w-full p-3 border border-brown rounded-lg outline-none bg-cream focus:shadow-amber-800 placeholder-yellow-700 focus:shadow-sm transition-colors"
 
   return (
-    <div className="p-6 max-w-6xl mx-auto bg-gray-50 rounded-lg shadow-lg grid grid-cols-1 md:grid-cols-4 gap-6">
+    <div className="p-6 max-w-6xl mx-auto bg-cream rounded-lg shadow-lg shadow-amber-800 text-brown grid grid-cols-1 md:grid-cols-4 gap-6">
       {/* Left Section - Race Details */}
-      <div className="bg-white p-6 rounded-lg shadow-md col-span-1">
+      <div className="bg-light-tan p-6 rounded-lg shadow-md shadow-amber-800 col-span-1">
         <h2
-          className="text-xl font-bold mb-4 text-blue-600 cursor-pointer hover:text-blue-800 transition-colors"
+          className="button text-xl hover:underline font-bold mb-4 cursor-pointer transition-colors"
           onClick={() => setShowRaceDetails(!showRaceDetails)}
         >
-          Race Details {showRaceDetails ? "▼" : "▲"}
+          Race Details {showRaceDetails ? "▲" : "▼"}
         </h2>
         {showRaceDetails && (
-          <div className="space-y-3 text-gray-700">
-            <p><strong className="text-gray-800">Size:</strong> {character.size}</p>
-            <p><strong className="text-gray-800">Size Description:</strong> {character.size_description}</p>
-            <p><strong className="text-gray-800">Languages:</strong> {character.languages.join(", ")}</p>
-            <p><strong className="text-gray-800">Language Description:</strong> {character.language_desc}</p>
-            <p><strong className="text-gray-800">Traits:</strong> {character.traits.join(", ")}</p>
+          <div className="space-y-3">
+            <p><strong >Size:</strong> {character.size}</p>
+            <p><strong >Size Description:</strong> {character.size_description}</p>
+            <p><strong >Languages:</strong> {character.languages.join(", ")}</p>
+            <p><strong >Language Description:</strong> {character.language_desc}</p>
+            <p><strong >Traits:</strong> {character.traits.join(", ")}</p>
           </div>
         )}
       </div>
 
       {/* Main Character Sheet Form */}
-      <div className="bg-white p-6 rounded-lg shadow-md col-span-2">
-        <h1 className="text-3xl font-bold mb-6 text-gray-800">D&D Character Sheet</h1>
+      <div className="bg-light-tan p-6 rounded-lg shadow-md col-span-2">
+        <h1 className="text-3xl font-bold mb-6 sancreek-regular">D&D Character Sheet</h1>
         <form className="space-y-6">
           {/* Character Name Input */}
           <div>
-            <label className="block text-lg font-medium text-gray-700 mb-2">Name:</label>
+            <label className="block text-lg font-medium mb-2">Name:</label>
             <input
               type="text"
-              className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 hover:border-gray-400 transition-colors"
+              className={formStyle}
               value={character.name}
               onChange={(e) => setCharacter({ ...character, name: e.target.value })}
               placeholder="Enter character name"
@@ -354,15 +358,15 @@ const CharacterStats = ({ onClassSelect, characterLevel, onLevelChange, displaye
 
           {/* Race Dropdown */}
           <div>
-            <label className="block text-lg font-medium text-gray-700 mb-2">Race:</label>
+            <label className="block text-lg font-medium mb-2">Race:</label>
             <select
-              className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 hover:border-gray-400 transition-colors"
+              className={formStyle}
               value={races.find(race => race.name === character.race)?.index || ""}
               onChange={(e) => handleRaceChange(e.target.value)}
             >
               <option value="">Select a Race</option>
               {races.map((race) => (
-                <option key={race.index} value={race.index} className="text-gray-700">
+                <option key={race.index} value={race.index}>
                   {race.name}
                 </option>
               ))}
@@ -371,15 +375,15 @@ const CharacterStats = ({ onClassSelect, characterLevel, onLevelChange, displaye
 
           {/* Class Dropdown */}
           <div>
-            <label className="block text-lg font-medium text-gray-700 mb-2">Class:</label>
+            <label className="block text-lg font-medium mb-2">Class:</label>
             <select
-              className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 hover:border-gray-400 transition-colors"
+              className={formStyle}
               value={classes.find(cls => cls.name === character.class) ?.index || ""}
               onChange={(e) => handleClassChange(e.target.value || "")}
             >
               <option value="">Select a Class</option>
               {classes.map((cls) => (
-                <option key={cls.index} value={cls.index} className="text-gray-700">
+                <option key={cls.index} value={cls.index}>
                   {cls.name}
                 </option>
               ))}
@@ -388,10 +392,10 @@ const CharacterStats = ({ onClassSelect, characterLevel, onLevelChange, displaye
 
           {/* Level Input */}
           <div>
-            <label className="block text-lg font-medium text-gray-700 mb-2">Level:</label>
+            <label className="block text-lg font-medium mb-2">Level:</label>
             <input
               type="number"
-              className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 hover:border-gray-400 transition-colors"
+              className={formStyle}
               value={characterLevel}
               onChange={(e) => handleLevelChange(parseInt(e.target.value) || 1)}
               min="1"
@@ -418,7 +422,7 @@ const CharacterStats = ({ onClassSelect, characterLevel, onLevelChange, displaye
           )}
 
           {/* Display Selected Spells */}
-          <div className="p-6 max-w-4xl mx-auto bg-gray-100 rounded-lg shadow-md mt-6">
+          <div className="p-6 max-w-4xl mx-auto bg-cream rounded-lg shadow-md mt-6">
             <h2 className="text-xl font-bold mb-4">Selected Spells</h2>
             {/* Display Remaining Spell Points for Each Level */}
             {Object.keys(spellSlots).map((level) => (
@@ -433,7 +437,7 @@ const CharacterStats = ({ onClassSelect, characterLevel, onLevelChange, displaye
                 <div key={index} className="p-4 border rounded shadow flex justify-between items-center">
                   <div>
                     <h3
-                      className="font-bold cursor-pointer hover:text-blue-600"
+                      className="font-bold cursor-pointer hover:text-yellow-700"
                       onClick={() => setSelectedSpellForDescription(spell)}
                     >
                       {spell.name}
@@ -444,7 +448,7 @@ const CharacterStats = ({ onClassSelect, characterLevel, onLevelChange, displaye
                   <button
                     type="button"
                     onClick={() => removeSpellFromCharacter(index)}
-                    className="p-2 bg-red-500 text-white rounded hover:bg-red-600"
+                    className="p-2 bg-cancel-red text-gold rounded button"
                   >
                     Remove
                   </button>
@@ -463,16 +467,16 @@ const CharacterStats = ({ onClassSelect, characterLevel, onLevelChange, displaye
 
           {/* Stats Inputs */}
           <div>
-            <label className="block text-lg font-medium text-gray-700 mb-2">Stats:</label>
+            <label className="block text-lg font-medium mb-2">Stats:</label>
             <div className="grid grid-cols-2 gap-4">
               {Object.keys(character.stats).map((stat) => (
                 <div key={stat}>
-                  <label className="block text-sm font-medium text-gray-600 mb-1">
+                  <label className="block text-sm font-medium mb-1">
                     {stat.charAt(0).toUpperCase() + stat.slice(1)}:
                   </label>
                   <input
                     type="number"
-                    className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 hover:border-gray-400 transition-colors"
+                    className={formStyle}
                     value={character.stats[stat]}
                     onChange={(e) => handleStatChange(stat, e.target.value)}
                     placeholder={`Enter ${stat}`}
@@ -483,21 +487,21 @@ const CharacterStats = ({ onClassSelect, characterLevel, onLevelChange, displaye
           </div>
 
           {/* Speed and Passive Perception Inputs */}
-          <div className="flex items-center space-x-6">
+          <div className="flex items-center space-x-24 pr-1">
             <div>
-              <label className="block text-sm font-medium text-gray-600 mb-1">Speed:</label>
+              <label className="block text-sm font-medium mb-1">Speed:</label>
               <input
                 type="text"
-                className="w-24 p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 hover:border-gray-400 transition-colors"
+                className={formStyle}
                 value={character.speed}
                 readOnly
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-600 mb-1">Passive Perception:</label>
+              <label className="block text-sm font-medium mb-1">Passive Perception:</label>
               <input
                 type="text"
-                className="w-24 p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 hover:border-gray-400 transition-colors"
+                className={formStyle}
                 value={10 + Math.floor((character.stats.wisdom - 10) / 2)}
                 readOnly
               />
@@ -506,10 +510,10 @@ const CharacterStats = ({ onClassSelect, characterLevel, onLevelChange, displaye
 
           {/* Hit Dice Input */}
           <div>
-            <label className="block text-lg font-medium text-gray-700 mb-2">Hit Dice:</label>
+            <label className="block text-lg font-medium mb-2">Hit Dice:</label>
             <input
               type="text"
-              className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 hover:border-gray-400 transition-colors"
+              className={formStyle}
               value={character.hitDice}
               readOnly
             />
@@ -518,7 +522,7 @@ const CharacterStats = ({ onClassSelect, characterLevel, onLevelChange, displaye
           {/* Save button */}
           <button 
                 onClick={handleSaveCharacter} 
-                className={`px-4 py-2 rounded ${saving ? "bg-gray-400" : "bg-goblin-green text-gold"}`}
+                className={`px-4 py-2 rounded ${saving ? "bg-tan text-brown" : "bg-goblin-green button text-gold"}`}
                 disabled={saving}
             >
                 {saving ? "Saving..." : "Save"}
@@ -527,19 +531,19 @@ const CharacterStats = ({ onClassSelect, characterLevel, onLevelChange, displaye
       </div>
 
       {/* Right Section - Class Proficiencies and Features */}
-      <div className="bg-white p-6 rounded-lg shadow-md col-span-1">
+      <div className="bg-light-tan p-6 rounded-lg shadow-md col-span-1">
         {/* Class Proficiencies */}
         <div className="mb-6">
           <h2
-            className="text-xl font-bold mb-4 text-blue-600 cursor-pointer hover:text-blue-800 transition-colors"
+            className="text-xl font-bold hover:underline mb-4 button cursor-pointer transition-colors"
             onClick={() => setShowClassProficiencies(!showClassProficiencies)}
           >
-            Class Proficiencies {showClassProficiencies ? "▼" : "▲"}
+            Class Proficiencies {showClassProficiencies ? "▲" : "▼"}
           </h2>
           {showClassProficiencies && (
-            <div className="space-y-3 text-gray-700">
-              <p><strong className="text-gray-800">Starting Proficiencies:</strong> {character.startingProficiencies.join(", ")}</p>
-              <p><strong className="text-gray-800">Class Proficiency Choices:</strong> {character.classProficiencies.join(", ")}</p>
+            <div className="space-y-3 text-brown">
+              <p><strong>Starting Proficiencies:</strong> {character.startingProficiencies.join(", ")}</p>
+              <p><strong>Class Proficiency Choices:</strong> {character.classProficiencies.join(", ")}</p>
             </div>
           )}
         </div>
@@ -547,13 +551,13 @@ const CharacterStats = ({ onClassSelect, characterLevel, onLevelChange, displaye
         {/* Class Features */}
         <div>
           <h2
-            className="text-xl font-bold mb-4 text-blue-600 cursor-pointer hover:text-blue-800 transition-colors"
+            className="text-xl font-bold mb-4 button hover:underline cursor-pointer transition-colors"
             onClick={() => setShowClassFeatures(!showClassFeatures)}
           >
-            Class Features {showClassFeatures ? "▼" : "▲"}
+            Class Features {showClassFeatures ? "▲" : "▼"}
           </h2>
           {showClassFeatures && (
-            <ul className="list-disc pl-5 space-y-2 text-gray-700">
+            <ul className="list-disc pl-5 space-y-2 ">
               {character.classFeatures.map((feature, index) => (
                 <li key={index}>{feature}</li>
               ))}

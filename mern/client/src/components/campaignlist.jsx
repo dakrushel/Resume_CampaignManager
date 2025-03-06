@@ -54,7 +54,7 @@ export default function CampaignList() {
             {campaigns.length === 0 ? (
                 <div className="text-center">
                     <p className="text-lg">No campaigns available.</p>
-                    <button onClick={handleCreateCampaign} className="mt-2 bg-goblin-green text-gold px-4 py-2 rounded shadow-sm shadow-amber-800">
+                    <button onClick={handleCreateCampaign} className="mt-2 bg-goblin-green text-gold px-4 py-2 rounded shadow-sm shadow-amber-800 button">
                         Create One
                     </button>
                 </div>
@@ -67,7 +67,7 @@ export default function CampaignList() {
                     </div>
                 ))
             )}
-            <button onClick={handleCreateCampaign} className="mt-2 bg-goblin-green text-xl text-gold px-4 py-2 rounded-full shadow-sm shadow-amber-800">
+            <button onClick={handleCreateCampaign} className="mt-2 bg-goblin-green text-xl text-gold px-4 py-2 rounded-full shadow-sm shadow-amber-800 button">
                 +
             </button>
         </div>
