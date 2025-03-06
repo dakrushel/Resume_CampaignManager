@@ -11,9 +11,9 @@ export default function Navbar({showNav}) {
         <NavLink to="/campaigns" title="See all your campaigns" alt="Campaigns" className={navButtonStyle}>
           <img src="/campaign.svg"></img>
         </NavLink>
-        <NavLink to="/notes" title="Take a peek at your notes" alt="Notes." className={navButtonStyle}>
+        {/* <NavLink to="/notes" title="Take a peek at your notes" alt="Notes." className={navButtonStyle}>
           <img src="/notes.svg"></img>
-        </NavLink>
+        </NavLink> */}
         <NavLink to="/characters" title="All your awesome characters." alt="Characters" className={navButtonStyle}>
           <img src="/character.svg"></img>
         </NavLink>

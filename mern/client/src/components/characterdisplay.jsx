@@ -42,7 +42,7 @@ const CharacterDisplay = () => {
   };
 
   return (
-    <div>
+    <div className="mt-16 text-brown">
       <CharacterStats
         onClassSelect={setSelectedClass}
         characterLevel={characterLevel}
@@ -53,7 +53,7 @@ const CharacterDisplay = () => {
       <SpellTable selectedClass={selectedClass} characterLevel={characterLevel} />
 
       {/* Display Selected Spells and Remaining Spell Points */}
-      <div className="p-6 max-w-4xl mx-auto bg-gray-100 rounded-lg shadow-md mt-6">
+      <div className="p-6 max-w-4xl mx-auto bg-cream rounded-lg shadow-md shadow-amber-800 mt-6">
         <h2 className="text-xl font-bold mb-4">Selected Spells</h2>
         {/* Display Remaining Spell Points for Each Level */}
         {Object.keys(spellSlots).map((level) => (

@@ -318,37 +318,39 @@ useEffect(() => {
   };
 }, [selectedClass, character.level]);
 
+const inputBoxStyle = "rounded-lg outline-none bg-cream placeholder-yellow-700 w-full p-3 transition-colors"
+
 return (
-  <div className="p-6 max-w-6xl mx-auto bg-gray-50 rounded-lg shadow-lg grid grid-cols-1 md:grid-cols-4 gap-6">
+  <div className="p-6 max-w-6xl mx-auto bg-cream rounded-lg shadow-md shadow-amber-800 grid grid-cols-1 md:grid-cols-4 gap-6 text-brown">
     {/* Left Section - Race Details */}
-    <div className="bg-white p-6 rounded-lg shadow-md col-span-1">
+    <div className="bg-light-tan p-6 rounded-lg shadow-md shadow-amber-800 col-span-1">
       <h2
-        className="text-xl font-bold mb-4 text-blue-600 cursor-pointer hover:text-blue-800 transition-colors"
+        className="text-xl font-bold mb-4 cursor-pointer"
         onClick={() => setShowRaceDetails(!showRaceDetails)}
       >
         Race Details {showRaceDetails ? "▼" : "▲"}
       </h2>
       {showRaceDetails && (
-        <div className="space-y-3 text-gray-700">
-          <p><strong className="text-gray-800">Size:</strong> {character.size}</p>
-          <p><strong className="text-gray-800">Size Description:</strong> {character.size_description}</p>
-          <p><strong className="text-gray-800">Languages:</strong> {character.languages.join(", ")}</p>
-          <p><strong className="text-gray-800">Language Description:</strong> {character.language_desc}</p>
-          <p><strong className="text-gray-800">Traits:</strong> {character.traits.join(", ")}</p>
+        <div className="space-y-3">
+          <p><strong>Size:</strong> {character.size}</p>
+          <p><strong>Size Description:</strong> {character.size_description}</p>
+          <p><strong>Languages:</strong> {character.languages.join(", ")}</p>
+          <p><strong>Language Description:</strong> {character.language_desc}</p>
+          <p><strong>Traits:</strong> {character.traits.join(", ")}</p>
         </div>
       )}
     </div>
 
     {/* Main Character Sheet Form */}
-    <div className="bg-white p-6 rounded-lg shadow-md col-span-2">
-      <h1 className="text-3xl font-bold mb-6 text-gray-800">D&D Character Sheet</h1>
+    <div className="bg-light-tan p-6 rounded-lg shadow-md shadow-amber-800 col-span-2">
+      <h1 className="text-3xl font-bold mb-6 sancreek-regular">D&D Character Sheet</h1>
       <form className="space-y-6">
         {/* Character Name Input */}
         <div>
-          <label className="block text-lg font-medium text-gray-700 mb-2">Name:</label>
+          <label className="block text-lg font-medium mb-2">Name:</label>
           <input
             type="text"
-            className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 hover:border-gray-400 transition-colors"
+            className={inputBoxStyle}
             value={character.name}
             onChange={(e) => setCharacter({ ...character, name: e.target.value })}
             placeholder="Enter character name"
@@ -357,14 +359,14 @@ return (
 
         {/* Race Dropdown */}
         <div>
-          <label className="block text-lg font-medium text-gray-700 mb-2">Race:</label>
+          <label className="block text-lg font-medium mb-2">Race:</label>
           <select
-            className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 hover:border-gray-400 transition-colors"
+            className={inputBoxStyle}
             onChange={(e) => handleRaceChange(e.target.value || "")}
           >
             <option value="">Select a Race</option>
             {races.map((race) => (
-              <option key={race.index} value={race.index} className="text-gray-700">
+              <option key={race.index} value={race.index}>
                 {race.name}
               </option>
             ))}
@@ -373,14 +375,14 @@ return (
 
         {/* Class Dropdown */}
         <div>
-          <label className="block text-lg font-medium text-gray-700 mb-2">Class:</label>
+          <label className="block text-lg font-medium mb-2">Class:</label>
           <select
-            className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 hover:border-gray-400 transition-colors"
+            className={inputBoxStyle}
             onChange={(e) => handleClassChange(e.target.value || "")}
           >
             <option value="">Select a Class</option>
             {classes.map((cls) => (
-              <option key={cls.index} value={cls.index} className="text-gray-700">
+              <option key={cls.index} value={cls.index}>
                 {cls.name}
               </option>
             ))}
@@ -389,10 +391,10 @@ return (
 
         {/* Level Input */}
         <div>
-          <label className="block text-lg font-medium text-gray-700 mb-2">Level:</label>
+          <label className="block text-lg font-medium mb-2">Level:</label>
           <input
             type="number"
-            className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 hover:border-gray-400 transition-colors"
+            className={inputBoxStyle}
             value={characterLevel}
             onChange={(e) => handleLevelChange(parseInt(e.target.value) || 1)}
             min="1"
@@ -417,16 +419,16 @@ return (
 
         {/* Stats Inputs */}
         <div>
-          <label className="block text-lg font-medium text-gray-700 mb-2">Stats:</label>
+          <label className="block text-lg font-medium mb-2">Stats:</label>
           <div className="grid grid-cols-2 gap-4">
             {Object.keys(character.stats).map((stat) => (
               <div key={stat}>
-                <label className="block text-sm font-medium text-gray-600 mb-1">
+                <label className="block text-sm font-medium mb-1">
                   {stat.charAt(0).toUpperCase() + stat.slice(1)}:
                 </label>
                 <input
                   type="number"
-                  className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 hover:border-gray-400 transition-colors"
+                  className={inputBoxStyle}
                   value={character.stats[stat]}
                   onChange={(e) => handleStatChange(stat, e.target.value)}
                   placeholder={`Enter ${stat}`}
@@ -439,19 +441,19 @@ return (
         {/* Speed and Passive Perception Inputs */}
         <div className="flex items-center space-x-6">
           <div>
-            <label className="block text-sm font-medium text-gray-600 mb-1">Speed:</label>
+            <label className="block text-sm font-medium mb-1">Speed:</label>
             <input
               type="text"
-              className="w-24 p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 hover:border-gray-400 transition-colors"
+              className={inputBoxStyle}
               value={character.speed}
               readOnly
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-600 mb-1">Passive Perception:</label>
+            <label className="block text-sm font-medium mb-1">Passive Perception:</label>
             <input
               type="text"
-              className="w-24 p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 hover:border-gray-400 transition-colors"
+              className={inputBoxStyle}
               value={10 + Math.floor((character.stats.wisdom - 10) / 2)}
               readOnly
             />
@@ -460,10 +462,10 @@ return (
 
         {/* Hit Dice Input */}
         <div>
-          <label className="block text-lg font-medium text-gray-700 mb-2">Hit Dice:</label>
+          <label className="block text-lg font-medium mb-2">Hit Dice:</label>
           <input
             type="text"
-            className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 hover:border-gray-400 transition-colors"
+            className={inputBoxStyle}
             value={character.hitDice}
             readOnly
           />

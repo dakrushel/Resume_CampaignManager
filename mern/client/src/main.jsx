@@ -19,6 +19,7 @@ import MonsterOverview from "./components/monsteroverview";
 import APISearch from "./components/search";
 import Rulebook from "./components/rulebook";
 import Home from "./components/home";
+import CharacterDisplay from "./components/characterdisplay";
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
@@ -41,10 +42,12 @@ ReactDOM.createRoot(document.getElementById("root")).render(
           <Route path="/monsters" element={<MonsterOverview />} />
           <Route path="/search" element={<APISearch />} />
           <Route path="/rules" element={<Rulebook />} />
+          <Route path="/characterdisplay" element={<CharacterDisplay/>} />
         </Routes>
         <App/>
       </BrowserRouter>
     </Auth0Provider>
   </React.StrictMode>
+  
   
 );
