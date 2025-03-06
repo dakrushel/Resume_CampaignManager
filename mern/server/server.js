@@ -7,7 +7,7 @@ import rateLimit from "express-rate-limit";
 import db from "./db/connection.js";
 import { auth } from "express-oauth2-jwt-bearer"
 
-import characters from "./routes/pcRoute.js";
+import characters from "./routes/characterRoute.js";
 import npcs from "./routes/npcRoute.js";
 import campaigns from "./routes/campaignsRoute.js";
 import monsters from "./routes/monsters.js";
@@ -15,6 +15,8 @@ import notes from "./routes/notesRoute.js";
 import events from "./routes/eventsRoute.js";
 import items from "./routes/items.js";
 import locations from "./routes/locationsRoute.js";
+
+console.log("Loaded env: ", process.env.ATLAS_URI);
 
 const PORT = process.env.PORT || 5050;
 const app = express();
