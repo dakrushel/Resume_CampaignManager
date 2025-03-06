@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useParams, useNavigate, useLocation, Link } from "react-router-dom";
+import { useParams, useNavigate, useLocation, } from "react-router-dom";
 import LocationList from "./locationlist";
 import LocationForm from "./locationform";
 import PropTypes from "prop-types";
@@ -7,6 +7,7 @@ import NotesList from "./noteslist";
 import EventList from "./eventlist";
 import NPCList from "./NPCList";
 import { useAuth0 } from "@auth0/auth0-react";
+import loader from "../graphics/loader.gif";
 
 
 export default function LocationItem() {
@@ -202,7 +203,7 @@ export default function LocationItem() {
     };
     // console.log("Location campaignID: ", location.campaignID)
     // console.log("formData.campaignID: ", formData.campaignID)
-    if (loading || !location) return(<div><img src={require("/loader.gif")}/> <p className="mt-16 text-brown">Loading location details...</p></div>);
+    if (loading || !location) return(<div><img src={loader}/> <p className="mt-16 text-brown">Loading location details...</p></div>);
     if (error) return <p className="mt-16 bg-cancel-red text-gold">{error}</p>;
     if (!location) {
         console.warn("Location data is missing, preventing incorrect render")

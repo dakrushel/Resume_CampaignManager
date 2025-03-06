@@ -10,7 +10,6 @@ const router = express.Router();
 const npcSchema = Joi.object({
   campaignID: Joi.string().required(),  // It's a string, like all the other routes
   locationID: Joi.string().required(),          // Required, all NPCs must have a parent location
-  // characterID: Joi.number().integer().required(),  //This needs to be the ObjectId, not an int
   charName: Joi.string().required(),
   age: Joi.number().integer().min(0).required(),  // Age should be a positive integer
   race: Joi.string().required(),
