@@ -23,6 +23,8 @@ export default function CampaignList() {
                 }
 
                 const data = await response.json();
+                // const text = await response.text();
+                // const data = text ? JSON.parse(text) : []; 
                 setCampaigns(data);
             } catch (err) {
                 console.error("Failed to fetch campaigns:", err);
