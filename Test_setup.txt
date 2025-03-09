@@ -31,6 +31,8 @@ docker-compose up --build
 #To run FRONTENT tests:
 #For UNIT tests (Jest):
 docker exec -it client_test npm test
+#Or to run locally:
+npm test
 
 #For INTEGRATION tests (Cypress):
 docker exec -it cypress_test cypress run
