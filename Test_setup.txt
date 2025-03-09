@@ -1,0 +1,50 @@
+#Frontend Dependencies (install in mern/client):
+
+jest
+@testing-library/react
+@testing-library/jest-dom
+cypress
+eslint-plugin-cypress
+
+npm install --save-dev jest @testing-library/react @testing-library/jest-dom cypress eslint-plugin-cypress
+
+
+#Bankend Dependencies (install in mern/server):
+
+jest
+mocha
+chai
+supertest
+selenium-webdriver
+artillery
+mongodb-memory-server
+
+npm install --save-dev jest mocha chai supertest selenium-webdriver artillery mongodb-memory-server
+
+
+#TO START RUNNING TESTS
+#Run in the root folder (mern)
+
+docker-compose up --build
+
+
+#To run FRONTENT tests:
+#For UNIT tests (Jest):
+docker exec -it client_test npm test
+
+#For INTEGRATION tests (Cypress):
+docker exec -it cypress_test cypress run
+
+
+#To run BACKEND tests:
+#For UNIT/API tests (Jest/Mocha/Supertest):
+docker exec -it node_test npm test
+
+#For PERFORMANCE tests (Artillery):
+docker exec -it node_test npx artillery run betests/performance/<test_script_file_name.yml>
+
+#For E2E BROWSER tests (Selenium):
+docker exec -it selenium_test npm run selenium-test
+
+ONCE FINISHED RUNNING TESTS
+docker-compose down

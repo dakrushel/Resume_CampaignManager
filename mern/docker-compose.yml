@@ -1,0 +1,45 @@
+services:
+  mongodb_test:
+    image: mongo
+    container_name: mongodb_test
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-data:/data/db
+
+  node_test:
+    build: ./server
+    container_name: node_test
+    working_dir: /app
+    volumes:
+      - ./server:/app
+    command: ["npm", "test"]
+    depends_on:
+      - mongodb_test
+
+  client_test:
+    build: ./client
+    container_name: client_test
+    working_dir: /app
+    volumes:
+      - ./client:/app
+    command: ["npm", "test"]
+
+  cypress_test:
+    image: cypress/included:12.6.0
+    container_name: cypress_test
+    working_dir: /e2e
+    volumes:
+      - ./client:/e2e
+    depends_on:
+      - client_test
+    command: ["cypress", "run"]
+
+  selenium_test:
+    image: selenium/standalone-chrome
+    container_name: selenium_test
+    ports:
+      - "4444:4444"
+
+volumes:
+  mongo-data:
