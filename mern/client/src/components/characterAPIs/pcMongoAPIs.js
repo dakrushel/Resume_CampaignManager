@@ -40,6 +40,12 @@ export const fetchCharactersByCampaign = async (campaignID, token) => {
                 "Authorization": `Bearer ${token}`,
             },
         });
+
+        if (response.status === 404) {
+            console.warn(`No characters found for campaign ${campaignID}`);
+            return [];
+        }
+
         if (!response.ok) throw new Error("Failed to fetch characters by campaign");
         return await response.json();
     } catch (error) {
@@ -75,7 +81,9 @@ export const modifyCharacter = async (id, characterData, token) => {
         if (!token) throw new Error("Missing authentication token");
 
         // Remove `_id` before sending to MongoDB
-        const { _id, ...characterUpdate } = characterData;
+        // const { _id, ...characterUpdate } = characterData;
+        const characterUpdate = { ...characterData };
+        delete characterUpdate._id;
         
         console.log("Sanitized Request Data:", characterUpdate);
 

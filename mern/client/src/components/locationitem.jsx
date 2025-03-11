@@ -262,7 +262,7 @@ export default function LocationItem() {
                                 NPCs {showNPCs ? "▲" : "▼"}
                             </button>
                             {
-                                showNPCs && <NPCList locationID={location?._id} campaignID={formData.campaignID} />
+                                showNPCs && <NPCList parentLocationID={location?._id} campaignID={formData.campaignID} />
                             }
 
                             <button onClick={() => setShowItems(!showItems)} className="mt-2 underline">

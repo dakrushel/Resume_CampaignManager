@@ -1,101 +1,89 @@
 import express from "express";
-import { getAllNPCs, getNPCsByLocation, getNPCById, addNPC, updateNPC, deleteNPC } from "../models/npcModel.js";
 import Joi from "joi";
+import {
+  getNpcById,
+  getNpcsByLocation,
+  getNpcsByCampaign,
+  addNpc,
+  updateNpc,
+  deleteNpc
+} from "../models/npcModel.js";
 import { sanitizeInput } from "../utils/sanitization.js";
 import { ObjectId } from "mongodb";
 
 const router = express.Router();
 
-//Joi validation schema
+// Joi validation schema for NPCs
 const npcSchema = Joi.object({
-  campaignID: Joi.string().required(),  // It's a string, like all the other routes
-  locationID: Joi.string().required(),          // Required, all NPCs must have a parent location
+  campaignID: Joi.string().required(),
+  parentLocationID: Joi.string().required(),
   charName: Joi.string().required(),
-  age: Joi.number().integer().min(0).required(),  // Age should be a positive integer
-  race: Joi.string().required(),
-  gender: Joi.string().allow(null),
-  alignment: Joi.string().required(),
+  age: Joi.string().optional(),
+  race: Joi.string().optional(),
+  gender: Joi.string().optional(),
+  alignment: Joi.string().optional(),
   className: Joi.string().optional(),
-  level: Joi.number().integer().optional(),
-  stats: Joi.object({
-    strength: Joi.number().integer().min(1).max(20).required(),
-    dexterity: Joi.number().integer().min(1).max(20).required(),
-    constitution: Joi.number().integer().min(1).max(20).required(),
-    intelligence: Joi.number().integer().min(1).max(20).required(),
-    wisdom: Joi.number().integer().min(1).max(20).required(),
-    charisma: Joi.number().integer().min(1).max(20).required()
-  }).required(),
-  size: Joi.string().valid("Small", "Medium", "Large").required(),
-  speed: Joi.number().integer().required(),
+  level: Joi.number().optional(),
+  size: Joi.string().optional(),
+  speed: Joi.number().optional(),
   quirks: Joi.string().optional(),
   features: Joi.string().optional(),
   vices: Joi.string().optional(),
   virtues: Joi.string().optional(),
   ideals: Joi.string().optional(),
+  stats: Joi.object({
+    strength: Joi.number().optional(),
+    dexterity: Joi.number().optional(),
+    constitution: Joi.number().optional(),
+    intelligence: Joi.number().optional(),
+    wisdom: Joi.number().optional(),
+    charisma: Joi.number().optional(),
+  }).optional(),
 });
-
 
 // Validate MongoDB ObjectId
 const validateObjectId = (id) => ObjectId.isValid(id);
 
-// Get all NPCs (for testing)
-router.get("/", async (req, res) => {
-    try {
-      const npcs = await getAllNPCs();
-      res.json(npcs);
-    } catch (error) {
-      res.status(500).json({ error: "Failed to fetch NPCs" });
-    }
-  });
-  
-// Get NPCs by locationID
-router.get("/location/:locationID", async (req, res) => {
-  try {
-      const { locationID } = req.params;
-
-      if (!locationID) {
-          return res.status(400).json({ error: "Missing locationID parameter" });
-      }
-
-      const npcs = await getNPCsByLocation(locationID);
-
-      if (!npcs.length) {
-          return res.status(404).json({ error: "No NPCs found for this location" });
-      }
-
-      res.json(npcs);
-  } catch (error) {
-      console.error("Failed to fetch NPCs by locationID:", error);
-      res.status(500).json({ error: "Failed to fetch NPCs" });
-  }
-});
-
-
-// Get NPC by ID with sanitization and validation
+// ✅ Get a single NPC by ID
 router.get("/:id", async (req, res) => {
   try {
     if (!validateObjectId(req.params.id)) {
       return res.status(400).json({ error: "Invalid NPC ID format" });
     }
-    const sanitizedId = sanitizeInput(req.params.id);
-    const npc = await getNPCById(sanitizedId);
+
+    const npc = await getNpcById(req.params.id);
     if (!npc) return res.status(404).json({ error: "NPC not found" });
+
     res.json(npc);
   } catch (error) {
+    console.error("Failed to fetch NPC:", error);
     res.status(500).json({ error: "Failed to fetch NPC" });
   }
 });
 
-// Add a new NPC
+// ✅ Get all NPCs for a specific location
+router.get("/location/:parentLocationID", async (req, res) => {
+  try {
+    if (!validateObjectId(req.params.parentLocationID)) {
+      return res.status(400).json({ error: "Invalid location ID format" });
+    }
+
+    const npcs = await getNpcsByLocation(req.params.parentLocationID);
+    res.json(npcs);
+  } catch (error) {
+    console.error("Failed to fetch NPCs for location:", error);
+    res.status(500).json({ error: "Failed to fetch NPCs" });
+  }
+});
+
+// ✅ Add a new NPC
 router.post("/", async (req, res) => {
   try {
-    console.log("Incoming NPC data:", req.body);
     const sanitizedData = sanitizeInput(req.body);
     const { error } = npcSchema.validate(sanitizedData);
-    if (error) {
-      return res.status(400).json({ error: error.details[0].message });
-    }
-    const result = await addNPC(sanitizedData);
+    if (error) return res.status(400).json({ error: error.details[0].message });
+
+    const result = await addNpc(sanitizedData);
     res.status(201).json(result);
   } catch (error) {
     console.error("Failed to add NPC:", error);
@@ -103,43 +91,42 @@ router.post("/", async (req, res) => {
   }
 });
 
-// Update an NPC with sanitization and validation
+// ✅ Update an NPC
 router.put("/:id", async (req, res) => {
-    try {
-      const id = req.params.id;
-      if (!validateObjectId(id)) {
-        return res.status(400).json({ error: "Invalid NPC ID format" });
-      }
-      
-      const sanitizedData = sanitizeInput(req.body);
-      const { error } = npcSchema.validate(sanitizedData);
-      if (error) {
-        return res.status(400).json({ error: error.details[0].message });
-      }
-  
-      const result = await updateNPC(id, sanitizedData);
-      if (result.modifiedCount === 0) {
-        return res.status(404).json({ error: "No NPC found to update" });
-      }
-  
-      res.json({ message: "NPC updated successfully", result });
-    } catch (error) {
-      console.error("Error updating NPC:", error);
-      res.status(500).json({ error: "Failed to update NPC" });
+  try {
+    if (!validateObjectId(req.params.id)) {
+      return res.status(400).json({ error: "Invalid NPC ID format" });
     }
-  });
-  
 
-// Delete an NPC with sanitization and validation
+    const sanitizedData = sanitizeInput(req.body);
+    const { error } = npcSchema.validate(sanitizedData);
+    if (error) return res.status(400).json({ error: error.details[0].message });
+
+    const result = await updateNpc(req.params.id, sanitizedData);
+    if (result.modifiedCount === 0) return res.status(404).json({ error: "No NPC found to update" });
+
+    const updatedNpc = await getNpcById(req.params.id);
+    if (!updatedNpc) {
+      return res.status(404).json({ error: "Updated NPC not found" });
+    }
+    res.json(updatedNpc);
+  } catch (error) {
+    console.error("Failed to update NPC:", error);
+    res.status(500).json({ error: "Failed to update NPC" });
+  }
+});
+
+// ✅ Delete an NPC
 router.delete("/:id", async (req, res) => {
   try {
     if (!validateObjectId(req.params.id)) {
       return res.status(400).json({ error: "Invalid NPC ID format" });
     }
-    const sanitizedId = sanitizeInput(req.params.id);
-    const result = await deleteNPC(sanitizedId);
+
+    const result = await deleteNpc(req.params.id);
     res.json(result);
   } catch (error) {
+    console.error("Failed to delete NPC:", error);
     res.status(500).json({ error: "Failed to delete NPC" });
   }
 });

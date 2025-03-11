@@ -1,27 +1,24 @@
-import { useState } from "react";
+import { useState, } from "react";
 import PropTypes from "prop-types";
 import { useAuth0 } from "@auth0/auth0-react";
-import { randGen } from "../utils/randomGeneration/characterGenerator.mjs";
 
-export default function NPCForm({ campaignID, locationID, existingNPC, onSave, onCancel }) {
-    const [npcData, setNPCData] = useState({
-        charName: existingNPC?.charName || "",
-        age: existingNPC?.age || 0,
-        race: existingNPC?.race || "",
-        gender: existingNPC?.gender || "",
-        alignment: existingNPC?.alignment || "",
-        className: existingNPC?.className || "",
-        level: existingNPC?.level || 1,
-        size: existingNPC?.size || "Medium",
-        speed: existingNPC?.speed || 30,
-        quirks: existingNPC?.quirks || "",
-        features: existingNPC?.features || "",
-        vices: existingNPC?.vices || "",
-        virtues: existingNPC?.virtues || "",
-        ideals: existingNPC?.ideals || "",
-        campaignID,
-        locationID,
-        stats: existingNPC?.stats || {
+export default function NpcForm({ campaignID, parentLocationID, existingNpc, onSave, onCancel }) {
+    const [formData, setFormData] = useState({
+        charName: existingNpc?.charName || "",
+        age: existingNpc?.age || "",
+        race: existingNpc?.race || "",
+        gender: existingNpc?.gender || "",
+        alignment: existingNpc?.alignment || "",
+        className: existingNpc?.className || "",
+        level: existingNpc?.level || 1,
+        size: existingNpc?.size || "Medium",
+        speed: existingNpc?.speed || 30,
+        quirks: existingNpc?.quirks || "",
+        features: existingNpc?.features || "",
+        vices: existingNpc?.vices || "",
+        virtues: existingNpc?.virtues || "",
+        ideals: existingNpc?.ideals || "",
+        stats: existingNpc?.stats || {
             strength: 10,
             dexterity: 10,
             constitution: 10,
@@ -29,158 +26,201 @@ export default function NPCForm({ campaignID, locationID, existingNPC, onSave, o
             wisdom: 10,
             charisma: 10,
         },
+        campaignID: existingNpc?.campaignID || campaignID || "",
+        parentLocationID: existingNpc?.parentLocationID || parentLocationID || null,
     });
 
+    const [saving, setSaving] = useState(false);
+    const [error, setError] = useState(null);
     const { getAccessTokenSilently } = useAuth0();
 
     const handleChange = (e) => {
         const { name, value } = e.target;
-        setNPCData((prev) =>
-            name in prev.stats
-                ? { ...prev, stats: { ...prev.stats, [name]: Number(value) || 10 } }
-                : { ...prev, [name]: value }
-        );
+        setFormData((prevData) => ({
+            ...prevData,
+            [name]: value,
+        }));
     };
 
-    const handleGenerate = () => {
-        const newNPC = randGen();
-        setNPCData({
-            charName: newNPC.charName,
-            age: newNPC.age,
-            race: newNPC.race,
-            gender: newNPC.gender,
-            alignment: newNPC.alignment,
-            className: newNPC.className,
-            level: newNPC.level,
-            size: newNPC.size,
-            speed: newNPC.speed,
-            quirks: newNPC.quirks,
-            features: newNPC.features,
-            vices: newNPC.vices,
-            virtues: newNPC.virtues,
-            ideals: newNPC.ideals,
-            campaignID,
-            locationID,
-            stats: newNPC.stats,
-        });
+    const handleStatChange = (e) => {
+        const { name, value } = e.target;
+        setFormData((prevData) => ({
+            ...prevData,
+            stats: { ...prevData.stats, [name]: parseInt(value, 10) || 0 },
+        }));
     };
 
     const handleSave = async (e) => {
         e.preventDefault();
-    
-        const token = await getAccessTokenSilently();
-        const url = existingNPC ? `http://localhost:5050/npcs/${existingNPC._id}` : "http://localhost:5050/npcs";
-        const method = existingNPC ? "PUT" : "POST";
-    
-        const payload = {
-            campaignID,
-            locationID,
-            charName: npcData.charName.trim(),
-            age: Number(npcData.age) || 0,
-            race: npcData.race.trim(),
-            gender: npcData.gender ? npcData.gender.trim() : null,
-            alignment: npcData.alignment.trim(),
-            className: npcData.className ? npcData.className.trim() : "",
-            level: Number(npcData.level) || 1,
-            size: npcData.size.trim(),
-            speed: Number(npcData.speed) || 30,
-            quirks: npcData.quirks.trim(),
-            features: npcData.features.trim(),
-            vices: npcData.vices.trim(),
-            virtues: npcData.virtues.trim(),
-            ideals: npcData.ideals.trim(),
-            stats: {
-                strength: Number(npcData.stats.strength) || 10,
-                dexterity: Number(npcData.stats.dexterity) || 10,
-                constitution: Number(npcData.stats.constitution) || 10,
-                intelligence: Number(npcData.stats.intelligence) || 10,
-                wisdom: Number(npcData.stats.wisdom) || 10,
-                charisma: Number(npcData.stats.charisma) || 10,
-            },
-        };
-    
-        console.log("Submitting NPC:", payload); // Log the request before sending
-    
+        if (saving) return;
+        setSaving(true);
+
         try {
-            const response = await fetch(url, {
+            const token = await getAccessTokenSilently({ audience: "https://campaignapi.com" });
+
+            const endpoint = existingNpc
+                ? `http://localhost:5050/npcs/${existingNpc._id}`
+                : "http://localhost:5050/npcs";
+
+            const method = existingNpc ? "PUT" : "POST";
+
+            const response = await fetch(endpoint, {
                 method,
                 headers: {
                     "Content-Type": "application/json",
                     Authorization: `Bearer ${token}`,
                 },
-                body: JSON.stringify(payload),
+                body: JSON.stringify(formData),
             });
-    
+
             if (!response.ok) {
-                const errorText = await response.text();
-                console.error("Server error:", errorText);
-                throw new Error(`Failed to save NPC: ${errorText}`);
+                throw new Error(`Failed to ${existingNpc ? "update" : "create"} NPC`);
             }
-    
-            const result = await response.json();
-            console.log("NPC saved successfully:", result);
-            onSave(result);
+
+            const npcData = await response.json();
+            console.log("Updated NPC recieved: ", npcData);
+            onSave(npcData);
         } catch (error) {
-            console.error("Failed to save NPC:", error);
-            alert(`Error saving NPC: ${error.message}`);
+            console.error("Error saving NPC:", error);
+            setError(error.message);
+        } finally {
+            setSaving(false);
         }
     };
-    
 
     return (
-        <form onSubmit={handleSave} className="p-4 bg-white rounded shadow-md">
-            <label>Name:</label>
-            <input type="text" name="charName" value={npcData.charName} onChange={handleChange} required />
+        <div className="p-4 border-0 rounded-lg bg-cream shadow-md">
+            <h2 className="text-xl font-bold">{existingNpc ? "Edit NPC" : "New NPC"}</h2>
+            {error && <p className="bg-cancel-red text-gold">{error}</p>}
 
-            <label>Age:</label>
-            <input type="number" name="age" value={npcData.age} onChange={handleChange} required />
+            <form onSubmit={handleSave} className="space-y-3">
+                <label>Name:</label>
+                <input
+                    type="text"
+                    name="charName"
+                    value={formData.charName}
+                    onChange={handleChange}
+                    placeholder="NPC Name"
+                    required
+                    className="border border-brown p-2 w-full rounded bg-cream"
+                />
 
-            <label>Race:</label>
-            <input type="text" name="race" value={npcData.race} onChange={handleChange} required />
+                <label>Race:</label>
+                <input
+                    type="text"
+                    name="race"
+                    value={formData.race}
+                    onChange={handleChange}
+                    placeholder="Race"
+                    className="border border-brown p-2 w-full rounded bg-cream"
+                />
 
-            <label>Gender:</label>
-            <input type="text" name="gender" value={npcData.gender} onChange={handleChange} required />
+                <label>Class:</label>
+                <input
+                    type="text"
+                    name="className"
+                    value={formData.className}
+                    onChange={handleChange}
+                    placeholder="Class"
+                    className="border border-brown p-2 w-full rounded bg-cream"
+                />
 
-            <label>Alignment:</label>
-            <input type="text" name="alignment" value={npcData.alignment} onChange={handleChange} required />
+                <label>Alignment:</label>
+                <input
+                    type="text"
+                    name="alignment"
+                    value={formData.alignment}
+                    onChange={handleChange}
+                    placeholder="Alignment"
+                    className="border border-brown p-2 w-full rounded bg-cream"
+                />
 
-            <label>Class:</label>
-            <input type="text" name="className" value={npcData.className} onChange={handleChange} />
+                <label>Level:</label>
+                <input
+                    type="number"
+                    name="level"
+                    value={formData.level}
+                    onChange={handleChange}
+                    className="border border-brown p-2 w-full rounded bg-cream"
+                />
 
-            <label>Level:</label>
-            <input type="number" name="level" value={npcData.level} onChange={handleChange} required />
+                <label>Speed:</label>
+                <input
+                    type="number"
+                    name="speed"
+                    value={formData.speed}
+                    onChange={handleChange}
+                    className="border border-brown p-2 w-full rounded bg-cream"
+                />
 
-            <label>Size:</label>
-            <input type="text" name="size" value={npcData.size} onChange={handleChange} required />
+                {/* Stats */}
+                <h3 className="font-bold">Stats</h3>
+                {["strength", "dexterity", "constitution", "intelligence", "wisdom", "charisma"].map((stat) => (
+                    <div key={stat}>
+                        <label>{stat.toUpperCase()}:</label>
+                        <input
+                            type="number"
+                            name={stat}
+                            value={formData.stats[stat]}
+                            onChange={handleStatChange}
+                            className="border border-brown p-2 w-full rounded bg-cream"
+                        />
+                    </div>
+                ))}
 
-            <label>Speed:</label>
-            <input type="number" name="speed" value={npcData.speed} onChange={handleChange} required />
+                <label>Quirks:</label>
+                <input
+                    type="text"
+                    name="quirks"
+                    value={formData.quirks}
+                    onChange={handleChange}
+                    className="border border-brown p-2 w-full rounded bg-cream"
+                />
 
-            <div className="npc-stats">
-                <label>Stats:</label>
-                <div className="stat-block">
-                    {Object.keys(npcData.stats).map((stat) => (
-                        <div className="stat" key={stat}>
-                            <p>{stat.charAt(0).toUpperCase() + stat.slice(1)}</p>
-                            <input type="number" name={stat} value={npcData.stats[stat]} onChange={handleChange} />
-                        </div>
-                    ))}
+                <label>Features:</label>
+                <input
+                    type="text"
+                    name="features"
+                    value={formData.features}
+                    onChange={handleChange}
+                    className="border border-brown p-2 w-full rounded bg-cream"
+                />
+
+                <label>Vices:</label>
+                <input
+                    type="text"
+                    name="vices"
+                    value={formData.vices}
+                    onChange={handleChange}
+                    className="border border-brown p-2 w-full rounded bg-cream"
+                />
+
+                <label>Virtues:</label>
+                <input
+                    type="text"
+                    name="virtues"
+                    value={formData.virtues}
+                    onChange={handleChange}
+                    className="border border-brown p-2 w-full rounded bg-cream"
+                />
+
+                <div className="flex space-x-2">
+                    <button type="submit" className={saving ? "bg-tan text-brown px-4 py-2 rounded" : "bg-goblin-green text-gold px-4 py-2 rounded"}>
+                        {saving ? "Saving..." : "Save"}
+                    </button>
+                    <button type="button" onClick={onCancel} className="bg-cancel-red text-gold px-4 py-2 rounded">
+                        Cancel
+                    </button>
                 </div>
-            </div>
-
-            <button type="button" onClick={handleGenerate} className="bg-blue-500 text-white px-4 py-2 rounded">
-                Generate
-            </button>
-            <button type="submit" className="bg-green-500 text-white px-4 py-2 rounded">Save</button>
-            <button type="button" onClick={onCancel} className="bg-gray-500 text-white px-4 py-2 rounded">Cancel</button>
-        </form>
+            </form>
+        </div>
     );
 }
 
-NPCForm.propTypes = {
+NpcForm.propTypes = {
     campaignID: PropTypes.string.isRequired,
-    locationID: PropTypes.string.isRequired,
-    existingNPC: PropTypes.object,
+    parentLocationID: PropTypes.oneOfType([PropTypes.string, PropTypes.oneOf([null])]),
+    existingNpc: PropTypes.object,
     onSave: PropTypes.func.isRequired,
     onCancel: PropTypes.func.isRequired,
 };

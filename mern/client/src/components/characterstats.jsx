@@ -15,7 +15,7 @@ import { fetchRaces, fetchClasses, fetchClassDetails, fetchClassFeatures, fetchC
 import { createCharacter, modifyCharacter } from "./characterAPIs/pcMongoAPIs";
 
 {/* CharacterStats use states, spells included */}
-const CharacterStats = ({ onClassSelect, characterLevel, onLevelChange, displayedCharacter }) => {
+const CharacterStats = ({ onClassSelect, characterLevel, onLevelChange, displayedCharacter, isNew, onCancel, refreshCharacters }) => {
   const [races, setRaces] = useState([]);
   const [classes, setClasses] = useState([]);
   // const [ characterLevel, setCharacterLevel] = useState(1);
@@ -276,6 +276,7 @@ const CharacterStats = ({ onClassSelect, characterLevel, onLevelChange, displaye
         response = await createCharacter(character, token);
       }
       alert("Character saved successfully!");
+      if (refreshCharacters) refreshCharacters();
       return response; // Optionally return the response for further processing
     } catch (error) {
       console.error("Error saving character:", error);
@@ -526,7 +527,13 @@ const CharacterStats = ({ onClassSelect, characterLevel, onLevelChange, displaye
                 disabled={saving}
             >
                 {saving ? "Saving..." : "Save"}
-            </button>
+          </button>
+          <button
+          onClick={onCancel}
+          className="mt-2 bg-cancel-red text-gold px-4 py-2 rounded shadow-sm shadow-amber-800"
+            >
+              Cancel
+          </button>
         </form>
       </div>
 
@@ -610,4 +617,6 @@ CharacterStats.propTypes = {
         })
       ),
     }).isRequired,
+    isNew: PropTypes.bool,
+    onCancel: PropTypes.func,
 };
