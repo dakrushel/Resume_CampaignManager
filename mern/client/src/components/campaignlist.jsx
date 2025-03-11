@@ -61,7 +61,9 @@ export default function CampaignList() {
             ) : (
                 campaigns.map((campaign) => (
                     <div key={campaign._id} className="p-2 border-b border-brown rounded">
-                        <Link to={`/campaigns/${campaign._id}`} className="text-xl text-brown font-bold hover:underline">
+                        <Link to={`/campaigns/${campaign._id}`} 
+                        className="text-xl text-brown font-bold hover:underline"
+                        onClick ={Cookies.set("campaign", `${campaign._id}`)}>
                             {campaign.title}
                         </Link>
                     </div>

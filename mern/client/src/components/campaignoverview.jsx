@@ -6,6 +6,7 @@ import CharacterList from "./characterlist";
 import { useAuth0 } from "@auth0/auth0-react";
 import SanitizeData from "../utils/santitization.mjs";
 
+
 export default function CampaignOverview() {
     const { id } = useParams();
     const navigate = useNavigate();
@@ -24,6 +25,7 @@ export default function CampaignOverview() {
     const [showCountries, setShowCountries] = useState(false);
     const [showRegions, setShowRegions] = useState(false);
     const { getAccessTokenSilently } = useAuth0();
+    
 
     useEffect(() => {
         if (isNew) return;

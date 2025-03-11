@@ -1,16 +1,19 @@
 // import { useState } from "react";
 import { NavLink } from "react-router-dom";
 import PropTypes from "prop-types"
+import { useLocation } from 'react-router-dom'
+import Cookies from 'js-cookie';
 
-export default function Navbar({showNav}) {
+export default function Navbar() {
 
   const navButtonStyle="flex button bg-light-tan rounded text-3xl text-center sancreek-regular w-52 h-24 items-center align-center"
+  const campaignID = Cookies.get("campaign")
   return (
     <div className="flex-row">
       <nav className="flex flex-col justify-between items-center mb-6 fixed left-0 top-0 w-64 h-full bg-tan pb-10 pt-24">
-        <NavLink to="/campaigns" title="See all your campaigns" alt="Campaigns" className={navButtonStyle}>
+        <NavLink to={`/campaigns/${campaignID}`} title="See your campaign in all its glory" alt="Campaign" className={navButtonStyle}>
           {/* <img src="/campaign.svg"></img> */}
-          <p className="text-center m-auto">Campaigns</p>
+          <p className="text-center m-auto">Campaign</p>
         </NavLink>
         <NavLink to="/characterdisplay" className={navButtonStyle}>
           <p className="text-center m-auto">PCs</p>

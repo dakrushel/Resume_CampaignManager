@@ -26,6 +26,8 @@ ReactDOM.createRoot(document.getElementById("root")).render(
     <Auth0Provider
       domain="dev-rq4jo6f1866uwndl.us.auth0.com"
       clientId="Tu11UqJ5IwIO4KINfmAckutSS005Wh02"
+      //note: this is mildly unsecure BUT should allow page refreshes
+      cacheLocation="localstorage"
       authorizationParams={{
         redirect_uri: window.location.origin,
         audience: "https://campaignapi.com"
