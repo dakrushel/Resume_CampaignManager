@@ -18,7 +18,7 @@ const npcSchema = Joi.object({
   campaignID: Joi.string().required(),
   parentLocationID: Joi.string().required(),
   charName: Joi.string().required(),
-  age: Joi.string().optional(),
+  age: Joi.number().optional(),
   race: Joi.string().optional(),
   gender: Joi.string().optional(),
   alignment: Joi.string().optional(),
@@ -32,13 +32,13 @@ const npcSchema = Joi.object({
   virtues: Joi.string().optional(),
   ideals: Joi.string().optional(),
   stats: Joi.object({
-    strength: Joi.number().optional(),
-    dexterity: Joi.number().optional(),
-    constitution: Joi.number().optional(),
-    intelligence: Joi.number().optional(),
-    wisdom: Joi.number().optional(),
-    charisma: Joi.number().optional(),
-  }).optional(),
+    strength: Joi.number().required(),
+    dexterity: Joi.number().required(),
+    constitution: Joi.number().required(),
+    intelligence: Joi.number().required(),
+    wisdom: Joi.number().required(),
+    charisma: Joi.number().required(),
+  }).required(),
 });
 
 // Validate MongoDB ObjectId

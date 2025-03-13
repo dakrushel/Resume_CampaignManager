@@ -10,6 +10,7 @@ export default function NpcList({ parentLocationID, campaignID }) {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [showForm, setShowForm] = useState(false);
+    const [isNew, setIsNew] = useState(false);
     const { getAccessTokenSilently } = useAuth0();
 
     // Fetch NPCs from the backend
@@ -111,10 +112,11 @@ export default function NpcList({ parentLocationID, campaignID }) {
                     parentLocationID={parentLocationID}
                     onSave={handleSaveNpc}
                     onCancel={() => setShowForm(false)}
+                    isNew={isNew}
                 />
             ) : (
                 <button
-                    onClick={() => setShowForm(true)}
+                    onClick={() => {setIsNew(true); setShowForm(true)}}
                     className="mt-2 bg-goblin-green text-xl text-gold px-4 py-2 rounded-full shadow-sm shadow-amber-800"
                 >
                     +

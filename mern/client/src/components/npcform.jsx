@@ -1,11 +1,12 @@
 import { useState, } from "react";
 import PropTypes from "prop-types";
 import { useAuth0 } from "@auth0/auth0-react";
+import { randGen } from "../utils/RandomGeneration/commonNPCGenerator";
 
-export default function NpcForm({ campaignID, parentLocationID, existingNpc, onSave, onCancel }) {
+export default function NpcForm({ campaignID, parentLocationID, existingNpc, onSave, onCancel, isNew }) {
     const [formData, setFormData] = useState({
         charName: existingNpc?.charName || "",
-        age: existingNpc?.age || "",
+        age: existingNpc?.age || 0,
         race: existingNpc?.race || "",
         gender: existingNpc?.gender || "",
         alignment: existingNpc?.alignment || "",
@@ -34,6 +35,15 @@ export default function NpcForm({ campaignID, parentLocationID, existingNpc, onS
     const [error, setError] = useState(null);
     const { getAccessTokenSilently } = useAuth0();
 
+    const generateNPC = () => {
+        const generatedNpc = randGen(); // Generate a random NPC
+        setFormData((prevData) => ({
+            ...prevData,
+            ...generatedNpc, // Overwrite existing fields with the generated NPC
+        }));
+    };
+    
+
     const handleChange = (e) => {
         const { name, value } = e.target;
         setFormData((prevData) => ({
@@ -51,6 +61,7 @@ export default function NpcForm({ campaignID, parentLocationID, existingNpc, onS
     };
 
     const handleSave = async (e) => {
+        console.log("npcform - formData before: ", formData);
         e.preventDefault();
         if (saving) return;
         setSaving(true);
@@ -64,6 +75,7 @@ export default function NpcForm({ campaignID, parentLocationID, existingNpc, onS
 
             const method = existingNpc ? "PUT" : "POST";
 
+            console.log("npcform - formData to save: ", formData);
             const response = await fetch(endpoint, {
                 method,
                 headers: {
@@ -211,6 +223,11 @@ export default function NpcForm({ campaignID, parentLocationID, existingNpc, onS
                     <button type="button" onClick={onCancel} className="bg-cancel-red text-gold px-4 py-2 rounded">
                         Cancel
                     </button>
+                    {isNew && (
+                        <button type="button" onClick={generateNPC} className="bg-goblin-green text-gold px-4 py-2 rounded">
+                            Generate
+                        </button>
+                    )}
                 </div>
             </form>
         </div>
@@ -223,4 +240,5 @@ NpcForm.propTypes = {
     existingNpc: PropTypes.object,
     onSave: PropTypes.func.isRequired,
     onCancel: PropTypes.func.isRequired,
+    isNew: PropTypes.bool.isRequired
 };

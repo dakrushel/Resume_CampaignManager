@@ -6,6 +6,16 @@ class BaseCharacter{
     constructor() {
         this.level = 1;
 
+        const statsArray = RNGesusStats();
+        this.stats = {
+            strength: statsArray[0],
+            dexterity: statsArray[1],
+            constitution: statsArray[2],
+            intelligence: statsArray[3],
+            wisdom: statsArray[4],
+            charisma: statsArray[5],
+        };
+
         //randomly generated fields (some based on race)
         this.age = "";
         this.gender = "";
@@ -19,7 +29,7 @@ class BaseCharacter{
 
         //race fields
         this.charName = "";
-        this.stats = RNGesusStats(); //aka ability scores
+        // this.stats = RNGesusStats(); //aka ability scores
         this.age = null;
         this.race = "";
         this.size = "";
@@ -42,31 +52,17 @@ class Human extends BaseCharacter {
     //No arg CTOR
     constructor() {
         super();
-        for (let i = 0; i < this.stats.length; i++) {
-            this.stats[i] += 1;
+
+        // Loop through each property and apply +1
+        for (let key of Object.keys(this.stats)) {
+            this.stats[key] += 1;
         }
-
-        this.strength = this.stats.pop();
-        this.dexterity = this.stats.pop();
-        this.constitution = this.stats.pop();
-        this.intelligence = this.stats.pop();
-        this.wisdom = this.stats.pop();
-        this.charisma = this.stats.pop();
-
-        this.stats = {
-            strength: this.strength,
-            dexterity: this.dexterity,
-            constitution: this.constitution,
-            intelligence: this.intelligence,
-            wisdom: this.wisdom,
-            charisma: this.charisma,
-          };
           
         this.charName = "";
         this.age = PickANumber(14, 70);
         this.race = "Human";
         this.size = "Medium";
-        this.speed = "30";
+        this.speed = 30;
     }
 }
 
@@ -75,28 +71,14 @@ class Dwarf extends BaseCharacter {
     //No arg CTOR
     constructor() {
         super();
-        
-        this.strength = this.stats.pop();
-        this.dexterity = this.stats.pop();
-        this.constitution = this.stats.pop() + 2;
-        this.intelligence = this.stats.pop();
-        this.wisdom = this.stats.pop();
-        this.charisma = this.stats.pop();
 
-        this.stats = {
-            strength: this.strength,
-            dexterity: this.dexterity,
-            constitution: this.constitution,
-            intelligence: this.intelligence,
-            wisdom: this.wisdom,
-            charisma: this.charisma,
-          };
+        this.stats.constitution += 2;
 
         this.charName = "";
         this.age = PickANumber(30, 350);
         this.race = "Dwarf";
         this.size = "Medium";
-        this.speed = "25";
+        this.speed = 25;
     }
 }
 
@@ -105,28 +87,14 @@ class Elf extends BaseCharacter {
     //No arg CTOR
     constructor() {
         super();
-        
-        this.strength = this.stats.pop();
-        this.dexterity = this.stats.pop() + 2;
-        this.constitution = this.stats.pop();
-        this.intelligence = this.stats.pop();
-        this.wisdom = this.stats.pop();
-        this.charisma = this.stats.pop();
 
-        this.stats = {
-            strength: this.strength,
-            dexterity: this.dexterity,
-            constitution: this.constitution,
-            intelligence: this.intelligence,
-            wisdom: this.wisdom,
-            charisma: this.charisma,
-          };
+        this.stats.dexterity += 2;
 
         this.charName = "";
         this.age = PickANumber(75, 750);
         this.race = "Elf";
         this.size = "Medium";
-        this.speed = "30";
+        this.speed = 30;
     }
 }
 
@@ -135,28 +103,14 @@ class Halfing extends BaseCharacter {
     //No arg CTOR
     constructor() {
         super();
-        
-        this.strength = this.stats.pop();
-        this.dexterity = this.stats.pop() + 2;
-        this.constitution = this.stats.pop();
-        this.intelligence = this.stats.pop();
-        this.wisdom = this.stats.pop();
-        this.charisma = this.stats.pop();
 
-        this.stats = {
-            strength: this.strength,
-            dexterity: this.dexterity,
-            constitution: this.constitution,
-            intelligence: this.intelligence,
-            wisdom: this.wisdom,
-            charisma: this.charisma,
-          };
+        this.stats.dexterity += 2;
 
         this.charName = "";
         this.age = PickANumber(14, 150);
         this.race = "Halfling";
         this.size = "Small";
-        this.speed = "25";
+        this.speed = 25;
     }
 }
 
@@ -165,28 +119,14 @@ class Gnome extends BaseCharacter {
     //No arg CTOR
     constructor() {
         super();
-        
-        this.strength = this.stats.pop();
-        this.dexterity = this.stats.pop();
-        this.constitution = this.stats.pop();
-        this.intelligence = this.stats.pop() + 2;
-        this.wisdom = this.stats.pop();
-        this.charisma = this.stats.pop();
 
-        this.stats = {
-            strength: this.strength,
-            dexterity: this.dexterity,
-            constitution: this.constitution,
-            intelligence: this.intelligence,
-            wisdom: this.wisdom,
-            charisma: this.charisma,
-          };
+        this.stats.intelligence += 2;
 
         this.charName = "";
         this.age = PickANumber(25, 400);
         this.race = "Gnome";
         this.size = "Small";
-        this.speed = "25";
+        this.speed = 25;
     }
 }
 
@@ -195,28 +135,14 @@ class Tiefling extends BaseCharacter {
     //No arg CTOR
     constructor() {
         super();
-        
-        this.strength = this.stats.pop();
-        this.dexterity = this.stats.pop();
-        this.constitution = this.stats.pop();
-        this.intelligence = this.stats.pop();
-        this.wisdom = this.stats.pop();
-        this.charisma = this.stats.pop() + 2;
 
-        this.stats = {
-            strength: this.strength,
-            dexterity: this.dexterity,
-            constitution: this.constitution,
-            intelligence: this.intelligence,
-            wisdom: this.wisdom,
-            charisma: this.charisma,
-          };
+        this.charisma += 2;
 
         this.charName = "";
         this.age = PickANumber(14, 70);
         this.race = "Tiefling";
         this.size = "Medium";
-        this.speed = "30";
+        this.speed = 30;
     }
 }
 

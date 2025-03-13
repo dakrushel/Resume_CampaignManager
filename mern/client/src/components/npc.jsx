@@ -117,7 +117,7 @@ NpcItem.propTypes = {
         alignment: PropTypes.string,
         size: PropTypes.string,
         speed: PropTypes.number,
-        age: PropTypes.string,
+        age: PropTypes.number,
         quirks: PropTypes.string,
         features: PropTypes.string,
         vices: PropTypes.string,
