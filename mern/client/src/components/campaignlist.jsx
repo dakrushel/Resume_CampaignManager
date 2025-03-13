@@ -25,7 +25,13 @@ export default function CampaignList() {
                 }
 
                 const data = await response.json();
-                setCampaigns(data);
+                let myCampaigns = []
+                for (let i = 0; i < data.length; i++) {
+                    if (data[i].createdBy == userId){
+                        myCampaigns = [...myCampaigns, data[i]]
+                    }
+                }
+                setCampaigns(myCampaigns);
             } catch (err) {
                 console.error("Failed to fetch campaigns:", err);
                 setError(err.message);
