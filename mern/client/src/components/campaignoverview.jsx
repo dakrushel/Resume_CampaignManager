@@ -25,6 +25,8 @@ export default function CampaignOverview() {
     const [showCountries, setShowCountries] = useState(false);
     const [showRegions, setShowRegions] = useState(false);
     const { getAccessTokenSilently } = useAuth0();
+
+    window.localStorage.setItem("selectedCampaign", id)
     
 
     useEffect(() => {

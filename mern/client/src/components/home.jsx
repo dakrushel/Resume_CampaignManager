@@ -2,10 +2,10 @@ import { useAuth0 } from "@auth0/auth0-react";
 import LoginButton from "./loginbutton";
 import LogoutButton from "./logoutbutton";
 import { NavLink } from "react-router-dom";
-import Cookies from 'js-cookie';
 
 export default function Home(){
     const {isAuthenticated} = useAuth0();
+    window.localStorage.setItem("selectedCampaign", "")
 
     const textStyle = "text-2xl mb-4 text-brown"
 
@@ -17,8 +17,7 @@ export default function Home(){
             {isAuthenticated && <p className={textStyle}>Welcome back, dungeon master! Your campaigns await.</p>}
             {isAuthenticated && <div>
                 <NavLink className="button shadow-md shadow-amber-800 inline-block text-xl rounded-lg py-4 mr-2 w-36 text-gold bg-goblin-green font-semibold"
-                    to="/campaigns"
-                    onClick={()=> Cookies.set("campaign", "")}>Campaigns</NavLink> 
+                    to="/campaigns">Campaigns</NavLink> 
                 <LogoutButton/>
             </div>}
         </div>
