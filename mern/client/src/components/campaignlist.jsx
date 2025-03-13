@@ -9,6 +9,8 @@ export default function CampaignList() {
     const { getAccessTokenSilently } = useAuth0();
     const navigate = useNavigate();
 
+    const userId = window.localStorage.getItem("userId")
+
     useEffect(() => {
         const fetchCampaigns = async () => {
             try {

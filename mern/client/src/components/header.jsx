@@ -7,9 +7,8 @@ export default function Header({ showMenuFunc }) {
 
   const clearCampaign = () => {
     window.localStorage.setItem("selectedCampaign", "")
-    this.forceUpdate()
+    this.forceUpdate
   }
-
   return (
     <header className="m-0 fixed top-0 left-0 right-0 w-full bg-goblin-green p-3 z-10 sancreek-regular flex items-center justify-between">
       <div className="flex items-center">
@@ -43,6 +42,7 @@ export default function Header({ showMenuFunc }) {
       </div>
     </header>
   );
+  
 }
 
 Header.propTypes = {

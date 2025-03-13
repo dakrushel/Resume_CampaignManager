@@ -8,15 +8,14 @@ import SanitizeData from "../utils/santitization.mjs";
 
 
 export default function CampaignOverview() {
+    const userId = window.localStorage.getItem("userId")
     const { id } = useParams();
     const navigate = useNavigate();
     const isNew = id === "new";
-
     const [campaign, setCampaign] = useState(null);
     const [loading, setLoading] = useState(!isNew);
     const [error, setError] = useState(null);
     const [editMode, setEditMode] = useState(isNew);
-    const [formData, setFormData] = useState({ title: "", description: "", createdBy: "DungeonMaster123" });
     const [saving, setSaving] = useState(false); // Prevent duplicate submissions
     const [showNotes, setShowNotes] = useState(false);
     const [showCharacters, setShowCharacters] = useState(false);
@@ -24,9 +23,11 @@ export default function CampaignOverview() {
     const [showRealms, setShowRealms] = useState(false);
     const [showCountries, setShowCountries] = useState(false);
     const [showRegions, setShowRegions] = useState(false);
+    const [formData, setFormData] = useState({ title: "", description: "", createdBy: userId});
     const { getAccessTokenSilently } = useAuth0();
 
     window.localStorage.setItem("selectedCampaign", id)
+    
     
 
     useEffect(() => {
@@ -35,6 +36,7 @@ export default function CampaignOverview() {
         const fetchCampaign = async () => {
             try {
                 const token = await getAccessTokenSilently({ audience: "https://campaignapi.com" });
+                console.log(token)
                 const response = await fetch(`http://localhost:5050/campaigns/${id}`, {
                     headers: {
                         Authorization: `Bearer ${token}`,
@@ -71,10 +73,9 @@ export default function CampaignOverview() {
                 method: "POST",
                 headers: { "Content-Type": "application/json",
                     Authorization: `Bearer ${token}`,
-                 },
+                },
                 body: JSON.stringify(formData),
             });
-
             if (!response.ok) throw new Error("Failed to create campaign");
 
             const createdCampaign = await response.json();
@@ -104,10 +105,9 @@ export default function CampaignOverview() {
                 method: "PUT",
                 headers: { "Content-Type": "application/json",
                     Authorization: `Bearer ${token}`,
-                 },
-                body: JSON.stringify({ ...formData, createdBy: campaign.createdBy || "DungeonMaster123" }),
+                },
+                body: JSON.stringify({ ...formData, createdBy: campaign.createdBy || userId }),
             });
-
             if (!response.ok) throw new Error("Failed to update campaign");
 
             setCampaign({ ...campaign, ...formData });
@@ -127,6 +127,7 @@ export default function CampaignOverview() {
                 method: "DELETE",
                 Authorization: `Bearer ${token}`,
             });
+            console.log(response)
             if (!response.ok) throw new Error("Failed to delete campaign");
             navigate("/campaigns");
         } catch (error) {

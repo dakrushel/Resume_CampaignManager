@@ -2,11 +2,15 @@
 import { useAuth0 } from "@auth0/auth0-react";
 
 export default function LoginButton(){
-    const { loginWithRedirect } = useAuth0();
+    const { loginWithRedirect, user } = useAuth0();
+
+    const logIn = () => {
+        loginWithRedirect()
+    }
 
     return (
     <button className="button shadow-md shadow-amber-800 inline-block bg-goblin-green text-xl rounded-lg text-gold w-36 py-4 font-semibold"
-    onClick={() => loginWithRedirect()}>Log In</button>
+    onClick={logIn}>Log In</button>
 );
 
 }

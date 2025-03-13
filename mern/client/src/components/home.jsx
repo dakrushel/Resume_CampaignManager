@@ -4,8 +4,16 @@ import LogoutButton from "./logoutbutton";
 import { NavLink } from "react-router-dom";
 
 export default function Home(){
-    const {isAuthenticated} = useAuth0();
+    const {isAuthenticated, user} = useAuth0();
     window.localStorage.setItem("selectedCampaign", "")
+    if (isAuthenticated){
+        window.localStorage.setItem("userId", `${user.sub}`)
+        console.log(window.localStorage.getItem("userId"))
+    } else {
+        window.localStorage.setItem("userId", "")
+        console.log(window.localStorage.getItem("userId"))
+    }
+    
 
     const textStyle = "text-2xl mb-4 text-brown"
 
