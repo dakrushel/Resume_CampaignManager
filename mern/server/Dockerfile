@@ -1,18 +1,20 @@
-# /mern/server/Dockerfile
-# Use official Node.js image
+# Use an official Node.js runtime as the base image
 FROM node:18
 
-# Set working directory inside container
+# Set the working directory
 WORKDIR /app
 
-# Copy package.json and package-lock.json first (for caching layers)
-COPY package.json package-lock.json ./
+# Copy package.json and package-lock.json
+COPY package*.json ./
 
 # Install dependencies
 RUN npm install
 
-# Copy all backend files
+# Copy the rest of the application code
 COPY . .
 
-# Default command: Run Jest/Mocha tests
-CMD ["npm", "test"]
+# Expose the port the app runs on
+EXPOSE 5000
+
+# Command to run the application
+CMD ["npm", "start"]

@@ -1,3 +1,4 @@
+version: '3.8'
 services:
   mongodb_test:
     image: mongo
@@ -6,6 +7,11 @@ services:
       - "27017:27017"
     volumes:
       - mongo-data:/data/db
+    healthcheck:
+      test: ["CMD", "mongo", "--eval", "db.adminCommand('ping')"]
+      interval: 5s
+      timeout: 10s
+      retries: 5
 
   node_test:
     build: ./server
@@ -13,9 +19,13 @@ services:
     working_dir: /app
     volumes:
       - ./server:/app
-    command: ["npm", "test"]
+    environment:
+      - NODE_ENV=test
+      - MONGODB_URI=mongodb://mongodb_test:27017/testdb
     depends_on:
-      - mongodb_test
+      mongodb_test:
+        condition: service_healthy
+    command: ["npm", "test"]
 
   client_test:
     build: ./client
@@ -23,6 +33,8 @@ services:
     working_dir: /app
     volumes:
       - ./client:/app
+    environment:
+      - NODE_ENV=test
     command: ["npm", "test"]
 
   cypress_test:

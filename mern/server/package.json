@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "test": "jest",
-    "start": "node --env-file=config.env server.js"
+    "start": "node --env-file=config.env server.js",
+    "test:docker": "docker-compose run server npm run test"
   },
   "keywords": [],
   "author": "",

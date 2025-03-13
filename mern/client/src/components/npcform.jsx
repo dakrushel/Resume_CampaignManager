@@ -1,7 +1,9 @@
 import { useState } from "react";
 import PropTypes from "prop-types";
 import { useAuth0 } from "@auth0/auth0-react";
-import { randGen } from "../utils/randomGeneration/characterGenerator.mjs";
+// import { randGen } from "../utils/randomGeneration/characterGenerator.mjs";
+import { randGen } from "../utils/RandomGeneration/characterGenerator";
+
 
 export default function NPCForm({ campaignID, locationID, existingNPC, onSave, onCancel }) {
     const [npcData, setNPCData] = useState({

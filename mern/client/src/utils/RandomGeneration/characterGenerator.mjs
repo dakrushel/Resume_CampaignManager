@@ -2,6 +2,7 @@ import * as Arrays from './arrays.mjs';
 import { racesArray, racesList, BaseCharacter } from './races.mjs';
 import { PickANumber, PickSeveralNumbers } from './rnGesus.mjs';
 
+
 //rnGesus > (races and class) and arrays > characterGenerator > return character 
 //generates random race, quirks, vices, virtues, ideals, alignment, name, features, class, gender
 //call and return this to src/components character component to write to database as needed
