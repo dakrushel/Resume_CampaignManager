@@ -10,10 +10,10 @@ import { auth } from "express-oauth2-jwt-bearer"
 import characters from "./routes/characterRoute.js";
 import npcs from "./routes/npcRoute.js";
 import campaigns from "./routes/campaignsRoute.js";
-import monsters from "./routes/monsters.js";
+import monsters from "./routes/monstersRoute.js";
 import notes from "./routes/notesRoute.js";
 import events from "./routes/eventsRoute.js";
-import items from "./routes/items.js";
+import items from "./routes/itemRoute.js";
 import locations from "./routes/locationsRoute.js";
 
 console.log("Loaded env: ", process.env.ATLAS_URI);

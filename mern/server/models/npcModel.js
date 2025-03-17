@@ -3,84 +3,116 @@ import { ObjectId } from "mongodb";
 
 const collectionName = "npcs";
 
-// Get all NPCs (for testing)
-export const getAllNPCs = async () => {
-  return await db.collection(collectionName).find({}).toArray();
-};
+// Validate MongoDB ObjectId
+const validateObjectId = (id) => ObjectId.isValid(id);
 
-// Get NPCs by location
-export const getNPCsByLocation = async (locationID) => {
+// Get NPC by ID
+export const getNpcById = async (id) => {
   try {
-      return await db.collection("npcs").find({ locationID: String(locationID) }).toArray();
+    if (!validateObjectId(id)) {
+      throw new Error("Invalid NPC ID format");
+    }
+
+    const npc = await db.collection(collectionName).findOne({ _id: new ObjectId(id) });
+
+    return npc ? { ...npc, _id: npc._id.toString() } : null;
   } catch (error) {
-      console.error("Error fetching NPCs by locationID:", error);
-      throw error;
+    console.error(`Error fetching NPC by ID ${id}:`, error);
+    throw error;
   }
 };
 
-
-// Get NPC by ID with ObjectId conversion
-export const getNPCById = async (id) => {
+// Get all NPCs for a specific location
+export const getNpcsByLocation = async (parentLocationID) => {
   try {
-    if (!ObjectId.isValid(id)) {
-      throw new Error("Invalid NPC ID format");
+    if (!validateObjectId(parentLocationID)) {
+      throw new Error("Invalid location ID format");
     }
-    return await db.collection(collectionName).findOne({ _id: new ObjectId(id) });
+
+    const query = { parentLocationID: new ObjectId(parentLocationID) };
+    return await db.collection(collectionName).find(query).toArray();
   } catch (error) {
-    console.error("Error fetching NPC by ID:", error);
+    console.error(`Error fetching NPCs for location ${parentLocationID}:`, error);
+    throw error;
+  }
+};
+
+// Get all NPCs for a campaign
+export const getNpcsByCampaign = async (campaignID) => {
+  try {
+    if (!validateObjectId(campaignID)) {
+      throw new Error("Invalid campaign ID format");
+    }
+
+    const query = { campaignID: new ObjectId(campaignID) };
+    return await db.collection(collectionName).find(query).toArray();
+  } catch (error) {
+    console.error(`Error fetching NPCs for campaign ${campaignID}:`, error);
     throw error;
   }
 };
 
 // Add a new NPC
-export const addNPC = async (npcData) => {
+export const addNpc = async (npcData) => {
   try {
+    if (!npcData.campaignID || !npcData.parentLocationID || !npcData.charName) {
+      throw new Error("NPC must have a campaignID, parentLocationID, and charName.");
+    }
 
-    // Ensure campaignID and locationID are strings
-    npcData.campaignID = String(npcData.campaignID);
-    npcData.locationID = String(npcData.locationID);
+    if (ObjectId.isValid(npcData.campaignID)) {
+      npcData.campaignID = new ObjectId(npcData.campaignID);
+    }
+
+    if (ObjectId.isValid(npcData.parentLocationID)) {
+      npcData.parentLocationID = new ObjectId(npcData.parentLocationID);
+    }
 
     const result = await db.collection(collectionName).insertOne(npcData);
-    return result;
+    return { ...npcData, _id: result.insertedId.toString() };
   } catch (error) {
     console.error("Error adding NPC:", error);
     throw error;
   }
 };
 
-// Update an existing NPC
-export const updateNPC = async (id, npcData) => {
-    try {
-      if (!ObjectId.isValid(id)) {
-        throw new Error("Invalid NPC ID format");
-      }
-  
-      // Ensure campaignID and locationID are strings
-      npcData.campaignID = String(npcData.campaignID);
-      npcData.locationID = String(npcData.locationID);
-  
-      const result = await db.collection(collectionName).updateOne(
-        { _id: new ObjectId(id) },
-        { $set: npcData }
-      );
-  
-      return result;
-    } catch (error) {
-      console.error("Error updating NPC:", error);
-      throw error;
-    }
-  };
-  
-
-// Delete an NPC
-export const deleteNPC = async (id) => {
+// Update an NPC
+export const updateNpc = async (id, npcData) => {
   try {
-    if (!ObjectId.isValid(id)) {
+    if (!validateObjectId(id)) {
       throw new Error("Invalid NPC ID format");
     }
-    return await db.collection(collectionName).deleteOne({ _id: new ObjectId(id) });
+
+    if (npcData.campaignID && ObjectId.isValid(npcData.campaignID)) {
+      npcData.campaignID = new ObjectId(npcData.campaignID);
+    }
+
+    if (npcData.parentLocationID && ObjectId.isValid(npcData.parentLocationID)) {
+      npcData.parentLocationID = new ObjectId(npcData.parentLocationID);
+    }
+
+    const result = await db.collection(collectionName).updateOne(
+      { _id: new ObjectId(id) },
+      { $set: npcData }
+    );
+
+    return result;
   } catch (error) {
-    console.error("Error deleting NPC:", error);
+    console.error(`Error updating NPC ID ${id}:`, error);
+    throw error;
+  }
+};
+
+// Delete an NPC
+export const deleteNpc = async (id) => {
+  try {
+    if (!validateObjectId(id)) {
+      throw new Error("Invalid NPC ID format");
+    }
+
+    const result = await db.collection(collectionName).deleteOne({ _id: new ObjectId(id) });
+    return result;
+  } catch (error) {
+    console.error(`Error deleting NPC ID ${id}:`, error);
     throw error;
   }
 };

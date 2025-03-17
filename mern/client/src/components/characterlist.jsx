@@ -10,29 +10,71 @@ const CharacterList = ({ campaignID }) => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [expandedCharacter, setExpandedCharacter] = useState(null);
+    
+    const blankCharacter = {
+        name: "",
+        alignment: "",
+        race: "",
+        class: "",
+        speed: 0,
+        hitDice: "",
+        proficiencies: [],
+        stats: { strength: 10, dexterity: 10, constitution: 10, intelligence: 10, wisdom: 10, charisma: 10 },
+        size: "",
+        size_description: "",
+        languages: [],
+        language_desc: "",
+        traits: [],
+        startingProficiencies: [],
+        classProficiencies: [],
+        level: 1,
+        classFeatures: [],
+    }
+
+    const fetchCharacters = async () => {
+        try {
+            if (!campaignID || !token) return;
+            setLoading(true);
+            const data = await fetchCharactersByCampaign(campaignID, token);
+            setCharacters(Array.isArray(data) ? data : []);
+        } catch (err) {
+            console.error("Error fetching characters:", err);
+            setError("Failed to load characters.");
+        } finally {
+            setLoading(false);
+        }
+    };
 
     useEffect(() => {
-        if (!campaignID || !token) return; // Wait for token before fetching
+        // if (!campaignID || !token) return; // Wait for token before fetching
 
-        const loadCharacters = async () => {
-            try {
-                setLoading(true);
-                const data = await fetchCharactersByCampaign(campaignID, token);
-                setCharacters(Array.isArray(data) ? data : []);
-            } catch (err) {
-                console.error("Error fetching characters:", err);
-                setError("Failed to load characters.");
-            } finally {
-                setLoading(false);
-            }
-        };
+        // const loadCharacters = async () => {
+        //     try {
+        //         setLoading(true);
+        //         const data = await fetchCharactersByCampaign(campaignID, token);
+        //         setCharacters(Array.isArray(data) ? data : []);
+        //     } catch (err) {
+        //         console.error("Error fetching characters:", err);
+        //         setError("Failed to load characters.");
+        //     } finally {
+        //         setLoading(false);
+        //     }
+        // };
 
-        loadCharacters();
+        fetchCharacters();
     }, [campaignID, token]); // Fetch when campaignID or token changes
 
-    const toggleCharacter = (characterId) => {
-        setExpandedCharacter(expandedCharacter === characterId ? null : characterId);
-    };
+    // const toggleCharacter = (characterId) => {
+    //     setExpandedCharacter(expandedCharacter === characterId ? null : characterId);
+    // };
+
+    const handleCancel = () => {
+        setExpandedCharacter(null);
+    }
+
+    const refreshCharacters = () => {
+        fetchCharacters();
+    }
 
     return (
         <div className="p-4 bg-light-tan text-lg rounded-lg">
@@ -49,22 +91,35 @@ const CharacterList = ({ campaignID }) => {
                     {characters.map((char) => (
                         <li key={char._id} className="py-2">
                             <button
-                                onClick={() => toggleCharacter(char._id)}
+                                onClick={() => setExpandedCharacter(expandedCharacter === char._id ? null : char._id)}
                                 className="w-full text-left font-semibold text-blue-600 hover:underline focus:outline-none"
                             >
-                                {`${char.name} ${char._id}`} {expandedCharacter === char._id ? "▲" : "▼"}
+                                {`${char.name}`} {expandedCharacter === char._id ? "▲" : "▼"}
                             </button>
 
                             {expandedCharacter === char._id && (
                                 <div className="mt-2 p-4 border rounded-lg bg-gray-50">
                                     {/* {console.log("characterlist - character: ", char)} */}
-                                    <CharacterDisplay character={char} />
+                                    <CharacterDisplay character={char} onCancel={() => setExpandedCharacter(null)}
+                                    refreshCharacters={refreshCharacters} />
                                 </div>
                             )}
                         </li>
                     ))}
                 </ul>
             )}
+                {expandedCharacter === "new" && (
+                    <div className="mt-4 p-4 border rounded-lg bg-gray-50">
+                        <CharacterDisplay character={blankCharacter} isNew={true} onCancel={handleCancel} />
+                    </div>
+            )}
+
+            <button
+                onClick={() => setExpandedCharacter("new")}
+                className="mt-2 bg-goblin-green text-xl text-gold px-4 py-2 rounded-full shadow-sm shadow-amber-800"
+            >
+                +
+            </button>
         </div>
     );
 };

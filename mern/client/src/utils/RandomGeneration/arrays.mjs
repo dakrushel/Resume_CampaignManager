@@ -1,4 +1,4 @@
-//Nearly all names were unabashedly taken from ChatGDT
+//Nearly all names were unabashedly taken from ChatGPT
 
 //==================================== PC/NPC NAMES ====================================
 //Human names

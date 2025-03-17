@@ -127,7 +127,7 @@ const characterToString = (character) => {
     if (!(character instanceof BaseCharacter)) {
         throw new Error("Character must extend BaseCharacter");
     }
-    return `Name :     ${character.charName}\n` +
+    return `Name:      ${character.charName}\n` +
            `Age:       ${character.age}\n` +
            `Race:      ${character.race}\n` +
            `Gender:    ${character.gender}\n` +
@@ -140,9 +140,9 @@ const characterToString = (character) => {
            `Vices:     ${character.vices}\n` +
            `Virtues:   ${character.virtues}\n` +
            `Ideals:    ${character.ideals}\n`+
-           `Class:    ${character.className}\n`;
+           `Class:     ${character.className}\n`;
 }
 export{randGen, characterToString};
 
 const test = randGen();
-console.log(characterToString(test));
+console.log(randGen());

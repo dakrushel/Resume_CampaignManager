@@ -9,7 +9,7 @@ import CharacterStats from "./characterstats";
 import { useAuthToken } from "./characterAPIs/useauthtoken";
 import { PropTypes } from "prop-types";
 
-const CharacterDisplay = ({ character }) => {
+const CharacterDisplay = ({ character, isNew, onCancel, refreshCharacters }) => {
   const [selectedClass, setSelectedClass] = useState("");
   const [characterLevel, setCharacterLevel] = useState(1);
   const token = useAuthToken(); // Get the authentication token
@@ -23,7 +23,11 @@ const CharacterDisplay = ({ character }) => {
         onLevelChange={setCharacterLevel}
         displayedCharacter={character}
         token={token}
+        isNew={isNew}
+        onCancel={onCancel}
+        refreshCharacters={refreshCharacters}  // Pass it down
       />
+
     </div>
   );
 };
@@ -44,6 +48,9 @@ CharacterDisplay.propTypes = {
       })
     ),
   }).isRequired,
+  isNew: PropTypes.bool,
+  onCancel: PropTypes.func,
+  refreshCharacters: PropTypes.func.isRequired,
 };
 
 export default CharacterDisplay;

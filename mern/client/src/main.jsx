@@ -15,9 +15,9 @@ import CampaignOverview from "./components/campaignoverview";
 import LocationItem from "./components/locationitem";
 // import CharacterOverview from "./components/characteroverview";
 import Notes from "./components/noteitem";
-import MonsterOverview from "./components/monsteroverview";
+import MonsterItem from "./components/monsteritem";
 import APISearch from "./components/search";
-import Rulebook from "./components/rulebook";
+import RulesLookUp from "./components/rulebook";
 import Home from "./components/home";
 import CharacterDisplay from "./components/characterdisplay";
 
@@ -41,9 +41,9 @@ ReactDOM.createRoot(document.getElementById("root")).render(
           <Route path="/locations/:id" element={<LocationItem />} />
           <Route path="/notes" element={<Notes />} />
           {/* <Route path="/characters" element={<CharacterOverview />} /> */}
-          <Route path="/monsters" element={<MonsterOverview />} />
+          <Route path="/monsters" element={<MonsterItem />} />
           <Route path="/search" element={<APISearch />} />
-          <Route path="/rules" element={<Rulebook />} />
+          <Route path="/rules" element={<RulesLookUp />} />
           <Route path="/characterdisplay" element={<CharacterDisplay/>} />
         </Routes>
         <App/>
