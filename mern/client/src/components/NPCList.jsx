@@ -34,11 +34,19 @@ export default function NPCList({ campaignID, locationID }) {
             const response = await fetch(endpoint, {
                 headers: { Authorization: `Bearer ${token}` },
             });
-
-            if (!response.ok) throw new Error(`Error fetching NPCs: ${response.statusText}`);
-
+            if (!response.ok) {
+                if (response.status === 404) {
+                    setNpcs([]); // Ensure it sets an empty array instead of throwing an error
+                    return;
+                }
+                throw new Error(`Error fetching NPCs: ${response.statusText}`);
+            }
             const data = await response.json();
-            if (!Array.isArray(data)) throw new Error("Invalid response: Expected an array of NPCs.");
+            console.log("Fetched NPCs: ", data);
+
+            if (!Array.isArray(data)) {
+                throw new Error("Invalid response: Expected an array of NPCs.");
+            }
 
             setNpcs(data);
         } catch (err) {

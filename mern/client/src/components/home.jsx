@@ -4,7 +4,16 @@ import LogoutButton from "./logoutbutton";
 import { NavLink } from "react-router-dom";
 
 export default function Home(){
-    const {isAuthenticated} = useAuth0();
+    const {isAuthenticated, user} = useAuth0();
+    window.localStorage.setItem("selectedCampaign", "")
+    if (isAuthenticated){
+        window.localStorage.setItem("userId", `${user.sub}`)
+        console.log(window.localStorage.getItem("userId"))
+    } else {
+        window.localStorage.setItem("userId", "")
+        console.log(window.localStorage.getItem("userId"))
+    }
+    
 
     const textStyle = "text-2xl mb-4 text-brown"
 
@@ -15,7 +24,7 @@ export default function Home(){
             {!isAuthenticated && <LoginButton/>}
             {isAuthenticated && <p className={textStyle}>Welcome back, dungeon master! Your campaigns await.</p>}
             {isAuthenticated && <div>
-                <NavLink className="inline-block text-xl rounded-lg py-4 mr-2 w-36 text-gold bg-goblin-green font-semibold"
+                <NavLink className="button shadow-md shadow-amber-800 inline-block text-xl rounded-lg py-4 mr-2 w-36 text-gold bg-goblin-green font-semibold"
                     to="/campaigns">Campaigns</NavLink> 
                 <LogoutButton/>
             </div>}

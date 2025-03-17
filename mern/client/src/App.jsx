@@ -9,7 +9,6 @@ import { useState } from 'react';
 function App() {
   const { isAuthenticated } = useAuth0();
   const [showNav, setShowNav] = useState(false);
-
   function changeShowNav(){
     setShowNav(!showNav);
     console.log(showNav);
@@ -19,7 +18,7 @@ function App() {
     <div className="w-full p-6">
       <Header showMenuFunc={changeShowNav}/>
       {isAuthenticated && showNav && <Navbar/>}
-      <Outlet />
+      <Outlet/>
     </div>
   )
 }

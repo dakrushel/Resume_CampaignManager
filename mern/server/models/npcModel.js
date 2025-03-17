@@ -35,9 +35,6 @@ export const getNPCById = async (id) => {
 // Add a new NPC
 export const addNPC = async (npcData) => {
   try {
-    if (!ObjectId.isValid(npcData.characterID)) {
-      throw new Error("Invalid character ID format");
-    }
 
     // Ensure campaignID and locationID are strings
     npcData.campaignID = String(npcData.campaignID);

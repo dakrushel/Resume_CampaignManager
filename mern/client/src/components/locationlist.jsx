@@ -64,11 +64,13 @@ export default function LocationList({ parentLocationID, locationType, campaignI
         setShowForm(false); // Hide the form after saving
     };
 
-    if (loading) return <p className="text-lg text-brown">Loading campaigns...</p>;
+    if (loading) return (<div>
+        {/* <img src="/loader.gif" height="128" width="128"/> */}
+        <p className="bg-light-tan text-lg p-2 text-brown rounded">Loading locations...</p></div>);
     if (error)
         return (
-            <div className="bg-cancel-red text-gold p-2 rounded">
-                <p>Error: {error}</p>
+            <div className="bg-light-tan font-bold text-lg text-red-800 p-2 rounded">
+                <p>Error: {error}. Sorry!</p>
             </div>
         );
 
@@ -80,7 +82,7 @@ export default function LocationList({ parentLocationID, locationType, campaignI
                 locations.map((location) => (
                     <div key={location._id} className="p-2 border-b border-brown rounded">
                         <Link to={`/locations/${location._id}`} className="text-xl font-bold hover:underline">
-                            {location.name} ({location.parentLocationID})
+                            {location.name}
                         </Link>
                     </div>
                 ))

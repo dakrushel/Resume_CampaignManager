@@ -87,8 +87,10 @@ export default function NoteList({ parentLocationID, campaignID }) {
         setNotes((prevNotes) => prevNotes.filter((note) => note._id !== deletedNoteID));
     }
 
-    if (loading) return <p className="text-brown">Loading notes...</p>;
-    if (error) return <p className="bg-cancel-red text-gold">{error}</p>;
+    if (loading) return <div>
+        {/* <img src="/loader.gif" height="128" width="128"/> */}
+        <p className="text-brown text-lg">Loading notes...</p></div>;
+    if (error) return <p className="bg-light-tan text-red-800 font-bold text-lg">Error: {error}. Sorry!</p>;
 
     return (
         <div className="p-4 bg-light-tan rounded-lg">

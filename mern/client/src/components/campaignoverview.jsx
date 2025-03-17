@@ -1,28 +1,34 @@
 import { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, Link } from "react-router-dom";
 import LocationList from "./locationlist";
 import NotesList from "./noteslist";
+import CharacterList from "./characterlist";
 import { useAuth0 } from "@auth0/auth0-react";
 import SanitizeData from "../utils/santitization.mjs";
 
+
 export default function CampaignOverview() {
+    const userId = window.localStorage.getItem("userId")
     const { id } = useParams();
     const navigate = useNavigate();
     const isNew = id === "new";
-
     const [campaign, setCampaign] = useState(null);
     const [loading, setLoading] = useState(!isNew);
     const [error, setError] = useState(null);
     const [editMode, setEditMode] = useState(isNew);
-    const [formData, setFormData] = useState({ title: "", description: "", createdBy: "DungeonMaster123" });
     const [saving, setSaving] = useState(false); // Prevent duplicate submissions
     const [showNotes, setShowNotes] = useState(false);
-
+    const [showCharacters, setShowCharacters] = useState(false);
     const [showPlanes, setShowPlanes] = useState(false);
     const [showRealms, setShowRealms] = useState(false);
     const [showCountries, setShowCountries] = useState(false);
     const [showRegions, setShowRegions] = useState(false);
+    const [formData, setFormData] = useState({ title: "", description: "", createdBy: userId});
     const { getAccessTokenSilently } = useAuth0();
+
+    window.localStorage.setItem("selectedCampaign", id)
+    
+    
 
     useEffect(() => {
         if (isNew) return;
@@ -30,6 +36,7 @@ export default function CampaignOverview() {
         const fetchCampaign = async () => {
             try {
                 const token = await getAccessTokenSilently({ audience: "https://campaignapi.com" });
+                console.log(token)
                 const response = await fetch(`http://localhost:5050/campaigns/${id}`, {
                     headers: {
                         Authorization: `Bearer ${token}`,
@@ -66,10 +73,9 @@ export default function CampaignOverview() {
                 method: "POST",
                 headers: { "Content-Type": "application/json",
                     Authorization: `Bearer ${token}`,
-                 },
+                },
                 body: JSON.stringify(formData),
             });
-
             if (!response.ok) throw new Error("Failed to create campaign");
 
             const createdCampaign = await response.json();
@@ -99,10 +105,9 @@ export default function CampaignOverview() {
                 method: "PUT",
                 headers: { "Content-Type": "application/json",
                     Authorization: `Bearer ${token}`,
-                 },
-                body: JSON.stringify({ ...formData, createdBy: campaign.createdBy || "DungeonMaster123" }),
+                },
+                body: JSON.stringify({ ...formData, createdBy: campaign.createdBy || userId }),
             });
-
             if (!response.ok) throw new Error("Failed to update campaign");
 
             setCampaign({ ...campaign, ...formData });
@@ -122,6 +127,7 @@ export default function CampaignOverview() {
                 method: "DELETE",
                 Authorization: `Bearer ${token}`,
             });
+            console.log(response)
             if (!response.ok) throw new Error("Failed to delete campaign");
             navigate("/campaigns");
         } catch (error) {
@@ -137,8 +143,9 @@ export default function CampaignOverview() {
     if (loading) return <p className="text-lg text-brown">Loading campaign details...</p>;
     if (error)
         return (
-            <div className="bg-cancel-red text-gold p-2 rounded">
-                <p>Error: {error}</p>
+            <div className="mt-16 p-4 bg-cream text-red-800 text-lg p-2 rounded">
+                <p className="mb-4">Error: {error}. Sorry! </p>
+                <Link to="/campaigns" className="button bg-goblin-green text-gold font-bold px-4 py-2 rounded mb-4">Take me back</Link>
             </div>
         );
 
@@ -176,14 +183,14 @@ export default function CampaignOverview() {
                 <div className="flex space-x-2">
                     <button 
                         onClick={isNew ? handleSave : handleUpdate} 
-                        className={`px-4 py-2 rounded ${saving ? "bg-tan" : "bg-goblin-green text-gold"}`}
+                        className={`px-4 py-2 rounded button ${saving ? "bg-tan" : "bg-goblin-green text-gold"}`}
                         disabled={saving}
                     >
                         {saving ? "Saving..." : "Save"}
                     </button>
                     <button 
                         onClick={handleCancel} 
-                        className="bg-cancel-red text-gold px-4 py-2 rounded"
+                        className="bg-cancel-red text-gold button px-4 py-2 rounded"
                     >
                         Cancel
                     </button>
@@ -196,10 +203,10 @@ export default function CampaignOverview() {
                     <div className="flex space-x-2 mt-4 items-center justify-center mb-4">
                         {!isNew && (
                             <>
-                                <button onClick={() => setEditMode(true)} className="bg-goblin-green text-gold px-4 py-2 rounded shadow-sm shadow-amber-700">
+                                <button onClick={() => setEditMode(true)} className="button bg-goblin-green text-gold font-bold px-4 py-2 rounded shadow-sm shadow-amber-700">
                                     Edit Campaign
                                 </button>
-                                <button onClick={handleDelete} className="bg-cancel-red text-gold px-4 py-2 rounded shadow-sm shadow-amber-700">
+                                <button onClick={handleDelete} className="button bg-cancel-red text-gold px-4 py-2 font-bold rounded shadow-sm shadow-amber-700">
                                     Delete Campaign
                                 </button>
                             </>
@@ -208,39 +215,48 @@ export default function CampaignOverview() {
                 </>
             )}
 
-            {/* Notes Section */}
-            <button onClick={() => setShowNotes(!showNotes)} className="mt-2 text-lg font-semibold">
-                Notes {showNotes ? "▲" : "▼"}
-            </button>
-            {
-                showNotes && <NotesList campaignID={id} />
-            }
+
+            <div className="flex flex-col">
+                {/* Notes Section */}
+                <button onClick={() => setShowNotes(!showNotes)} className="mt-2 text-lg hover:underline font-semibold">
+                    Notes {showNotes ? "▲" : "▼"}
+                </button>
+                {
+                    showNotes && <NotesList campaignID={id} />
+                }
+
+                {/* Player Characters */}
+                <button onClick={() => setShowCharacters(!showCharacters)} className="text-lg hover:underline font-semibold">
+                    Player Characters {showCharacters ? "▲" : "▼"}
+                </button>
+                {showCharacters && <CharacterList campaignID={id} />}
+            </div>
 
             {!isNew && (
                 <>
                     <div>
-                        <button onClick={() => setShowPlanes(!showPlanes)} className="text-lg font-semibold">
+                        <button onClick={() => setShowPlanes(!showPlanes)} className="text-lg hover:underline font-semibold">
                             Planes {showPlanes ? "▲" : "▼"}
                         </button>
                         {showPlanes && <LocationList parentLocationID={null} locationType="Plane" campaignID={id} isOverview={true}/>}
                     </div>
 
                     <div>
-                        <button onClick={() => setShowRealms(!showRealms)} className="text-lg font-semibold">
+                        <button onClick={() => setShowRealms(!showRealms)} className="text-lg hover:underline font-semibold">
                             Realms {showRealms ? "▲" : "▼"}
                         </button>
                         {showRealms && <LocationList parentLocationID={null} locationType="Realm" campaignID={id} isOverview={true} />}
                     </div>
 
                     <div>
-                        <button onClick={() => setShowCountries(!showCountries)} className="text-lg font-semibold">
+                        <button onClick={() => setShowCountries(!showCountries)} className="text-lg hover:underline font-semibold">
                             Countries {showCountries ? "▲" : "▼"}
                         </button>
                         {showCountries && <LocationList parentLocationID={null} locationType="Country" campaignID={id} isOverview={true} />}
                     </div>
 
                     <div>
-                        <button onClick={() => setShowRegions(!showRegions)} className="text-lg font-semibold">
+                        <button onClick={() => setShowRegions(!showRegions)} className="text-lg hover:underline font-semibold">
                             All Regions {showRegions ? "▲" : "▼"}
                         </button>
                         {showRegions && <LocationList parentLocationID={null} locationType="Region" campaignID={id} isOverview={true} />}

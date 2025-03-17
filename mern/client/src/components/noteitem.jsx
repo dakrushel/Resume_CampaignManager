@@ -44,7 +44,7 @@ export default function NoteItem({ note, campaignID, parentLocationID, onNoteUpd
     }
 
     return (
-        <div className="p-2 border-b bg-white rounded-md shadow">
+        <div className="p-2 border-b bg-cream border-brown rounded-md shadow shadow-amber-800">
             <button onClick={() => setExpanded(!expanded)} className="text-lg font-semibold">
                 {expanded ? "▼" : "▶"} {note.title}
             </button>
@@ -61,13 +61,13 @@ export default function NoteItem({ note, campaignID, parentLocationID, onNoteUpd
                             onCancel={() => setEditMode(false)} />
                     ) : (
                         <>
-                            <p className="p-2 bg-gray-100 rounded">{note.body}</p>
-                            <button onClick={handleEditClick} className="mt-2 bg-blue-600 text-white px-3 py-1 rounded">
+                            <p className="p-2 bg-light-tan rounded">{note.body}</p>
+                            <button onClick={handleEditClick} className="mt-2 bg-goblin-green text-gold px-3 py-1 rounded">
                                 Edit
                             </button>
                             <button
                                     onClick={handleDelete}
-                                    className={`bg-red-600 text-white px-3 py-1 rounded ${deleting ? "opacity-50" : ""}`}
+                                    className={`bg-cancel-red text-gold px-3 py-1 rounded ${deleting ? "opacity-50" : ""}`}
                                     disabled={deleting}
                                 >
                                     {deleting ? "Deleting..." : "Delete"}

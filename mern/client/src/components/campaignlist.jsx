@@ -9,6 +9,8 @@ export default function CampaignList() {
     const { getAccessTokenSilently } = useAuth0();
     const navigate = useNavigate();
 
+    const userId = window.localStorage.getItem("userId")
+
     useEffect(() => {
         const fetchCampaigns = async () => {
             try {
@@ -23,7 +25,13 @@ export default function CampaignList() {
                 }
 
                 const data = await response.json();
-                setCampaigns(data);
+                let myCampaigns = []
+                for (let i = 0; i < data.length; i++) {
+                    if (data[i].createdBy == userId){
+                        myCampaigns = [...myCampaigns, data[i]]
+                    }
+                }
+                setCampaigns(myCampaigns);
             } catch (err) {
                 console.error("Failed to fetch campaigns:", err);
                 setError(err.message);
@@ -39,11 +47,11 @@ export default function CampaignList() {
         navigate("/campaigns/new");
     };
 
-    if (loading) return <p className="text-lg text-brown">Loading campaigns...</p>;
+    if (loading) return (<div className="mt-16 flex flex-col justify-center items-center"><img src="/loader.gif" height="256" width="256"/><p className="text-lg text-brown">Loading campaigns...</p></div>);
     if (error)
         return (
-            <div className="bg-cancel-red text-gold p-2 rounded">
-                <p>Error: {error}</p>
+            <div className="mt-16 bg-light-tan text-lg text-red-800 p-2 rounded">
+                <p>Error: {error}. Sorry!</p>
             </div>
         );
 
@@ -54,20 +62,22 @@ export default function CampaignList() {
             {campaigns.length === 0 ? (
                 <div className="text-center">
                     <p className="text-lg">No campaigns available.</p>
-                    <button onClick={handleCreateCampaign} className="mt-2 bg-goblin-green text-gold px-4 py-2 rounded shadow-sm shadow-amber-800">
+                    <button onClick={handleCreateCampaign} className="mt-2 bg-goblin-green text-gold px-4 py-2 rounded shadow-sm shadow-amber-800 button">
                         Create One
                     </button>
                 </div>
             ) : (
                 campaigns.map((campaign) => (
                     <div key={campaign._id} className="p-2 border-b border-brown rounded">
-                        <Link to={`/campaigns/${campaign._id}`} className="text-xl text-brown font-bold hover:underline">
+                        <Link to={`/campaigns/${campaign._id}`} 
+                        className="text-xl text-brown font-bold hover:underline"
+                        onClick={()=> this.forceUpdate()}>
                             {campaign.title}
                         </Link>
                     </div>
                 ))
             )}
-            <button onClick={handleCreateCampaign} className="mt-2 bg-goblin-green text-xl text-gold px-4 py-2 rounded-full shadow-sm shadow-amber-800">
+            <button onClick={handleCreateCampaign} className="mt-2 bg-goblin-green text-xl text-gold px-4 py-2 rounded-full shadow-sm shadow-amber-800 button">
                 +
             </button>
         </div>

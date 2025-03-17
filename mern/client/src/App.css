@@ -50,3 +50,11 @@
 .no-scroll {
   overflow: hidden;
 }
+
+.button:hover{
+  filter: brightness(1.30);
+}
+
+.button:active{
+  filter: brightness(0.75);
+}

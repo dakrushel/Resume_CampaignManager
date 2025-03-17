@@ -13,18 +13,21 @@ import "./index.css";
 import CampaignList from "./components/campaignlist";
 import CampaignOverview from "./components/campaignoverview";
 import LocationItem from "./components/locationitem";
-import CharacterOverview from "./components/characteroverview";
+// import CharacterOverview from "./components/characteroverview";
 import Notes from "./components/noteitem";
 import MonsterOverview from "./components/monsteroverview";
 import APISearch from "./components/search";
 import Rulebook from "./components/rulebook";
 import Home from "./components/home";
+import CharacterDisplay from "./components/characterdisplay";
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
     <Auth0Provider
       domain="dev-rq4jo6f1866uwndl.us.auth0.com"
       clientId="Tu11UqJ5IwIO4KINfmAckutSS005Wh02"
+      //note: this is mildly unsecure BUT should allow page refreshes
+      cacheLocation="localstorage"
       authorizationParams={{
         redirect_uri: window.location.origin,
         audience: "https://campaignapi.com"
@@ -37,14 +40,16 @@ ReactDOM.createRoot(document.getElementById("root")).render(
           <Route path="/campaigns/:id" element={<CampaignOverview />} />
           <Route path="/locations/:id" element={<LocationItem />} />
           <Route path="/notes" element={<Notes />} />
-          <Route path="/characters" element={<CharacterOverview />} />
+          {/* <Route path="/characters" element={<CharacterOverview />} /> */}
           <Route path="/monsters" element={<MonsterOverview />} />
           <Route path="/search" element={<APISearch />} />
           <Route path="/rules" element={<Rulebook />} />
+          <Route path="/characterdisplay" element={<CharacterDisplay/>} />
         </Routes>
         <App/>
       </BrowserRouter>
     </Auth0Provider>
   </React.StrictMode>
+  
   
 );
