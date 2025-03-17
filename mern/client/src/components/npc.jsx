@@ -52,7 +52,7 @@ export default function NpcItem({ npc, campaignID, parentLocationID, onNpcUpdate
     return (
         <div className="p-2 border-b bg-cream border-brown rounded-md shadow shadow-amber-800">
             <button onClick={() => setExpanded(!expanded)} className="text-lg font-semibold flex items-center">
-                {expanded ? "▼" : "▶"} {npcData.charName}
+                {expanded ? "▲" : "▼"} {npcData.charName}
             </button>
 
             {expanded && (

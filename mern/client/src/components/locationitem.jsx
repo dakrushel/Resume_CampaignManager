@@ -8,6 +8,8 @@ import EventList from "./eventlist";
 import NPCList from "./NPCList";
 import { useAuth0 } from "@auth0/auth0-react";
 import loader from "../graphics/loader.gif";
+import MonstersList from "./monsterlist";
+import ItemList from "./itemlist";
 
 
 export default function LocationItem() {
@@ -57,6 +59,7 @@ export default function LocationItem() {
     const [showNotes, setShowNotes] = useState(false);
     const [showEvents, setShowEvents] = useState(false);
     const [showNPCs, setShowNPCs] = useState(false);
+    const [showMonsters, setShowMonsters] = useState(false);
     const [showItems, setShowItems] = useState(false);
     const [showSublocations, setShowSublocations] = useState(false);
 
@@ -255,7 +258,7 @@ export default function LocationItem() {
                         showEvents && <EventList parentLocationID={location?._id} campaignID={formData.campaignID} />
                     }
 
-                    {/* NPCs & Items (Only for Regions and Sites) */}
+                    {/* NPCs, Monsters & Items (Only for Regions and Sites) */}
                     {["Region", "Site"].includes(formData.locationType) && (
                         <>
                             <button onClick={() => setShowNPCs(!showNPCs)} className="mt-2 underline">
@@ -265,9 +268,19 @@ export default function LocationItem() {
                                 showNPCs && <NPCList parentLocationID={location?._id} campaignID={formData.campaignID} />
                             }
 
+                            <button onClick={() => setShowMonsters(!showMonsters)} className="mt-2 underline">
+                                Monsters {showMonsters ? "▲" : "▼"}
+                            </button>
+                            {
+                                showMonsters && <MonstersList parentLocationID={location?._id} campaignID={formData.campaignID} />
+                            }
+                            
                             <button onClick={() => setShowItems(!showItems)} className="mt-2 underline">
                                 Items {showItems ? "▲" : "▼"}
                             </button>
+                            {
+                                showItems && <ItemList parentLocationID={location?._id} campaignID={formData.campaignID} />
+                            }
                         </>
                     )}
 
