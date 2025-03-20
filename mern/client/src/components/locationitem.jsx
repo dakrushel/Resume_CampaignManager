@@ -178,7 +178,7 @@ export default function LocationItem() {
                 throw new Error(errorResponse.error || "Failed to delete location");
             }
             
-            const redirectPath = parentLocationID ? `/location/${parentLocationID}` : "/campaigns";
+            const redirectPath = parentLocationID ? `/location/${parentLocationID}` : `/campaigns/${window.localStorage.getItem("selectedCampaign")}`;
             navigate(redirectPath);
         } catch (error) {
             console.error(error);
@@ -227,23 +227,24 @@ export default function LocationItem() {
                     onCancel={handleCancel}
                 />
             ) : (
-                <>
+                <div className="flex flex-col">
                     <h1 className="text-3xl sancreek-regular">{location.name || "Unknown Location"}</h1>
                     <p className="text-lg italic px-4 py-2">{location.description || "No description available."}</p>
                     <p><strong>Campaign:</strong> {campaignName || "Unspecified Campaign"}</p>
-                    {formData.locationType !== "Plane" && (<p><strong>Parent Location:</strong> {parentLocationName || "Unspecified Parent Location"}</p>)}
+                    {formData.locationType !== "Plane" && (<p><strong>Located in:</strong> {parentLocationName || "Unspecified Parent Location"}</p>)}
+                    <p>Children: luslbadfl, slkjhedfsuh</p>
                     {/* <p><strong>Location Type:</strong> {formData.locationType}</p> */}
-                    <div className="flex space-x-2 mt-4">
-                        <button onClick={() => setEditMode(true)} className="bg-goblin-green text-gold px-4 py-2 rounded">
+                    <div className="flex space-x-2 mt-4 mx-auto">
+                        <button onClick={() => setEditMode(true)} className="bg-goblin-green font-bold button shadow-sm shadow-amber-700 hover:shadow-amber-900 text-gold px-4 py-2 rounded">
                             Edit Location
                         </button>
-                        <button onClick={handleDelete} className="bg-cancel-red text-gold px-4 py-2 rounded">
+                        <button onClick={handleDelete} className="bg-cancel-red font-bold button hover:shadow-sm shadow-sm shadow-amber-700 hover:shadow-amber-900 text-gold px-4 py-2 rounded">
                             Delete Location
                         </button>
                     </div>
 
                     {/* Notes Section */}
-                    <button onClick={() => setShowNotes(!showNotes)} className="mt-2 underline">
+                    <button onClick={() => setShowNotes(!showNotes)} className="mt-8 hover:underline font-bold text-lg">
                         Notes {showNotes ? "▲" : "▼"}
                     </button>
                     {
@@ -251,7 +252,7 @@ export default function LocationItem() {
                     }
 
                     {/* Events Section */}
-                    <button onClick={() => setShowEvents(!showEvents)} className="mt-2 underline">
+                    <button onClick={() => setShowEvents(!showEvents)} className="mt-2 hover:underline font-bold text-lg">
                         Events {showEvents ? "▲" : "▼"}
                     </button>
                     {
@@ -261,21 +262,21 @@ export default function LocationItem() {
                     {/* NPCs, Monsters & Items (Only for Regions and Sites) */}
                     {["Region", "Site"].includes(formData.locationType) && (
                         <>
-                            <button onClick={() => setShowNPCs(!showNPCs)} className="mt-2 underline">
+                            <button onClick={() => setShowNPCs(!showNPCs)} className="mt-2 hover:underline font-bold text-lg">
                                 NPCs {showNPCs ? "▲" : "▼"}
                             </button>
                             {
                                 showNPCs && <NPCList parentLocationID={location?._id} campaignID={formData.campaignID} />
                             }
 
-                            <button onClick={() => setShowMonsters(!showMonsters)} className="mt-2 underline">
+                            <button onClick={() => setShowMonsters(!showMonsters)} className="mt-2 hover:underline font-bold text-lg">
                                 Monsters {showMonsters ? "▲" : "▼"}
                             </button>
                             {
                                 showMonsters && <MonstersList parentLocationID={location?._id} campaignID={formData.campaignID} />
                             }
                             
-                            <button onClick={() => setShowItems(!showItems)} className="mt-2 underline">
+                            <button onClick={() => setShowItems(!showItems)} className="mt-2 hover:underline font-bold text-lg">
                                 Items {showItems ? "▲" : "▼"}
                             </button>
                             {
@@ -285,7 +286,7 @@ export default function LocationItem() {
                     )}
 
                     {/* Sublocations */}
-                    <button onClick={() => setShowSublocations(!showSublocations)} className="mt-2 underline">
+                    <button onClick={() => setShowSublocations(!showSublocations)} className="mt-2 hover:underline font-bold text-lg">
                         {getChildLocationType(formData.locationType) === "Country" ? ("Countries") : (`${getChildLocationType(formData.locationType)}s`)} {showSublocations ? "▲" : "▼"}
                     </button>
                     {showSublocations && <LocationList
@@ -293,7 +294,7 @@ export default function LocationItem() {
                         locationType={getChildLocationType(formData.locationType)}
                         campaignID={formData.campaignID} />}
 
-                </>
+                </div>
             )}
         </div>
     );

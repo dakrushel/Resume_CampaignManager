@@ -41,6 +41,7 @@ export default function LocationForm({ campaignID, parentLocationID, locationTyp
         }, [existingLocation, locationType, campaignID, parentLocationID]);
 
   //Fetch all campaigns
+  const userId = window.localStorage.getItem("userId")
   useEffect(() => {
       async function fetchCampaigns() {
         try {
@@ -51,8 +52,13 @@ export default function LocationForm({ campaignID, parentLocationID, locationTyp
             },
           });
           const data = await response.json();
-          console.log("Fetched campaigns: ", data);
-          setCampaigns(Array.isArray(data) ? data : []);
+          let myCampaigns = []
+                for (let i = 0; i < data.length; i++) {
+                    if (data[i].createdBy == userId){
+                        myCampaigns = [...myCampaigns, data[i]]
+                    }
+                }
+          setCampaigns(myCampaigns);
         } catch (error) {
           console.error("Failed to fetch Campaign: ", error);
         }
@@ -178,15 +184,15 @@ export default function LocationForm({ campaignID, parentLocationID, locationTyp
     // };
     
     return (
-        <div className="p-4 border rounded-lg bg-white shadow-md">
+        <div className="p-4 border-0 rounded-lg bg-cream shadow-md shadow-amber-800">
             <h2 className="text-xl font-bold">Create New Location</h2>
-            {error && <p className="text-red-500">{error}</p>}
+            {error && <p className="text-red-800">{error}</p>}
             <label>Campaign:</label>
             <select
                 name="campaignID"
                 value={formData.campaignID}
                 onChange={handleChange}
-                className="border p-2 w-full rounded"
+                className="border border-brown outline-none p-2 w-full rounded bg-cream hover:cursor-pointer hover:shadow-sm hover:shadow-amber-800"
             >
                 <option value="">Select a Campaign</option>
                 {campaigns.map(campaign => (
@@ -196,14 +202,14 @@ export default function LocationForm({ campaignID, parentLocationID, locationTyp
 
             {locationType !== "Plane" && (
                 <>
-                    <label>Parent Location:</label>
+                    <label>Located in:</label>
                     <select
                         name="parentLocationID"
                         value={formData.parentLocationID}
                         onChange={handleChange}
-                        className="border p-2 w-full rounded"
+                        className="border border-brown outline-none p-2 w-full rounded bg-cream hover:cursor-pointer hover:shadow-sm hover:shadow-amber-800"
                     >
-                        <option value="">Select a Parent Location</option>
+                        <option value="">Select a Location</option>
                         {parentLocations.map(location => (
                             <option key={location._id} value={location._id}>{location.name}</option>
                         ))}
@@ -211,7 +217,7 @@ export default function LocationForm({ campaignID, parentLocationID, locationTyp
                 </>
             )}
 
-            <form onSubmit={handleSave} className="space-y-3">
+            <form onSubmit={handleSave} className="mt-8 space-y-3">
                 <input
                     type="text"
                     name="name"
@@ -219,24 +225,28 @@ export default function LocationForm({ campaignID, parentLocationID, locationTyp
                     onChange={handleChange}
                     placeholder="Location Name"
                     required
-                    className="border p-2 w-full rounded"
+                    className="border border-brown p-2 w-full rounded bg-cream placeholder-yellow-700 outline-none 
+                    hover:shadow-sm hover:shadow-amber-800
+                    focus:shadow-sm focus:shadow-amber-600"
                 />
                 <textarea
                     name="description"
                     value={formData.description}
                     onChange={handleChange}
                     placeholder="Location Description"
-                    className="border p-2 w-full rounded"
+                    className="border border-brown p-2 w-full rounded bg-cream placeholder-yellow-700 outline-none 
+                    hover:shadow-sm hover:shadow-amber-800
+                    focus:shadow-sm focus:shadow-amber-600"
                 />
                 <div className="flex space-x-2">
                     <button
                         type="submit"
-                        className={`px-4 py-2 rounded ${saving ? "bg-gray-400" : "bg-blue-600 text-white"}`}
+                        className={saving ? "bg-tan font-bold text-brown px-4 py-2 rounded" : "button font-bold bg-goblin-green text-gold px-4 py-2 rounded hover:shadow-sm hover:shadow-amber-800"}
                         disabled={saving}
                     >
                         {saving ? "Saving..." : "Save"}
                     </button>
-                    <button type="button" onClick={onCancel} className="bg-gray-400 text-white px-4 py-2 rounded">
+                    <button type="button" onClick={onCancel} className="bg-cancel-red font-bold button text-gold px-4 py-2 rounded hover:shadow-sm hover:shadow-amber-800">
                         Cancel
                     </button>
 
