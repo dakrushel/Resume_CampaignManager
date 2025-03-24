@@ -26,7 +26,7 @@ export default function LocationForm({ campaignID, parentLocationID, locationTyp
     const [error, setError] = useState(null);
     const [campaigns, setCampaigns] = useState([]);
     const [parentLocation, setParentLocation] = useState();
-    const [parentLocations, setParentLocations] = useState([]);
+    const [parentLocations, setParentLocations] = useState([]); //locations PLURAL!!!! Very important
 
     useEffect(() => {
         if (existingLocation) {
@@ -46,12 +46,10 @@ export default function LocationForm({ campaignID, parentLocationID, locationTyp
         try {
           const token = await getAccessTokenSilently({ audience: "https://campaignapi.com" });
           const response = await fetch("http://localhost:5050/campaigns", {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
+            headers: { Authorization: `Bearer ${token}` },
           });
           const data = await response.json();
-          console.log("Fetched campaigns: ", data);
+          // console.log("Fetched campaigns: ", data);
           setCampaigns(Array.isArray(data) ? data : []);
         } catch (error) {
           console.error("Failed to fetch Campaign: ", error);
@@ -63,11 +61,11 @@ export default function LocationForm({ campaignID, parentLocationID, locationTyp
 
   // Fetch parent location data with authorization
   useEffect(() => {
-    if (!parentLocationID) return;
+    if (!formData.parentLocationID) return;
     async function fetchParentLocation() {
       try {
         const token = await getAccessTokenSilently({ audience: "https://campaignapi.com" });
-        const response = await fetch(`http://localhost:5050/locations/${parentLocationID}`, {
+        const response = await fetch(`http://localhost:5050/locations/${formData.parentLocationID}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         const data = await response.json();
@@ -77,28 +75,66 @@ export default function LocationForm({ campaignID, parentLocationID, locationTyp
       }
     }
     fetchParentLocation();
-  }, [parentLocationID, getAccessTokenSilently]);
+  }, [formData.parentLocationID, getAccessTokenSilently]);
 
   // Fetch parent locations based on the parent's location type with authorization
   useEffect(() => {
-    if (!parentLocation || !parentLocation.locationType) return;
+    if (!formData.locationType || !campaignID) return;
+  
     async function fetchParentLocations() {
       try {
         const token = await getAccessTokenSilently({ audience: "https://campaignapi.com" });
-        const response = await fetch(
-          `http://localhost:5050/locations/campaign/${campaignID}/type/${parentLocation.locationType}`,
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          }
-        );
-        const data = await response.json();
-        setParentLocations(Array.isArray(data) ? data : []);
+  
+        let combined = [];
+  
+        if (formData.locationType === "Site") {
+          // Fetch both Regions and Sites
+          const [regionRes, siteRes] = await Promise.all([
+            fetch(`http://localhost:5050/locations/campaign/${campaignID}/type/Region`, {
+              headers: { Authorization: `Bearer ${token}` },
+            }),
+            fetch(`http://localhost:5050/locations/campaign/${campaignID}/type/Site`, {
+              headers: { Authorization: `Bearer ${token}` },
+            }),
+          ]);
+  
+          const [regions, sites] = await Promise.all([
+            regionRes.json(),
+            siteRes.json(),
+          ]);
+  
+          combined = [
+            ...(Array.isArray(regions) ? regions : []),
+            ...(Array.isArray(sites) ? sites : []),
+          ];
+        } else {
+          // Fetch parent locations based on parentLocation's type
+          const parentType = parentLocation?.locationType;
+          if (!parentType) return;
+  
+          const response = await fetch(
+            `http://localhost:5050/locations/campaign/${campaignID}/type/${parentType}`,
+            { headers: { Authorization: `Bearer ${token}` } }
+          );
+  
+          const data = await response.json();
+          combined = Array.isArray(data) ? data : [];
+        }
+  
+        // Filter out self-reference if editing
+        if (existingLocation?._id) {
+          combined = combined.filter(loc => loc._id !== existingLocation._id);
+        }
+  
+        setParentLocations(combined);
       } catch (error) {
         console.error("Failed to fetch parent locations: ", error);
       }
     }
+  
     fetchParentLocations();
-  }, [parentLocation?.locationType, campaignID, getAccessTokenSilently]);
+  }, [formData.locationType, campaignID, parentLocation?.locationType, existingLocation?._id, getAccessTokenSilently]);
+  
     //Apparently you don't need to track all of parentLocation if you're only using parentLocation.locationType
     
     const handleChange = (e) => {
@@ -121,6 +157,21 @@ export default function LocationForm({ campaignID, parentLocationID, locationTyp
     
         try {
             const token = await getAccessTokenSilently({ audience: "https://campaignapi.com" });
+            
+//////////////////////////////////////////////            
+            // Determine nestDepth if location is a Site
+            if (formData.locationType === "Site") {
+              let nestDepth = 0;
+              const parentDepth = parseInt(parentLocation?.nestDepth);
+              if (!isNaN(parentDepth)) {
+                nestDepth = parentDepth + 1;
+              }
+              formData.nestDepth = nestDepth;
+              formData.children = []; // Start with no children
+          }            
+//////////////////////////////////////////////          
+
+            // Create or update location
             const response = await fetch(
               existingLocation
                 ? `http://localhost:5050/locations/${existingLocation._id}`
@@ -141,7 +192,64 @@ export default function LocationForm({ campaignID, parentLocationID, locationTyp
     
             createdLocation = await response.json();
             // console.log("Database confirmed update:", createdLocation);
-    
+
+            // If the parent is a Site, add this new location to its children
+            try {
+              const isSite = formData.locationType === "Site";
+              const isNew = !existingLocation;
+              const parentChanged = existingLocation &&
+                existingLocation.parentLocationID &&
+                formData.parentLocationID &&
+                existingLocation.parentLocationID !== formData.parentLocationID;
+            
+              if (isSite && isNew && parentLocation?.locationType === "Site") {
+                // New Site under a Site parent → add to parent's children[]
+                const patchRes = await fetch(`http://localhost:5050/locations/${parentLocation._id}/add-child`, {
+                  method: "PATCH",
+                  headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${token}`,
+                  },
+                  body: JSON.stringify({ childID: createdLocation._id }),
+                });
+            
+                if (!patchRes.ok) {
+                  const errText = await patchRes.text();
+                  throw new Error(`Failed to PATCH parent: ${patchRes.statusText} - ${errText}`);
+                }
+            
+                console.log("Successfully added new child to parent.");
+              }
+            
+              if (isSite && parentChanged) {
+                console.log("Parent has changed. Updating relationships...");
+            
+                // 1. Remove from old parent
+                await fetch(`http://localhost:5050/locations/${existingLocation.parentLocationID}/remove-child`, {
+                  method: "PATCH",
+                  headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${token}`,
+                  },
+                  body: JSON.stringify({ childID: existingLocation._id }),
+                });
+            
+                // 2. Add to new parent
+                await fetch(`http://localhost:5050/locations/${formData.parentLocationID}/add-child`, {
+                  method: "PATCH",
+                  headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${token}`,
+                  },
+                  body: JSON.stringify({ childID: createdLocation._id }),
+                });
+            
+                console.log("Parent-child relationship updated.");
+              }
+            } catch (err) {
+              console.error("PATCH error (add/remove child):", err);
+            }            
+            
             databaseReady = true; // Mark database as updated
             onSave(createdLocation); // Pass new location to parent component
     
@@ -151,7 +259,13 @@ export default function LocationForm({ campaignID, parentLocationID, locationTyp
                 console.error("Error: locationID is undefined. Cannot navigate.");
                 return;
             }
-    
+
+// //////////////////////////////////////////////
+//             if (locationID) {
+//               navigate(`/locations/${locationID}`, { state: { forceRefresh: true } });
+//             }            
+// //////////////////////////////////////////////
+
         } catch (error) {
             console.error(error);
             setError(error.message);
