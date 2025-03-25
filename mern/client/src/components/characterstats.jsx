@@ -10,12 +10,33 @@ import SpellSlotTracker from "./spellslottracker";
 import SpellModal from "./spellmodal";
 // import { wizardSpellSlots } from "./spelldata";
 import PropTypes from "prop-types";
-import { useAuthToken } from "./characterAPIs/useauthtoken"
-import { fetchRaces, fetchRaceDetails, fetchClasses, fetchClassDetails, fetchClassFeatures, fetchClassSpells } from "./characterAPIs/pc5eAPIs";
-import { createCharacter, modifyCharacter } from "./characterAPIs/pcMongoAPIs";
+import { useAuthToken } from "./characterAPIs/useauthtoken";
+import {
+  fetchRaces,
+  fetchRaceDetails,
+  fetchClasses,
+  fetchClassDetails,
+  fetchClassFeatures,
+  fetchClassSpells,
+} from "./characterAPIs/pc5eAPIs";
+import {
+  createCharacter,
+  modifyCharacter,
+  removeCharacter,
+} from "./characterAPIs/pcMongoAPIs";
 
-{/* CharacterStats use states, spells included */}
-const CharacterStats = ({ onClassSelect, characterLevel, onLevelChange, displayedCharacter, isNew, onCancel, refreshCharacters }) => {
+{
+  /* CharacterStats use states, spells included */
+}
+const CharacterStats = ({
+  onClassSelect,
+  characterLevel,
+  onLevelChange,
+  displayedCharacter,
+  isNew,
+  onCancel,
+  refreshCharacters,
+}) => {
   const [races, setRaces] = useState([]);
   const [classes, setClasses] = useState([]);
   // const [ characterLevel, setCharacterLevel] = useState(1);
@@ -26,13 +47,16 @@ const CharacterStats = ({ onClassSelect, characterLevel, onLevelChange, displaye
   const [selectedSpellLevel, setSelectedSpellLevel] = useState(null);
   const [spellsByLevel, setSpellsByLevel] = useState({});
   const [selectedSpells, setSelectedSpells] = useState([]);
-  const [selectedSpellForDescription, setSelectedSpellForDescription] = useState(null); // Track selected spell for description
+  const [selectedSpellForDescription, setSelectedSpellForDescription] =
+    useState(null); // Track selected spell for description
   const [initialCharacter, setInitialCharacter] = useState({});
   const [saving, setSaving] = useState(false); // Prevent duplicate submissions
   const token = useAuthToken();
   // const [setError] = useState(null);
 
-  {/* Base Stats for character */}
+  {
+    /* Base Stats for character */
+  }
   // const [baseStats, setBaseStats] = useState({
   //   strength: 10,
   //   dexterity: 10,
@@ -50,7 +74,14 @@ const CharacterStats = ({ onClassSelect, characterLevel, onLevelChange, displaye
     speed: 0,
     hitDice: "",
     proficiencies: [],
-    stats: { strength: 10, dexterity: 10, constitution: 10, intelligence: 10, wisdom: 10, charisma: 10 },
+    stats: {
+      strength: 10,
+      dexterity: 10,
+      constitution: 10,
+      intelligence: 10,
+      wisdom: 10,
+      charisma: 10,
+    },
     size: "",
     size_description: "",
     languages: [],
@@ -60,6 +91,8 @@ const CharacterStats = ({ onClassSelect, characterLevel, onLevelChange, displaye
     classProficiencies: [],
     level: 1, // Default level
     classFeatures: [],
+    spellSlots: {},
+    selectedSpells: [],
   });
 
   useEffect(() => {
@@ -69,7 +102,7 @@ const CharacterStats = ({ onClassSelect, characterLevel, onLevelChange, displaye
         ...prev,
         ...displayedCharacter, // Merge new values
       }));
-  
+
       // Set the initial character state
       setInitialCharacter(displayedCharacter);
     }
@@ -119,8 +152,9 @@ const CharacterStats = ({ onClassSelect, characterLevel, onLevelChange, displaye
         console.error("Error fetching spells:", error);
       }
     };
+
     fetchSpells();
-  }, [character.class]);
+  }, [character.class]); // Only re-run when class changes
 
   useEffect(() => {
     const updateSpellSlots = async () => {
@@ -142,21 +176,18 @@ const CharacterStats = ({ onClassSelect, characterLevel, onLevelChange, displaye
       setCharacter((prev) => ({ ...prev, race: "" }));
       return;
     }
- 
-    //this does not correctly map race details for some reason
+
     try {
-      console.log(raceIndex)
-      const raceDetails = await fetchRaceDetails(raceIndex)
-      // setRaceDetails(details)
-      console.log(raceDetails);
+      const raceDetails = await fetchRaceDetails(raceIndex);
       setCharacter((prev) => ({
         ...prev,
         race: raceDetails.name,
         size: raceDetails.size,
         size_description: raceDetails.size_description,
-        languages: raceDetails.languages ? raceDetails.languages.map(lang => lang.name) : [],
-        language_desc: raceDetails.language_desc,
-        traits: raceDetails.traits ? raceDetails.traits.map(trait => trait.name) : [],
+        speed: raceDetails.speed || 30, // Default speed if not provided
+        languages: raceDetails.languages?.map((lang) => lang.name) || [],
+        language_desc: raceDetails.language_desc || "",
+        traits: raceDetails.traits?.map((trait) => trait.name) || [],
       }));
     } catch (error) {
       console.error("Error fetching race details:", error);
@@ -191,7 +222,9 @@ const CharacterStats = ({ onClassSelect, characterLevel, onLevelChange, displaye
       const features = await fetchClassFeatures(classIndex, character.level);
       setCharacter((prev) => ({
         ...prev,
-        classFeatures: features.map((feature) => `Level ${feature.level}: ${feature.name}`),
+        classFeatures: features.map(
+          (feature) => `Level ${feature.level}: ${feature.name}`
+        ),
       }));
     } catch (error) {
       console.error("Error fetching class details:", error);
@@ -209,10 +242,15 @@ const CharacterStats = ({ onClassSelect, characterLevel, onLevelChange, displaye
 
     if (character.class) {
       try {
-        const features = await fetchClassFeatures(character.class, clampedLevel);
+        const features = await fetchClassFeatures(
+          character.class,
+          clampedLevel
+        );
         setCharacter((prev) => ({
           ...prev,
-          classFeatures: features.map((feature) => `Level ${feature.level}: ${feature.name}`),
+          classFeatures: features.map(
+            (feature) => `Level ${feature.level}: ${feature.name}`
+          ),
         }));
       } catch (error) {
         console.error("Error fetching class features:", error);
@@ -249,80 +287,167 @@ const CharacterStats = ({ onClassSelect, characterLevel, onLevelChange, displaye
   };
 
   const removeSpellFromCharacter = (spellIndex) => {
-    setSelectedSpells((prev) => prev.filter((_, index) => index !== spellIndex));
+    setSelectedSpells((prev) =>
+      prev.filter((_, index) => index !== spellIndex)
+    );
   };
 
   const handleSaveCharacter = async () => {
     if (saving) return;
     if (!token) {
-      console.error("Auth token is missing");
+      alert("Authentication error. Please log in again.");
       return;
     }
   
-    // Check if any fields have changed
-    const hasChanges = Object.keys(character).some(
-      (key) => character[key] !== initialCharacter[key]
-    );
+    // Enhanced validation with type checking
+    const requiredFields = {
+      name: { value: character.name, type: 'string' },
+      race: { value: character.race, type: 'string' },
+      class: { value: character.class, type: 'string' },
+      campaignID: { value: character.campaignID, type: 'string' }
+    };
   
-    if (!hasChanges) {
-      console.log("No changes detected, skipping save.");
+    const validationErrors = Object.entries(requiredFields)
+      .filter(([field, { value, type }]) => !value || typeof value !== type)
+      .map(([field]) => field);
+  
+    if (validationErrors.length > 0) {
+      alert(`Invalid or missing fields: ${validationErrors.join(', ')}`);
       return;
     }
   
     setSaving(true);
     try {
+      // Prepare character data for saving
+      const characterData = {
+        name: character.name,
+        race: character.race,
+        class: character.class,
+        level: parseInt(character.level) || 1,
+        alignment: character.alignment || "Unaligned",
+        stats: Object.fromEntries(
+          Object.entries(character.stats).map(([stat, value]) => [stat, parseInt(value) || 0])
+        ),
+        speed: parseInt(character.speed) || 30,
+        hitDice: character.hitDice,
+        proficiencies: character.proficiencies,
+        size: character.size,
+        size_description: character.size_description,
+        languages: character.languages,
+        language_desc: character.language_desc,
+        traits: character.traits,
+        startingProficiencies: character.startingProficiencies,
+        classProficiencies: character.classProficiencies,
+        classFeatures: character.classFeatures,
+        campaignID: character.campaignID.toString(),
+        selectedSpells: character.selectedSpells || [],
+      };
+
+      console.debug("Sending character data:", {
+        ...characterData,
+        stats: characterData.stats, // Already converted
+        token: token ? "***REDACTED***" : "MISSING"
+      });
+
+      console.log("Final payload being sent:", JSON.stringify(characterData, null, 2));
+      console.log("Auth token exists:", !!token);
+  
       let response;
+      const startTime = performance.now();
+      
       if (character._id) {
-        // If the character has an _id, it already exists in the database, so update it
-        response = await modifyCharacter(character._id, character, token);
+        console.log("Updating existing character with ID:", character._id);
+        response = await modifyCharacter(character._id, characterData, token);
       } else {
-        // If the character doesn't have an _id, it's new, so create it
-        response = await createCharacter(character, token);
+        console.log("Creating new character");
+        response = await createCharacter(characterData, token);
       }
-      alert("Character saved successfully!");
+  
+      const duration = performance.now() - startTime;
+      console.log(`API call took ${duration.toFixed(2)}ms`);
+      console.log("API response:", response);
+  
+      const apiStart = Date.now();
+  
+      console.log(`API call completed in ${Date.now() - apiStart}ms`, response);
+  
+      if (!response?._id) {
+        throw new Error("Server returned invalid response");
+      }
+  
+      alert(`Character ${character._id ? 'updated' : 'created'} successfully!`);
       if (refreshCharacters) refreshCharacters();
-      return response; // Optionally return the response for further processing
     } catch (error) {
-      console.error("Error saving character:", error);
-      alert("Failed to save character.");
+      console.error("Save operation failed:", {
+        error: error.message,
+        stack: error.stack,
+        characterData: {
+          ...character,
+          stats: character.stats,
+          campaignID: character.campaignID
+        },
+        time: new Date().toISOString()
+      });
+      
+      alert(`Save failed: ${error.message || 'Unknown server error'}`);
     } finally {
       setSaving(false);
     }
   };
 
-  
-
   const SpellDescriptionModal = ({ spell, onClose }) => {
     if (!spell) return null;
 
     return (
-        <div className="fixed inset-0 bg-tan bg-opacity-50 flex items-center justify-center p-4">
-            <div className="bg-light-tan p-6 rounded-lg shadow-lg max-w-2xl w-full max-h-[80vh] overflow-y-auto">
-                <h3 className="font-bold text-xl mb-4">{spell.name}</h3>
-                <p>{spell.desc || "No description available."}</p>
-                <button
-                    type="button"
-                    onClick={onClose}
-                    className="mt-4 p-2 bg-goblin-green text-gold rounded button"
-                >
-                    Close
-                </button>
-            </div>
+      <div className="fixed inset-0 bg-tan bg-opacity-50 flex items-center justify-center p-4">
+        <div className="bg-light-tan p-6 rounded-lg shadow-lg max-w-2xl w-full max-h-[80vh] overflow-y-auto">
+          <h3 className="font-bold text-xl mb-4">{spell.name}</h3>
+          <p>{spell.desc || "No description available."}</p>
+          <button
+            type="button"
+            onClick={onClose}
+            className="mt-4 p-2 bg-goblin-green text-gold rounded button"
+          >
+            Close
+          </button>
         </div>
+      </div>
     );
   };
 
   const handleStatChange = (stat, value) => {
     setCharacter((prev) => ({
-        ...prev,
-        stats: {
-            ...prev.stats,
-            [stat]: parseInt(value) || 0, // Ensure value is a number
-        },
+      ...prev,
+      stats: {
+        ...prev.stats,
+        [stat]: parseInt(value) || 0, // Ensure value is a number
+      },
     }));
   };
-  
-  const formStyle = "w-full p-3 border border-brown rounded-lg outline-none bg-cream focus:shadow-amber-800 placeholder-yellow-700 focus:shadow-sm transition-colors"
+
+  const handleDeleteCharacter = async () => {
+    if (!character._id) {
+      console.error("Cannot delete - no character ID");
+      return;
+    }
+
+    if (!window.confirm("Are you sure you want to delete this character?")) {
+      return;
+    }
+
+    try {
+      await removeCharacter(character._id, token);
+      alert("Character deleted successfully!");
+      if (refreshCharacters) refreshCharacters(); // Refresh the character list
+      if (onCancel) onCancel(); // Close the form
+    } catch (error) {
+      console.error("Error deleting character:", error);
+      alert("Failed to delete character.");
+    }
+  };
+
+  const formStyle =
+    "w-full p-3 border border-brown rounded-lg outline-none bg-cream focus:shadow-amber-800 placeholder-yellow-700 focus:shadow-sm transition-colors";
 
   return (
     <div className="p-6 max-w-6xl mx-auto bg-cream rounded-lg shadow-lg shadow-amber-800 text-brown grid grid-cols-1 md:grid-cols-4 gap-6">
@@ -336,18 +461,30 @@ const CharacterStats = ({ onClassSelect, characterLevel, onLevelChange, displaye
         </h2>
         {showRaceDetails && (
           <div className="space-y-3">
-            <p><strong >Size:</strong> {character.size}</p>
-            <p><strong >Size Description:</strong> {character.size_description}</p>
-            <p><strong >Languages:</strong> {character.languages.join(", ")}</p>
-            <p><strong >Language Description:</strong> {character.language_desc}</p>
-            <p><strong >Traits:</strong> {character.traits.join(", ")}</p>
+            <p>
+              <strong>Size:</strong> {character.size}
+            </p>
+            <p>
+              <strong>Size Description:</strong> {character.size_description}
+            </p>
+            <p>
+              <strong>Languages:</strong> {character.languages.join(", ")}
+            </p>
+            <p>
+              <strong>Language Description:</strong> {character.language_desc}
+            </p>
+            <p>
+              <strong>Traits:</strong> {character.traits.join(", ")}
+            </p>
           </div>
         )}
       </div>
 
       {/* Main Character Sheet Form */}
       <div className="bg-light-tan p-6 rounded-lg shadow-md col-span-2">
-        <h1 className="text-3xl font-bold mb-6 sancreek-regular">D&D Character Sheet</h1>
+        <h1 className="text-3xl font-bold mb-6 sancreek-regular">
+          D&D Character Sheet
+        </h1>
         <form className="space-y-6">
           {/* Character Name Input */}
           <div>
@@ -356,7 +493,9 @@ const CharacterStats = ({ onClassSelect, characterLevel, onLevelChange, displaye
               type="text"
               className={formStyle}
               value={character.name}
-              onChange={(e) => setCharacter({ ...character, name: e.target.value })}
+              onChange={(e) =>
+                setCharacter({ ...character, name: e.target.value })
+              }
               placeholder="Enter character name"
             />
           </div>
@@ -366,7 +505,9 @@ const CharacterStats = ({ onClassSelect, characterLevel, onLevelChange, displaye
             <label className="block text-lg font-medium mb-2">Race:</label>
             <select
               className={formStyle}
-              value={races.find(race => race.name === character.race)?.index || ""}
+              value={
+                races.find((race) => race.name === character.race)?.index || ""
+              }
               onChange={(e) => handleRaceChange(e.target.value)}
             >
               <option value="">Select a Race</option>
@@ -383,7 +524,9 @@ const CharacterStats = ({ onClassSelect, characterLevel, onLevelChange, displaye
             <label className="block text-lg font-medium mb-2">Class:</label>
             <select
               className={formStyle}
-              value={classes.find(cls => cls.name === character.class) ?.index || ""}
+              value={
+                classes.find((cls) => cls.name === character.class)?.index || ""
+              }
               onChange={(e) => handleClassChange(e.target.value || "")}
             >
               <option value="">Select a Class</option>
@@ -421,7 +564,9 @@ const CharacterStats = ({ onClassSelect, characterLevel, onLevelChange, displaye
               spells={spellsByLevel[selectedSpellLevel] || []}
               onAddSpell={addSpellToCharacter}
               onClose={() => setIsSpellModalOpen(false)}
-              remainingSpellPoints={calculateRemainingSpellPoints(selectedSpellLevel)}
+              remainingSpellPoints={calculateRemainingSpellPoints(
+                selectedSpellLevel
+              )}
               selectedSpells={selectedSpells}
             />
           )}
@@ -433,13 +578,19 @@ const CharacterStats = ({ onClassSelect, characterLevel, onLevelChange, displaye
             {Object.keys(spellSlots).map((level) => (
               <div key={level} className="mb-4">
                 <h3 className="font-bold">Level {level} Spells</h3>
-                <p>Remaining Points: {calculateRemainingSpellPoints(parseInt(level))}</p>
+                <p>
+                  Remaining Points:{" "}
+                  {calculateRemainingSpellPoints(parseInt(level))}
+                </p>
               </div>
             ))}
             {/* Display Selected Spells */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {selectedSpells.map((spell, index) => (
-                <div key={index} className="p-4 border rounded shadow flex justify-between items-center">
+                <div
+                  key={index}
+                  className="p-4 border rounded shadow flex justify-between items-center"
+                >
                   <div>
                     <h3
                       className="font-bold cursor-pointer hover:text-yellow-700"
@@ -448,7 +599,9 @@ const CharacterStats = ({ onClassSelect, characterLevel, onLevelChange, displaye
                       {spell.name}
                     </h3>
                     <p>Level: {spell.level}</p>
-                    <p>School: {spell.school ? spell.school.name : "Unknown"}</p>
+                    <p>
+                      School: {spell.school ? spell.school.name : "Unknown"}
+                    </p>
                   </div>
                   <button
                     type="button"
@@ -503,7 +656,9 @@ const CharacterStats = ({ onClassSelect, characterLevel, onLevelChange, displaye
               />
             </div>
             <div>
-              <label className="block text-sm font-medium mb-1">Passive Perception:</label>
+              <label className="block text-sm font-medium mb-1">
+                Passive Perception:
+              </label>
               <input
                 type="text"
                 className={formStyle}
@@ -525,21 +680,33 @@ const CharacterStats = ({ onClassSelect, characterLevel, onLevelChange, displaye
           </div>
 
           {/* Save button */}
-          <button 
-                onClick={handleSaveCharacter} 
-                className={`px-4 py-2 rounded ${saving ? "bg-tan text-brown" : "bg-goblin-green button text-gold"}`}
-                disabled={saving}
-            >
-                {saving ? "Saving..." : "Save"}
+          <button
+            onClick={handleSaveCharacter}
+            className={`px-4 py-2 rounded ${
+              saving ? "bg-tan text-brown" : "bg-goblin-green button text-gold"
+            }`}
+            disabled={saving}
+          >
+            {saving ? "Saving..." : "Save"}
           </button>
           <button
-          onClick={onCancel}
-          className="mt-2 bg-cancel-red text-gold px-4 py-2 rounded shadow-sm shadow-amber-800"
-            >
-              Cancel
+            onClick={onCancel}
+            className="mt-2 bg-cancel-red text-gold px-4 py-2 rounded shadow-sm shadow-amber-800"
+          >
+            Cancel
           </button>
         </form>
       </div>
+
+      {/* Add this button near your save/cancel buttons */}
+      {!isNew && (
+        <button
+          onClick={handleDeleteCharacter}
+          className="mt-2 bg-cancel-red text-gold px-4 py-2 rounded shadow-sm shadow-amber-800"
+        >
+          Delete Character
+        </button>
+      )}
 
       {/* Right Section - Class Proficiencies and Features */}
       <div className="bg-light-tan p-6 rounded-lg shadow-md col-span-1">
@@ -553,8 +720,14 @@ const CharacterStats = ({ onClassSelect, characterLevel, onLevelChange, displaye
           </h2>
           {showClassProficiencies && (
             <div className="space-y-3 text-brown">
-              <p><strong>Starting Proficiencies:</strong> {character.startingProficiencies.join(", ")}</p>
-              <p><strong>Class Proficiency Choices:</strong> {character.classProficiencies.join(", ")}</p>
+              <p>
+                <strong>Starting Proficiencies:</strong>{" "}
+                {character.startingProficiencies.join(", ")}
+              </p>
+              <p>
+                <strong>Class Proficiency Choices:</strong>{" "}
+                {character.classProficiencies.join(", ")}
+              </p>
             </div>
           )}
         </div>
@@ -583,44 +756,81 @@ const CharacterStats = ({ onClassSelect, characterLevel, onLevelChange, displaye
 export default CharacterStats;
 
 CharacterStats.propTypes = {
-  onClassSelect: PropTypes.func.isRequired,
-  characterLevel: PropTypes.number.isRequired,
-  onLevelChange: PropTypes.func.isRequired,
-  spellSlots: PropTypes.object.isRequired,
-  onSpendSlot: PropTypes.func.isRequired,
+  // Class selection props
+  onClassSelect: PropTypes.func,
+  characterLevel: PropTypes.number,
+  onLevelChange: PropTypes.func,
+
+  // Character data props
+  displayedCharacter: PropTypes.shape({
+    _id: PropTypes.string,
+    name: PropTypes.string.isRequired,
+    race: PropTypes.string,
+    class: PropTypes.string,
+    level: PropTypes.number,
+    alignment: PropTypes.string,
+    speed: PropTypes.number,
+    hitDice: PropTypes.string,
+    stats: PropTypes.shape({
+      strength: PropTypes.number,
+      dexterity: PropTypes.number,
+      constitution: PropTypes.number,
+      intelligence: PropTypes.number,
+      wisdom: PropTypes.number,
+      charisma: PropTypes.number,
+    }),
+    size: PropTypes.string,
+    size_description: PropTypes.string,
+    languages: PropTypes.arrayOf(PropTypes.string),
+    language_desc: PropTypes.string,
+    traits: PropTypes.arrayOf(PropTypes.string),
+    startingProficiencies: PropTypes.arrayOf(PropTypes.string),
+    classProficiencies: PropTypes.arrayOf(PropTypes.string),
+    classFeatures: PropTypes.arrayOf(PropTypes.string),
+    campaignID: PropTypes.string,
+    selectedSpells: PropTypes.arrayOf(
+      PropTypes.shape({
+        name: PropTypes.string.isRequired,
+        level: PropTypes.number.isRequired,
+        school: PropTypes.shape({
+          name: PropTypes.string.isRequired,
+        }),
+        desc: PropTypes.string,
+      })
+    ),
+  }).isRequired,
+
+  // Spell management props
+  spellSlots: PropTypes.object,
+  onSpendSlot: PropTypes.func,
   selectedSpells: PropTypes.arrayOf(
     PropTypes.shape({
       name: PropTypes.string.isRequired,
       level: PropTypes.number.isRequired,
       school: PropTypes.shape({
-        name: PropTypes.string.isRequired, // ✅ Ensure school is an object with a name
-      }).isRequired,
-      desc: PropTypes.string, // Optional description
+        name: PropTypes.string.isRequired,
+      }),
+      desc: PropTypes.string,
     })
-  ).isRequired,
-  onAddSpell: PropTypes.func.isRequired,
-  onClose: PropTypes.func.isRequired,
+  ),
+  onAddSpell: PropTypes.func,
+
+  // Modal and flow control props
+  isNew: PropTypes.bool,
+  onCancel: PropTypes.func.isRequired,
+  refreshCharacters: PropTypes.func,
+  token: PropTypes.string,
+
+  // Optional spell display props
   spell: PropTypes.shape({
-    name: PropTypes.string.isRequired,
-    desc: PropTypes.string, // Description may be optional
-    level: PropTypes.string.isRequired,
-    school: PropTypes.string.isRequired,
+    name: PropTypes.string,
+    desc: PropTypes.string,
+    level: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    school: PropTypes.oneOfType([
+      PropTypes.string,
+      PropTypes.shape({
+        name: PropTypes.string,
+      }),
+    ]),
   }),
-  displayedCharacter: PropTypes.shape({
-      _id: PropTypes.string.isRequired,
-      name: PropTypes.string.isRequired,
-      class: PropTypes.string.isRequired,
-      level: PropTypes.number.isRequired,
-      selectedSpells: PropTypes.arrayOf(
-        PropTypes.shape({
-          name: PropTypes.string.isRequired,
-          level: PropTypes.number.isRequired,
-          school: PropTypes.shape({
-            name: PropTypes.string.isRequired,
-          }).isRequired,
-        })
-      ),
-    }).isRequired,
-    isNew: PropTypes.bool,
-    onCancel: PropTypes.func,
 };

@@ -1,128 +1,190 @@
-export const fetchAllCharacters = async (token) => {
+// Helper function for API requests
+const makeRequest = async (url, method, token, body = null) => {
+    const headers = {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${token}`,
+    };
+  
+    const config = {
+      method,
+      headers,
+      body: body ? JSON.stringify(body) : null,
+    };
+  
     try {
-        const response = await fetch("http://localhost:5050/characters", {
-            headers: {
-                "Content-Type": "application/json",
-                "Authorization": `Bearer ${token}`,
-            },
-        });
-        if (!response.ok) throw new Error("Failed to fetch characters");
-        return await response.json();
-    } catch (error) {
-        console.error("Error fetching all characters:", error);
-        throw error;
-    }
-};
-
-export const fetchCharacterById = async (id, token) => {
-    try {
-        if (!id) throw new Error("Character ID is required");
-        const response = await fetch(`http://localhost:5050/characters/${id}`, {
-            headers: {
-                "Content-Type": "application/json",
-                "Authorization": `Bearer ${token}`,
-            },
-        });
-        if (!response.ok) throw new Error("Failed to fetch character");
-        return await response.json();
-    } catch (error) {
-        console.error("Error fetching character by ID:", error);
-        throw error;
-    }
-};
-
-export const fetchCharactersByCampaign = async (campaignID, token) => {
-    try {
-        if (!campaignID) throw new Error("Campaign ID is required");
-        const response = await fetch(`http://localhost:5050/characters/campaign/${campaignID}`, {
-            headers: {
-                "Content-Type": "application/json",
-                "Authorization": `Bearer ${token}`,
-            },
-        });
-
-        if (response.status === 404) {
-            console.warn(`No characters found for campaign ${campaignID}`);
-            return [];
+      const response = await fetch(url, config);
+      
+      if (!response.ok) {
+        let errorMsg = `Request failed with status ${response.status}`;
+        try {
+          const errorData = await response.json();
+          errorMsg = errorData.message || errorMsg;
+        } catch (e) {
+          // Failed to parse JSON error response
         }
-
-        if (!response.ok) throw new Error("Failed to fetch characters by campaign");
-        return await response.json();
+        throw new Error(errorMsg);
+      }
+  
+      return await response.json();
     } catch (error) {
-        console.error("Error fetching characters by campaign:", error);
-        throw error;
+      console.error(`API request failed: ${url}`, error);
+      throw error;
     }
-};
-
-export const createCharacter = async (characterData, token) => {
+  };
+  
+  // Fetch all characters
+  export const fetchAllCharacters = async (token) => {
+    if (!token) throw new Error("Authentication token is required");
+    return makeRequest("http://localhost:5050/characters", "GET", token);
+  };
+  
+  // Fetch character by ID
+  export const fetchCharacterById = async (id, token) => {
+    if (!id) throw new Error("Character ID is required");
+    if (!token) throw new Error("Authentication token is required");
+    return makeRequest(`http://localhost:5050/characters/${id}`, "GET", token);
+  };
+  
+  // Fetch characters by campaign
+  export const fetchCharactersByCampaign = async (campaignID, token) => {
+    if (!campaignID) throw new Error("Campaign ID is required");
+    if (!token) throw new Error("Authentication token is required");
+    
     try {
-        const response = await fetch("http://localhost:5050/characters", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                "Authorization": `Bearer ${token}`,
-            },
-            body: JSON.stringify(characterData),
-        });
-        if (!response.ok) throw new Error("Failed to create character");
-        return await response.json();
+      return await makeRequest(
+        `http://localhost:5050/characters/campaign/${campaignID}`,
+        "GET",
+        token
+      );
     } catch (error) {
-        console.error("Error adding new character:", error);
-        throw error;
+      if (error.message.includes("404")) {
+        console.warn(`No characters found for campaign ${campaignID}`);
+        return [];
+      }
+      throw error;
     }
-};
-
-export const modifyCharacter = async (id, characterData, token) => {
+  };
+  
+  // Create new character
+  export const createCharacter = async (characterData, token) => { // Remove campaignID parameter
+    if (!token) throw new Error("Authentication token is required");
+    
+    // Enhanced validation
+    const requiredFields = {
+      name: 'string',
+      race: 'string', 
+      class: 'string',
+      level: 'number',
+      campaignID: 'string'
+    };
+  
+    const validationErrors = [];
+    
+    // Check required fields
+    for (const [field, type] of Object.entries(requiredFields)) {
+      const value = characterData[field]; // Always get from characterData
+      
+      if (value === undefined || value === null) {
+        validationErrors.push(`Missing required field: ${field}`);
+      } else if (typeof value !== type) {
+        validationErrors.push(`Invalid type for ${field}: expected ${type}, got ${typeof value}`);
+      }
+    }
+  
+    if (validationErrors.length > 0) {
+      throw new Error(`Validation errors:\n${validationErrors.join('\n')}`);
+    }
+  
+    // Prepare clean data
+    const cleanData = {
+        name: characterData.name.trim(),
+        alignment: characterData.alignment || 'Unaligned',
+        race: characterData.race,
+        class: characterData.class, // Don't lowercase
+        level: parseInt(characterData.level) || 1,
+        speed: parseInt(characterData.speed) || 30,
+        hitDice: characterData.hitDice,
+        proficiencies: characterData.proficiencies || [],
+        stats: {
+          strength: parseInt(characterData.stats?.strength) || 10,
+          dexterity: parseInt(characterData.stats?.dexterity) || 10,
+          constitution: parseInt(characterData.stats?.constitution) || 10,
+          intelligence: parseInt(characterData.stats?.intelligence) || 10,
+          wisdom: parseInt(characterData.stats?.wisdom) || 10,
+          charisma: parseInt(characterData.stats?.charisma) || 10,
+        },
+        size: characterData.size,
+        size_description: characterData.size_description,
+        languages: characterData.languages || [],
+        language_desc: characterData.language_desc,
+        traits: characterData.traits || [],
+        startingProficiencies: characterData.startingProficiencies || [],
+        classProficiencies: characterData.classProficiencies || [],
+        classFeatures: characterData.classFeatures || [],
+        campaignID: characterData.campaignID,
+        selectedSpells: characterData.selectedSpells || []
+      };
+    
+  
+    console.log("Final character data for API:", cleanData);
+  
     try {
-        console.log("Sending update request for character ID:", id);
-        console.log("Original Request Data:", characterData);
-        
-        if (!id) throw new Error("Character ID is required for update");
-        if (!token) throw new Error("Missing authentication token");
-
-        // Remove `_id` before sending to MongoDB
-        // const { _id, ...characterUpdate } = characterData;
-        const characterUpdate = { ...characterData };
-        delete characterUpdate._id;
-        
-        console.log("Sanitized Request Data:", characterUpdate);
-
-        const response = await fetch(`http://localhost:5050/characters/${id}`, {
-            method: "PUT",
-            headers: {
-                "Content-Type": "application/json",
-                "Authorization": `Bearer ${token}`,
-            },
-            body: JSON.stringify(characterUpdate),
-        });
-
-        if (!response.ok) {
-            const errorMsg = await response.text(); // Get backend error message
-            throw new Error(`Failed to update character: ${errorMsg}`);
-        }
-
-        return await response.json();
+      const response = await fetch("http://localhost:5050/characters", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`,
+        },
+        body: JSON.stringify(cleanData),
+      });
+  
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+      }
+  
+      return await response.json();
     } catch (error) {
-        console.error("Error updating character:", error);
-        throw error;
+      console.error("API call failed:", {
+        endpoint: "/characters",
+        method: "POST",
+        payload: cleanData,
+        error: error.message,
+        stack: error.stack
+      });
+      throw error;
     }
-};
-
-
-export const removeCharacter = async (id, token) => {
-    try {
-        if (!id) throw new Error("Character ID is required for deletion");
-        const response = await fetch(`http://localhost:5050/characters/${id}`, {
-            method: "DELETE",
-            headers: {
-                "Content-Type": "application/json",
-                "Authorization": `Bearer ${token}`,
-            },
-        });
-        if (!response.ok) throw new Error("Failed to delete character");
-        return await response.json();
-    } catch (error) {
-        console.error("Error deleting character:", error);
-        throw error;
-    }
-};
+  };
+  
+  // Update existing character
+  export const modifyCharacter = async (id, characterData, token) => {
+    if (!id) throw new Error("Character ID is required");
+    if (!token) throw new Error("Authentication token is required");
+  
+    // Remove MongoDB-specific fields
+    const { _id, __v, createdAt, ...updateData } = characterData;
+    
+    // Add updated timestamp
+    updateData.updatedAt = new Date().toISOString();
+  
+    console.log("Updating character with data:", updateData);
+    return makeRequest(
+      `http://localhost:5050/characters/${id}`,
+      "PUT",
+      token,
+      updateData
+    );
+  };
+  
+  // Delete character
+  export const removeCharacter = async (id, token) => {
+    if (!id) throw new Error("Character ID is required");
+    if (!token) throw new Error("Authentication token is required");
+    
+    console.log("Deleting character with ID:", id);
+    return makeRequest(
+      `http://localhost:5050/characters/${id}`,
+      "DELETE",
+      token
+    );
+  };

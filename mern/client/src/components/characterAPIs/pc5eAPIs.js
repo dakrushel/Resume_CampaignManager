@@ -37,7 +37,7 @@ export const fetchClasses = async () => {
 // Fetch class details by index (e.g., "wizard")
 export const fetchClassDetails = async (classIndex) => {
     try {
-        const response = await axios.get(`${BASE_URL}/classes/${classIndex}`);
+        const response = await axios.get(`${BASE_URL}/classes/${classIndex.toLowerCase()}`);
         return response.data;
     } catch (error) {
         console.error("Error fetching class details:", error);
@@ -48,21 +48,28 @@ export const fetchClassDetails = async (classIndex) => {
 // Fetch spells for a specific class
 export const fetchClassSpells = async (classIndex) => {
     try {
-        const response = await axios.get(`${BASE_URL}/classes/${classIndex}/spells`);
-        return response.data.results;
+        const response = await axios.get(`${BASE_URL}/classes/${classIndex.toLowerCase()}/spells`);
+        return response.data.results || [];
     } catch (error) {
         console.error("Error fetching spells for class:", error);
-        throw error;
+        return []; // Return empty array instead of throwing error
     }
 };
 
 // Fetch class features by level
 export const fetchClassFeatures = async (classIndex, level) => {
     try {
-        const response = await axios.get(`${BASE_URL}/classes/${classIndex}/levels/${level}`);
-        return response.data.features;
+        // First get all levels up to the current level
+        const features = [];
+        for (let l = 1; l <= level; l++) {
+            const response = await axios.get(`${BASE_URL}/classes/${classIndex}/levels/${l}/features`);
+            if (response.data.features) {
+                features.push(...response.data.features);
+            }
+        }
+        return features;
     } catch (error) {
         console.error("Error fetching class features:", error);
-        throw error;
+        return []; // Return empty array instead of throwing error
     }
 };

@@ -9,35 +9,59 @@ import CharacterStats from "./characterstats";
 import { useAuthToken } from "./characterAPIs/useauthtoken";
 import { PropTypes } from "prop-types";
 
-const CharacterDisplay = ({ character, isNew, onCancel, refreshCharacters }) => {
+const CharacterDisplay = ({ character, isNew, onCancel, refreshCharacters, campaignID }) => {
   const [selectedClass, setSelectedClass] = useState("");
   const [characterLevel, setCharacterLevel] = useState(1);
-  const token = useAuthToken(); // Get the authentication token
+  const token = useAuthToken();
+
+  // Initialize state for spell management
+  const [spellSlots, setSpellSlots] = useState({});
+  const [selectedSpells, setSelectedSpells] = useState([]);
+
+  // Handler functions for spells
+  const handleSpendSlot = (level) => {
+    setSpellSlots(prev => ({
+      ...prev,
+      [level]: Math.max((prev[level] || 0) - 1, 0)
+    }));
+  };
+
+  const handleAddSpell = (spell) => {
+    setSelectedSpells(prev => [...prev, spell]);
+  };
 
   return (
     <div className="mt-16">
-      {/* Render the CharacterStats component */}
       <CharacterStats
         onClassSelect={setSelectedClass}
         characterLevel={characterLevel}
         onLevelChange={setCharacterLevel}
-        displayedCharacter={character}
+        displayedCharacter={{
+          ...character,
+          campaignID: campaignID 
+        }}
         token={token}
         isNew={isNew}
         onCancel={onCancel}
-        refreshCharacters={refreshCharacters}  // Pass it down
+        refreshCharacters={refreshCharacters}
+        
+        // Spell-related props
+        spellSlots={spellSlots}
+        onSpendSlot={handleSpendSlot}
+        selectedSpells={selectedSpells}
+        onAddSpell={handleAddSpell}
       />
-
     </div>
   );
 };
 
 CharacterDisplay.propTypes = {
   character: PropTypes.shape({
-    _id: PropTypes.string.isRequired,
+    _id: PropTypes.string,
     name: PropTypes.string.isRequired,
-    class: PropTypes.string.isRequired,
-    level: PropTypes.number.isRequired,
+    class: PropTypes.string,
+    level: PropTypes.number,
+    campaignID: PropTypes.string.isRequired, // Add campaignID to propTypes
     selectedSpells: PropTypes.arrayOf(
       PropTypes.shape({
         name: PropTypes.string.isRequired,
@@ -51,6 +75,7 @@ CharacterDisplay.propTypes = {
   isNew: PropTypes.bool,
   onCancel: PropTypes.func,
   refreshCharacters: PropTypes.func.isRequired,
+  campaignID: PropTypes.string // Add campaignID to component propTypes
 };
 
 export default CharacterDisplay;
