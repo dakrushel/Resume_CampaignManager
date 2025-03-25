@@ -82,33 +82,58 @@ export const createCharacter = async (characterData, token) => {
 // In pcMongoAPIs.js
 export const modifyCharacter = async (id, characterData, token) => {
     try {
-      const response = await fetch(`http://localhost:5050/characters/${id}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}`,
-        },
-        body: JSON.stringify(characterData),
-      });
+        const response = await fetch(`http://localhost:5050/characters/${id}`, {
+            method: "PUT",
+            headers: {
+              "Content-Type": "application/json",
+              "Authorization": `Bearer ${token}`,
+            },
+            body: JSON.stringify(characterData),
+          });
+          
   
-      if (!response.ok) {
-        const errorData = await response.json();
-        console.error("Validation errors:", {
-          url: response.url,
-          status: response.status,
-          errors: errorData.errors || errorData.message
-        });
-        throw new Error(errorData.message || `Validation failed with status ${response.status}`);
+      if (response.status !== 200) {
+        const errorData = await response.json(); // Read server response
+        console.error("Server validation failed:", errorData); // Log details
+        console.log("Sent payload:", characterData); // Log payload
+        throw new Error(`Validation failed: ${errorData.message}`);
+      }      
+  
+      return response.data;
+    } catch (error) {
+      let errorMessage = 'Failed to update character';
+      
+      if (error.response) {
+        // Server responded with error status
+        const { data, status } = error.response;
+        
+        if (response.status !== 200) {
+            const errorData = await response.json(); // Read server response
+            console.error("Server validation failed:", errorData); // Log details
+            console.log("Sent payload:", characterData); // Log payload
+            throw new Error(`Validation failed: ${errorData.message}`);
+        }        
+
+        if (status === 400) {
+          errorMessage = data.message || 'Validation failed';
+          console.error('Validation errors:', {
+            errors: data.errors,
+            payload: characterData
+          });
+        } else if (status === 401) {
+          errorMessage = 'Unauthorized - Please log in again';
+        } else if (status === 404) {
+          errorMessage = 'Character not found';
+        }
+      } else if (error.request) {
+        // Request was made but no response received
+        errorMessage = 'No response from server';
+      } else {
+        // Something else happened
+        errorMessage = error.message || 'Unknown error occurred';
       }
   
-      return await response.json();
-    } catch (error) {
-      console.error("Update failed:", {
-        error: error.message,
-        characterId: id,
-        payload: characterData
-      });
-      throw error;
+      throw new Error(errorMessage);
     }
   };
 

@@ -15,6 +15,7 @@ import {
   druidSpellSlots,
   paladinSpellSlots,
   clericSpellSlots,
+  warlockSpellSlots,
 } from "./spelldata";
 import PropTypes from "prop-types";
 import { useAuthToken } from "./characterAPIs/useauthtoken";
@@ -48,6 +49,7 @@ const CharacterStats = ({
   const [initialCharacter, setInitialCharacter] = useState({});
   const [saving, setSaving] = useState(false);
   const token = useAuthToken();
+  const [saveSuccess, setSaveSuccess] = useState(false);
 
   // Base Stats for character
   const [baseStats, setBaseStats] = useState({
@@ -64,10 +66,10 @@ const CharacterStats = ({
     alignment: "Neutral",
     race: "",
     class: "",
-    speed: 0,
+    speed: 0, // Initialize with 0
     hitDice: "",
     proficiencies: [],
-    stats: { ...baseStats },
+    stats: { ...baseStats }, // Explicit copy of baseStats
     size: "",
     size_description: "",
     languages: [],
@@ -173,12 +175,14 @@ const CharacterStats = ({
         classFeatures: [],
       }));
       onClassSelect("");
+
+      // Clear all spell-related state
+      setSpellSlots({});
+      setSelectedSpells([]);
+      setSpellsByLevel({});
       return;
     }
 
-    {
-      /* Fetch the class details from DnDAPI */
-    }
     const classDetails = await axios.get(
       `https://www.dnd5eapi.co/api/classes/${index}`
     );
@@ -193,6 +197,22 @@ const CharacterStats = ({
         (p) => p.desc
       ),
     }));
+
+    // Clear spells if switching to non-spellcasting class
+    const spellcastingClasses = [
+      "wizard",
+      "sorcerer",
+      "bard",
+      "cleric",
+      "paladin",
+      "druid",
+      "warlock",
+    ];
+    if (!spellcastingClasses.includes(classDetails.data.index)) {
+      setSelectedSpells([]);
+      setSpellsByLevel({});
+    }
+
     onClassSelect(classDetails.data.index);
   };
 
@@ -235,24 +255,34 @@ const CharacterStats = ({
     }));
   };
 
-  /* Calculate remaining spell slots for a specific level */
+  // Update calculateRemainingSpellPoints to accept spells parameter
   const calculateRemainingSpellPoints = (level) => {
-    const spellSlots = getClassSpellSlots(selectedClass, characterLevel);
-    const maxSpellPoints = spellSlots[level] || 0;
-    const usedSpellPoints = selectedSpells.filter(
+    // Get max slots for this level from the spellSlots table
+    const maxSlots = spellSlots[level] || 0;
+
+    // Count how many spells of this level are already selected
+    const usedSlots = selectedSpells.filter(
       (spell) => spell.level === level
     ).length;
-    return maxSpellPoints - usedSpellPoints;
+
+    return maxSlots - usedSlots;
   };
 
   /* Update spell slots when character level or class changes */
   useEffect(() => {
-    if (
-      ["wizard", "sorcerer", "bard", "cleric", "paladin", "druid"].includes(
-        selectedClass
-      )
-    ) {
-      setSpellSlots(getClassSpellSlots(selectedClass, characterLevel));
+    const spellcastingClasses = [
+      "wizard",
+      "sorcerer",
+      "bard",
+      "cleric",
+      "paladin",
+      "druid",
+      "warlock",
+    ];
+
+    if (selectedClass && spellcastingClasses.includes(selectedClass)) {
+      const slots = getClassSpellSlots(selectedClass, characterLevel);
+      setSpellSlots(slots || {});
     } else {
       setSpellSlots({});
     }
@@ -264,15 +294,17 @@ const CharacterStats = ({
       case "wizard":
         return wizardSpellSlots[level] || {};
       case "sorcerer":
-        return sorcerorSpellSlots[level] || {}; // Note: Check if it's "sorceror" or "sorcerer" in your data
+        return sorcerorSpellSlots[level] || {};
       case "bard":
         return bardSpellSlots[level] || {};
       case "cleric":
-        return clericSpellSlots[level] || {}; // Make sure you're importing this
+        return clericSpellSlots[level] || {};
       case "druid":
         return druidSpellSlots[level] || {};
       case "paladin":
         return paladinSpellSlots[level] || {};
+      case "warlock":
+        return warlockSpellSlots[level] || {};
       default:
         return {};
     }
@@ -296,42 +328,16 @@ const CharacterStats = ({
       return;
     }
 
+    // Update selected spells
     setSelectedSpells((prev) => [...prev, spell]);
-    setSpellSlots((prev) => ({
-      ...prev,
-      [spell.level]: (prev[spell.level] || 0) - 1,
-    }));
   };
-
-  const validateSpellSlots = () => {
-    return Object.entries(spellSlots).every(([level, remaining]) => {
-      const usedSpells = selectedSpells.filter(
-        (s) => s.level === parseInt(level)
-      ).length;
-      const maxSlots = getClassSpellSlots(selectedClass, character.level)[
-        level
-      ];
-      return usedSpells <= maxSlots;
-    });
-  };
-
-  // Then add this check at start of handleSaveCharacter:
-  if (!validateSpellSlots()) {
-    setError("Invalid spell selection - exceeds available slots");
-    setSaving(false);
-    return;
-  }
 
   /* Remove a spell from the selected spells list and restore spell slots */
   const removeSpellFromCharacter = (spellIndex) => {
-    const spellToRemove = selectedSpells[spellIndex];
     setSelectedSpells((prev) =>
       prev.filter((_, index) => index !== spellIndex)
     );
-    setSpellSlots((prev) => ({
-      ...prev,
-      [spellToRemove.level]: (prev[spellToRemove.level] || 0) + 1,
-    }));
+    // No need to manually update spellSlots
   };
 
   /* Fetch all spells from the selected class if the selected class has access to spells */
@@ -454,31 +460,54 @@ const CharacterStats = ({
     }
   }, [selectedClass, character.level]);
 
-  const validateCharacter = () => {
+  const validateCharacter = (characterData) => {
     const requiredFields = ["name", "race", "class", "level", "stats"];
-
+    const maxLengths = {
+      name: 50,
+      race: 30,
+      class: 30
+    };
+  
+    // Check required fields
     for (const field of requiredFields) {
-      if (!character[field]) {
+      if (!characterData[field]) {
         return `${field.charAt(0).toUpperCase() + field.slice(1)} is required`;
       }
     }
-
-    if (!window.localStorage.getItem("selectedCampaign")) {
-      return "Please select a campaign first";
+  
+    // Check field lengths
+    if (characterData.name.length > maxLengths.name) {
+      return `Name must be less than ${maxLengths.name} characters`;
     }
-
-    // Validate stats
-    for (const [stat, value] of Object.entries(character.stats)) {
+  
+    if (characterData.race.length > maxLengths.race) {
+      return `Race must be less than ${maxLengths.race} characters`;
+    }
+  
+    if (characterData.class.length > maxLengths.class) {
+      return `Class must be less than ${maxLengths.class} characters`;
+    }
+  
+    // Check stats
+    if (!characterData.stats || typeof characterData.stats !== "object") {
+      return "Character stats are invalid";
+    }
+  
+    for (const [stat, value] of Object.entries(characterData.stats)) {
       if (value < 1 || value > 20) {
         return `${stat} must be between 1-20`;
       }
     }
-
+  
+    if (!window.localStorage.getItem("selectedCampaign")) {
+      return "Please select a campaign first";
+    }
+  
     return null;
   };
 
   const validateSpells = (spells) => {
-    return spells.every(spell => {
+    return spells.every((spell) => {
       return (
         typeof spell.name === "string" &&
         typeof spell.level === "number" &&
@@ -507,17 +536,15 @@ const CharacterStats = ({
   
     try {
       // Format spells to match backend expectations
-      const formattedSpells = selectedSpells.map(spell => {
-        // Handle school format - ensure we send string to backend
+      const formattedSpells = (selectedSpells || []).map((spell) => {
         const schoolName = spell.school?.name || spell.school || "Unknown";
-        
         return {
           name: spell.name || "Unnamed Spell",
           level: spell.level || 0,
-          school: schoolName, // Send as string to backend
-          desc: Array.isArray(spell.desc) 
-            ? spell.desc.join("\n\n") 
-            : spell.desc || spell.description || ""
+          school: schoolName,
+          desc: Array.isArray(spell.desc)
+            ? spell.desc.join("\n\n")
+            : spell.desc || spell.description || "",
         };
       });
   
@@ -526,32 +553,23 @@ const CharacterStats = ({
         race: character.race || "",
         class: character.class || "",
         level: character.level || 1,
-        stats: character.stats || baseStats,
-        speed: character.speed || 30,
-        hitDice: character.hitDice || "d6",
+        stats: character.stats || { ...baseStats },
+        speed: character.speed || 0,
+        hitDice: character.hitDice || "d8",
         campaignID,
         alignment: character.alignment || "Neutral",
         size: character.size || "Medium",
         languages: character.languages || [],
         traits: character.traits || [],
         selectedSpells: formattedSpells,
-        _id: character._id === 'new' ? undefined : character._id // Handle new character ID
+        // Do not send _id in the request payload
+        // _id: character._id === "new" ? undefined : character._id,  <- Remove this
       };
   
-      // Validate spells before sending
-      const validateSpells = (spells) => {
-        return spells.every(spell => {
-          return (
-            typeof spell.name === "string" &&
-            typeof spell.level === "number" &&
-            typeof spell.school === "string" &&
-            typeof spell.desc === "string"
-          );
-        });
-      };
-  
-      if (!validateSpells(formattedSpells)) {
-        setError("Invalid spell data format");
+      // Client-side validation
+      const validationError = validateCharacter(characterToSave);
+      if (validationError) {
+        setError(validationError);
         setSaving(false);
         return;
       }
@@ -559,38 +577,37 @@ const CharacterStats = ({
       console.log("Sending character data:", characterToSave);
   
       let response;
-    if (character._id && character._id !== 'new') {
-      // Update existing
-      response = await modifyCharacter(character._id, characterToSave, token);
-    } else {
-      // Create new
-      response = await createCharacter(characterToSave, token); 
-    }
+      if (character._id && character._id !== "new") {
+        // Pass the ID only as part of the URL, not in the request body
+        response = await modifyCharacter(character._id, characterToSave, token);
+      } else {
+        response = await createCharacter(characterToSave, token);
+      }
   
-      // Update local state with normalized spells (convert school back to object format)
-      const normalizedResponse = {
-        ...response,
-        selectedSpells: response.selectedSpells?.map(spell => ({
-          ...spell,
-          school: { name: spell.school } // Convert string back to object
-        })) || []
-      };
+      setCharacter(response);
+      setInitialCharacter(response);
   
-      setCharacter(normalizedResponse);
-      setInitialCharacter(normalizedResponse);
-      
-      alert(`Character ${character._id ? "updated" : "created"} successfully!`);
-      if (refreshCharacters) await refreshCharacters();
+      setSaveSuccess(true);
+      setTimeout(() => setSaveSuccess(false), 3000);
   
-      return normalizedResponse;
+      if (refreshCharacters) {
+        await refreshCharacters();
+      }
+  
+      return response;
     } catch (error) {
       console.error("Save error:", error);
-      setError(error.message || "Failed to save character");
-      throw error;
+      let errorMessage = error.message.includes("Validation failed")
+        ? "Invalid character data. Please check all fields."
+        : error.message.includes("Unauthorized")
+        ? "Session expired. Please log in again."
+        : error.message;
+      setError(errorMessage);
     } finally {
       setSaving(false);
     }
   };
+  
 
   // Spell Description Modal component
   const SpellDescriptionModal = ({ spell, onClose }) => {
@@ -720,7 +737,7 @@ const CharacterStats = ({
           </div>
           {/* Spell Slot Tracker */}
           <SpellSlotTracker
-            spellSlots={spellSlots}
+            spellSlots={spellSlots || {}}
             onSpendSlot={handleSpendSlot}
           />
           {/* Spell Modal */}
@@ -739,16 +756,20 @@ const CharacterStats = ({
           {/* Display Selected Spells */}
           <div className="p-6 max-w-4xl mx-auto bg-cream rounded-lg shadow-md mt-6">
             <h2 className="text-xl font-bold mb-4">Selected Spells</h2>
-            {/* Display Remaining Spell Points for Each Level */}
-            {Object.keys(spellSlots || {}).map((level) => (
-              <div key={level} className="mb-4">
-                <h3 className="font-bold">Level {level} Spells</h3>
-                <p>
-                  Remaining Points:{" "}
-                  {calculateRemainingSpellPoints(parseInt(level))}
-                </p>
-              </div>
-            ))}
+            {/* Safely display spell slots */}
+            {Object.keys(spellSlots || {}).length > 0 ? (
+              Object.keys(spellSlots || {}).map((level) => (
+                <div key={level} className="mb-4">
+                  <h3 className="font-bold">Level {level} Spells</h3>
+                  <p>
+                    Remaining Points:{" "}
+                    {calculateRemainingSpellPoints(parseInt(level))}
+                  </p>
+                </div>
+              ))
+            ) : (
+              <p>No spell slots available</p>
+            )}
             {/* Display Selected Spells */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {selectedSpells.map((spell, index) => (
@@ -788,33 +809,31 @@ const CharacterStats = ({
           )}
 
           {/* Stats Inputs */}
-          <div>
-            <label className="block text-lg font-medium mb-2">Stats:</label>
-            <div className="grid grid-cols-2 gap-4">
-              {Object.keys(character.stats).map((stat) => (
-                <div key={stat}>
-                  <label className="block text-sm font-medium mb-1">
-                    {stat.charAt(0).toUpperCase() + stat.slice(1)}:
-                  </label>
-                  <input
-                    type="number"
-                    className={formStyle}
-                    value={character.stats[stat]}
-                    onChange={(e) => handleStatChange(stat, e.target.value)}
-                    placeholder={`Enter ${stat}`}
-                  />
-                </div>
-              ))}
-            </div>
+          <div className="grid grid-cols-2 gap-4">
+            {Object.keys(character.stats || baseStats).map((stat) => (
+              <div key={stat}>
+                <label className="block text-sm font-medium mb-1">
+                  {stat.charAt(0).toUpperCase() + stat.slice(1)}:
+                </label>
+                <input
+                  type="number"
+                  className={formStyle}
+                  value={(character.stats || baseStats)[stat] || 0} // Added fallback
+                  onChange={(e) => handleStatChange(stat, e.target.value)}
+                  placeholder={`Enter ${stat}`}
+                />
+              </div>
+            ))}
           </div>
-          {/* Speed and Passive Perception Inputs */}
+
+          {/* Speed and Passive Perception */}
           <div className="flex items-center space-x-24 pr-1">
             <div>
               <label className="block text-sm font-medium mb-1">Speed:</label>
               <input
                 type="text"
                 className={formStyle}
-                value={character.speed}
+                value={character.speed || 0} // Fallback to 0
                 readOnly
               />
             </div>
@@ -825,7 +844,12 @@ const CharacterStats = ({
               <input
                 type="text"
                 className={formStyle}
-                value={10 + Math.floor((character.stats.wisdom - 10) / 2)}
+                value={
+                  10 +
+                    Math.floor(
+                      ((character.stats || baseStats).wisdom - 10) / 2
+                    ) || 10
+                } // Fallback to 10
                 readOnly
               />
             </div>
@@ -863,6 +887,12 @@ const CharacterStats = ({
           </div>
         </form>
       </div>
+
+      {saveSuccess && (
+        <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative mb-4">
+          Character saved successfully!
+        </div>
+      )}
 
       {/* Right Section - Class Proficiencies and Features */}
       <div className="bg-light-tan p-6 rounded-lg shadow-md col-span-1">
