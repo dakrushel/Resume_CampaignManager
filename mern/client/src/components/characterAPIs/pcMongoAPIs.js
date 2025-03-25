@@ -54,59 +54,63 @@ export const fetchCharactersByCampaign = async (campaignID, token) => {
     }
 };
 
+// In pcMongoAPIs.js
 export const createCharacter = async (characterData, token) => {
     try {
-        const response = await fetch("http://localhost:5050/characters", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                "Authorization": `Bearer ${token}`,
-            },
-            body: JSON.stringify(characterData),
-        });
-        if (!response.ok) throw new Error("Failed to create character");
-        return await response.json();
+      const response = await fetch("http://localhost:5050/characters", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`,
+        },
+        body: JSON.stringify(characterData),
+      });
+  
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.log("Server response error details:", errorData);
+        throw new Error(errorData.message || "Failed to create character");
+      }
+  
+      return await response.json();
     } catch (error) {
-        console.error("Error adding new character:", error);
-        throw error;
+      console.error("Error creating character:", error);
+      throw error;
     }
-};
+  };
 
+// In pcMongoAPIs.js
 export const modifyCharacter = async (id, characterData, token) => {
     try {
-        console.log("Sending update request for character ID:", id);
-        console.log("Original Request Data:", characterData);
-        
-        if (!id) throw new Error("Character ID is required for update");
-        if (!token) throw new Error("Missing authentication token");
-
-        // Remove `_id` before sending to MongoDB
-        // const { _id, ...characterUpdate } = characterData;
-        const characterUpdate = { ...characterData };
-        delete characterUpdate._id;
-        
-        console.log("Sanitized Request Data:", characterUpdate);
-
-        const response = await fetch(`http://localhost:5050/characters/${id}`, {
-            method: "PUT",
-            headers: {
-                "Content-Type": "application/json",
-                "Authorization": `Bearer ${token}`,
-            },
-            body: JSON.stringify(characterUpdate),
+      const response = await fetch(`http://localhost:5050/characters/${id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`,
+        },
+        body: JSON.stringify(characterData),
+      });
+  
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error("Validation errors:", {
+          url: response.url,
+          status: response.status,
+          errors: errorData.errors || errorData.message
         });
-
-        if (!response.ok) {
-            const errorMsg = await response.text(); // Get backend error message
-            throw new Error(`Failed to update character: ${errorMsg}`);
-        }
-
-        return await response.json();
+        throw new Error(errorData.message || `Validation failed with status ${response.status}`);
+      }
+  
+      return await response.json();
     } catch (error) {
-        console.error("Error updating character:", error);
-        throw error;
+      console.error("Update failed:", {
+        error: error.message,
+        characterId: id,
+        payload: characterData
+      });
+      throw error;
     }
-};
+  };
 
 
 export const removeCharacter = async (id, token) => {
