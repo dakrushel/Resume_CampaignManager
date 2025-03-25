@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import LocationList from "./locationlist";
+import SitesList from "./locationlistsites";
 import NotesList from "./noteslist";
 import CharacterList from "./characterlist";
 import { useAuth0 } from "@auth0/auth0-react";
@@ -23,6 +24,7 @@ export default function CampaignOverview() {
     const [showRealms, setShowRealms] = useState(false);
     const [showCountries, setShowCountries] = useState(false);
     const [showRegions, setShowRegions] = useState(false);
+    const [showSites, setShowSites] = useState(false);
     const [formData, setFormData] = useState({ title: "", description: "", createdBy: userId});
     const { getAccessTokenSilently } = useAuth0();
 
@@ -36,7 +38,7 @@ export default function CampaignOverview() {
         const fetchCampaign = async () => {
             try {
                 const token = await getAccessTokenSilently({ audience: "https://campaignapi.com" });
-                console.log(token)
+                // console.log(token)
                 const response = await fetch(`http://localhost:5050/campaigns/${id}`, {
                     headers: {
                         Authorization: `Bearer ${token}`,
@@ -260,6 +262,13 @@ export default function CampaignOverview() {
                             All Regions {showRegions ? "▲" : "▼"}
                         </button>
                         {showRegions && <LocationList parentLocationID={null} locationType="Region" campaignID={id} isOverview={true} />}
+                    </div>
+
+                    <div>
+                        <button onClick={() => setShowSites(!showSites)} className="text-lg hover:underline font-semibold">
+                            Sites and Sub-Sites by Regions {showSites ? "▲" : "▼"}
+                        </button>
+                        {showSites && <SitesList campaignID={id} />}
                     </div>
                 </>
             )}

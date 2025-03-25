@@ -18,7 +18,8 @@ import {
   warlockSpellSlots,
 } from "./spelldata";
 import PropTypes from "prop-types";
-import { useAuthToken } from "./characterAPIs/useauthtoken";
+import { useAuthToken } from "./characterAPIs/useauthtoken"
+import { fetchRaces, fetchRaceDetails, fetchClasses, fetchClassDetails, fetchClassFeatures, fetchClassSpells } from "./characterAPIs/pc5eAPIs";
 import { createCharacter, modifyCharacter } from "./characterAPIs/pcMongoAPIs";
 
 {
@@ -119,6 +120,7 @@ const CharacterStats = ({
         console.error("Error fetching data:", error);
       }
     };
+    
     fetchData();
   }, []);
 

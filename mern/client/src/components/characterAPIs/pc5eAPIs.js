@@ -13,6 +13,16 @@ export const fetchRaces = async () => {
     }
 };
 
+export const fetchRaceDetails = async (index) => {
+    try {
+        const response = await axios.get(`${BASE_URL}/races/${index}`);
+        return response.data;
+    } catch (error) {
+        console.error("Error fetching race details:", error);
+        throw error;
+    }
+};
+
 // Fetch all available classes
 export const fetchClasses = async () => {
     try {

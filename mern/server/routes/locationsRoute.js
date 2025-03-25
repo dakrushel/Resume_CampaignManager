@@ -1,7 +1,7 @@
 import express from "express";
 import Joi from "joi";
 import db from "../db/connection.js";
-import { getLocationsByCampaign, getLocationById, getLocationsByParent, addLocation, updateLocation, deleteLocation } from "../models/locationModel.js";
+import { getLocationsByCampaign, getLocationById, getLocationsByParent, addLocation, updateLocation, addChildToLocation, removeChildFromLocation, deleteLocation } from "../models/locationModel.js";
 import { sanitizeInput } from "../utils/sanitization.js";
 import { ObjectId } from "mongodb";
 
@@ -27,6 +27,18 @@ const locationSchema = Joi.object({
   locationType: Joi.string().valid("Plane", "Realm", "Country", "Region", "Site").required(),
   name: Joi.string().required(),
   description: Joi.string().optional(),
+
+  children: Joi.when("locationType", {
+    is: "Site",
+    then: Joi.array().items(Joi.string()).required(), // You can change to Joi.object() if needed
+    otherwise: Joi.forbidden()
+  }),
+
+  nestDepth: Joi.when("locationType", {
+    is: "Site",
+    then: Joi.number().integer().min(0).required(),
+    otherwise: Joi.forbidden()
+  }),
 });
 
 // **Validate MongoDB ObjectId (Used for incoming IDs)**
@@ -45,6 +57,25 @@ router.get("/campaign/:campaignID", async (req, res) => {
   } catch (error) {
     console.error("Failed to fetch locations:", error);
     res.status(500).json({ error: "Failed to fetch locations" });
+  }
+});
+
+// **GET multiple locations for black magic
+router.get("/many", async (req, res) => {
+  try {
+    const ids = req.query.ids;
+    if (!ids || ids.length === 0) {
+      return res.status(400).json({ error: "No IDs provided" });
+    }
+
+    const parsedIDs = Array.isArray(ids) ? ids : [ids];
+    const objectIDs = parsedIDs.map(id => new ObjectId(id));
+    const children = await db.collection("locations").find({ _id: { $in: objectIDs } }).toArray();
+    
+    res.json(children);
+  } catch (error) {
+    console.error("Failed to fetch multiple locations:", error);
+    res.status(500).json({ error: "Internal Server Error" });
   }
 });
 
@@ -157,6 +188,43 @@ router.put("/:id", async (req, res) => {
     res.status(500).json({ error: "Failed to update location" });
   }
 });
+
+// **PATCH to add Site ID to parent Site**
+router.patch("/:id/add-child", async (req, res) => {
+  try {
+    const parentID = req.params.id;
+    const { childID } = req.body;
+
+    if (!childID) {
+      return res.status(400).json({ error: "Missing childID in request body" });
+    }
+
+    const result = await addChildToLocation(parentID, childID);
+    res.json(result);
+  } catch (error) {
+    console.error("Failed to add child:", error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// **PATCH to remove a Site ID from a parent Site**
+router.patch("/:id/remove-child", async (req, res) => {
+  try {
+    const parentID = req.params.id;
+    const { childID } = req.body;
+
+    if (!childID) {
+      return res.status(400).json({ error: "Missing childID in request body" });
+    }
+
+    const result = await removeChildFromLocation(parentID, childID);
+    res.json(result);
+  } catch (error) {
+    console.error("Failed to remove child:", error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 
 // **DELETE: Remove a location**
 router.delete("/:id", async (req, res) => {

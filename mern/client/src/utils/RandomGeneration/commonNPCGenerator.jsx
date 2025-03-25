@@ -1,4 +1,4 @@
-import { useState } from "react";
+// import { useState } from "react";
 
 //This component is a monolithic combination of several .mjs files because it was easier to deal with than all of the
 //troubleshooting required to get ES Modules to play nice with Jest and Cypress for containerization and testing.
@@ -269,7 +269,7 @@ class Tiefling extends BaseCharacter {
     constructor() {
         super();
 
-        this.charisma += 2;
+        this.stats.charisma += 2;
 
         this.charName = "";
         this.age = PickANumber(14, 70);
