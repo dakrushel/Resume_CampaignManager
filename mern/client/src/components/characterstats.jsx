@@ -11,7 +11,7 @@ import SpellModal from "./spellmodal";
 // import { wizardSpellSlots } from "./spelldata";
 import PropTypes from "prop-types";
 import { useAuthToken } from "./characterAPIs/useauthtoken"
-import { fetchRaces, fetchClasses, fetchClassDetails, fetchClassFeatures, fetchClassSpells } from "./characterAPIs/pc5eAPIs";
+import { fetchRaces, fetchRaceDetails, fetchClasses, fetchClassDetails, fetchClassFeatures, fetchClassSpells } from "./characterAPIs/pc5eAPIs";
 import { createCharacter, modifyCharacter } from "./characterAPIs/pcMongoAPIs";
 
 {/* CharacterStats use states, spells included */}
@@ -142,17 +142,21 @@ const CharacterStats = ({ onClassSelect, characterLevel, onLevelChange, displaye
       setCharacter((prev) => ({ ...prev, race: "" }));
       return;
     }
-
+ 
+    //this does not correctly map race details for some reason
     try {
-      const raceDetails = await fetchRaces(raceIndex);
+      console.log(raceIndex)
+      const raceDetails = await fetchRaceDetails(raceIndex)
+      // setRaceDetails(details)
+      console.log(raceDetails);
       setCharacter((prev) => ({
         ...prev,
         race: raceDetails.name,
         size: raceDetails.size,
         size_description: raceDetails.size_description,
-        languages: raceDetails.languages.map(lang => lang.name),
+        languages: raceDetails.languages ? raceDetails.languages.map(lang => lang.name) : [],
         language_desc: raceDetails.language_desc,
-        traits: raceDetails.traits.map(trait => trait.name),
+        traits: raceDetails.traits ? raceDetails.traits.map(trait => trait.name) : [],
       }));
     } catch (error) {
       console.error("Error fetching race details:", error);
