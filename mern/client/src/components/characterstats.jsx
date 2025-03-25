@@ -5,10 +5,9 @@
 ===============================================*/
 
 import { useState, useEffect } from "react";
-// import axios from "axios";
-import SpellSlotTracker from "./spellslottracker";
+import { SpellSlotTable } from "./spelldata";
+import { getLocalSpellSlots } from "./spelldata";
 import SpellModal from "./spellmodal";
-// import { wizardSpellSlots } from "./spelldata";
 import PropTypes from "prop-types";
 import { useAuthToken } from "./characterAPIs/useauthtoken";
 import {
@@ -25,9 +24,6 @@ import {
   removeCharacter,
 } from "./characterAPIs/pcMongoAPIs";
 
-{
-  /* CharacterStats use states, spells included */
-}
 const CharacterStats = ({
   onClassSelect,
   characterLevel,
@@ -39,36 +35,38 @@ const CharacterStats = ({
 }) => {
   const [races, setRaces] = useState([]);
   const [classes, setClasses] = useState([]);
-  // const [ characterLevel, setCharacterLevel] = useState(1);
-  // const [setSelectedRace] = useState(null);
-  // const [selectedClass, setSelectedClass] = useState(null);
-  const [spellSlots, setSpellSlots] = useState({});
-  const [isSpellModalOpen, setIsSpellModalOpen] = useState(false);
-  const [selectedSpellLevel, setSelectedSpellLevel] = useState(null);
-  const [spellsByLevel, setSpellsByLevel] = useState({});
-  const [selectedSpells, setSelectedSpells] = useState([]);
-  const [selectedSpellForDescription, setSelectedSpellForDescription] =
-    useState(null); // Track selected spell for description
   const [initialCharacter, setInitialCharacter] = useState({});
   const [saving, setSaving] = useState(false); // Prevent duplicate submissions
   const token = useAuthToken();
-  // const [setError] = useState(null);
   const [isLoadingFeatures, setIsLoadingFeatures] = useState(false);
   const [featureError, setFeatureError] = useState(null);
   const [selectedFeature, setSelectedFeature] = useState(null);
   const [expandedLevels, setExpandedLevels] = useState(new Set());
+  const [showRaceDetails, setShowRaceDetails] = useState(false);
+  const [showClassProficiencies, setShowClassProficiencies] = useState(false);
+  const [showClassFeatures, setShowClassFeatures] = useState(false);
 
-  {
-    /* Base Stats for character */
-  }
-  // const [baseStats, setBaseStats] = useState({
-  //   strength: 10,
-  //   dexterity: 10,
-  //   constitution: 10,
-  //   intelligence: 10,
-  //   wisdom: 10,
-  //   charisma: 10,
-  // });
+  const [spellSlots, setSpellSlots] = useState({});
+  const [usedSlots, setUsedSlots] = useState({});
+  const [isSpellModalOpen, setIsSpellModalOpen] = useState(false);
+  const [selectedSpellLevel, setSelectedSpellLevel] = useState(null);
+  const [spellsByLevel, setSpellsByLevel] = useState({});
+  const [selectedSpells, setSelectedSpells] = useState([]);
+  const [spells, setSpells] = useState([]);
+  const [spellsLoading, setSpellsLoading] = useState(false);
+  const [spellsError, setSpellsError] = useState(null);
+  const [selectedSpellForDescription, setSelectedSpellForDescription] =
+    useState(null); // Track selected spell for description
+  const [spellSlotsState, setSpellSlotsState] = useState({
+    loading: false,
+    error: null,
+    slots: {},
+    available: {}, // Track remaining slots
+  });
+  // Add this near your other state declarations
+  const [preparedSpells, setPreparedSpells] = useState([]);
+  const [knownCantrips, setKnownCantrips] = useState([]);
+  const [availableSpells, setAvailableSpells] = useState([]);
 
   const [character, setCharacter] = useState({
     name: "",
@@ -99,6 +97,41 @@ const CharacterStats = ({
     selectedSpells: [],
   });
 
+  // Replace your current loadSpellData effect with this:
+  // Add this effect to load spell data
+  // Update the spell loading effect
+  useEffect(() => {
+    const loadSpellData = async () => {
+      if (!character.class) return;
+
+      try {
+        // Load spell slots
+        const slots = getLocalSpellSlots(
+          character.class.toLowerCase(),
+          character.level
+        );
+        setSpellSlots(slots);
+        setUsedSlots({});
+
+        // Load spells from API
+        const spells = await fetchClassSpells(character.class.toLowerCase());
+        setAvailableSpells(spells);
+      } catch (error) {
+        console.error("Error loading spell data:", error);
+      }
+    };
+
+    loadSpellData();
+  }, [character.class, character.level]);
+
+  useEffect(() => {
+    if (displayedCharacter?.selectedSpells) {
+      const spells = displayedCharacter.selectedSpells;
+      setPreparedSpells(spells.filter((s) => s.level > 0));
+      setKnownCantrips(spells.filter((s) => s.level === 0));
+    }
+  }, [displayedCharacter]);
+
   useEffect(() => {
     if (displayedCharacter && Object.keys(displayedCharacter).length > 0) {
       // Update the character state
@@ -111,10 +144,6 @@ const CharacterStats = ({
       setInitialCharacter(displayedCharacter);
     }
   }, [displayedCharacter]);
-
-  const [showRaceDetails, setShowRaceDetails] = useState(false);
-  const [showClassProficiencies, setShowClassProficiencies] = useState(false);
-  const [showClassFeatures, setShowClassFeatures] = useState(false);
 
   useEffect(() => {
     const loadRaces = async () => {
@@ -243,26 +272,37 @@ const CharacterStats = ({
   const handleLevelChange = async (newLevel) => {
     const clampedLevel = Math.min(Math.max(newLevel, 1), 20);
     onLevelChange(clampedLevel);
-
+  
+    // Immediately update level to prevent flicker
+    setCharacter(prev => ({
+      ...prev,
+      level: clampedLevel
+    }));
+  
     if (character.class) {
       try {
         setIsLoadingFeatures(true);
         setFeatureError(null);
-
+  
         const features = await fetchClassFeatures(
           character.class,
           clampedLevel
         );
-        setCharacter((prev) => ({
+        
+        // Update spell slots for new level
+        const slots = getLocalSpellSlots(character.class.toLowerCase(), clampedLevel);
+        setSpellSlots(slots);
+        setUsedSlots({});
+  
+        setCharacter(prev => ({
           ...prev,
-          level: clampedLevel,
           classFeatures: features,
         }));
-
-        // Maintain expanded state for existing levels
-        const newLevels = new Set(features.map((f) => f.level));
+  
+        // Maintain expanded state
+        const newLevels = new Set(features.map(f => f.level));
         const maintainedExpansion = new Set(
-          [...expandedLevels].filter((l) => newLevels.has(l))
+          [...expandedLevels].filter(l => newLevels.has(l))
         );
         setExpandedLevels(maintainedExpansion);
       } catch (error) {
@@ -271,11 +311,6 @@ const CharacterStats = ({
       } finally {
         setIsLoadingFeatures(false);
       }
-    } else {
-      setCharacter((prev) => ({
-        ...prev,
-        level: clampedLevel,
-      }));
     }
   };
 
@@ -337,37 +372,97 @@ const CharacterStats = ({
     );
   };
 
-  const handleSpendSlot = (level) => {
-    setSpellSlots((prev) => ({
+  // Replace your current spell slot functions with these:
+  const handleSpendSlot = (spellLevel) => {
+    setUsedSlots((prev) => ({
       ...prev,
-      [level]: Math.max((prev[level] || 0) - 1, 0),
+      [spellLevel]: (prev[spellLevel] || 0) + 1,
     }));
   };
 
-  const calculateRemainingSpellPoints = (level) => {
-    const maxPoints = spellSlots[level] || 0;
-    const usedPoints = selectedSpells.filter((s) => s.level === level).length;
-    return maxPoints - usedPoints;
+  // Add this function to reset slots
+  const handleResetSlots = () => {
+    setUsedSlots({});
   };
 
-  const addSpellToCharacter = (spell) => {
-    const isAlreadySelected = selectedSpells.some((s) => s.name === spell.name);
-    if (isAlreadySelected) {
-      alert(`You already have ${spell.name} selected.`);
+  const handlePrepareSpell = (spell) => {
+    if (spell.level === 0) {
+      // Handle cantrips
+      setKnownCantrips((prev) => [...prev, spell]);
+    } else {
+      // Handle regular spells
+      setPreparedSpells((prev) => [...prev, spell]);
+    }
+
+    // Remove from available spells
+    setAvailableSpells((prev) => prev.filter((s) => s.index !== spell.index));
+  };
+
+  const handleUnprepareSpell = (spell) => {
+    if (spell.level === 0) {
+      setKnownCantrips((prev) => prev.filter((s) => s.index !== spell.index));
+    } else {
+      setPreparedSpells((prev) => prev.filter((s) => s.index !== spell.index));
+    }
+
+    // Add back to available spells
+    setAvailableSpells((prev) => [...prev, spell]);
+  };
+
+  // Add this helper function near the top of your file
+  const isSpellcastingClass = (className) => {
+    const spellcastingClasses = [
+      "wizard",
+      "cleric",
+      "druid",
+      "bard",
+      "sorcerer",
+      "warlock",
+      "paladin",
+      "ranger",
+    ];
+    return spellcastingClasses.includes(className.toLowerCase());
+  };
+
+  // Then modify your SpellSlotTable rendering:
+  {
+    isSpellcastingClass(character.class) && (
+      <SpellSlotTable
+        className={character.class.toLowerCase()}
+        level={character.level}
+        onSpendSlot={handleSpendSlot}
+      />
+    );
+  }
+
+  // Update the calculateRemainingSpellPoints function
+  const calculateRemainingSpellPoints = (spellLevel) => {
+    const totalSlots = spellSlots[spellLevel] || 0;
+    const used = usedSlots[spellLevel] || 0;
+    return Math.max(totalSlots - used, 0);
+  };
+
+  const handleAddSpell = (spell) => {
+    // Check if already selected
+    if (selectedSpells.some((s) => s.index === spell.index)) {
+      alert(`${spell.name} is already selected.`);
       return;
     }
 
-    const remainingPoints = calculateRemainingSpellPoints(spell.level);
-    if (remainingPoints > 0) {
-      setSelectedSpells((prev) => [...prev, spell]);
-    } else {
-      alert(`No remaining spell points for level ${spell.level} spells.`);
+    // Check available slots
+    const remainingSlots = calculateRemainingSpellPoints(spell.level);
+    if (remainingSlots <= 0) {
+      alert(`No remaining spell slots for level ${spell.level} spells.`);
+      return;
     }
+
+    setSelectedSpells((prev) => [...prev, spell]);
+    setIsSpellModalOpen(false);
   };
 
-  const removeSpellFromCharacter = (spellIndex) => {
+  const handleRemoveSpell = (spellIndex) => {
     setSelectedSpells((prev) =>
-      prev.filter((_, index) => index !== spellIndex)
+      prev.filter((spell) => spell.index !== spellIndex)
     );
   };
 
@@ -377,56 +472,82 @@ const CharacterStats = ({
       alert("Authentication error. Please log in again.");
       return;
     }
-
+  
     setSaving(true);
     try {
+      // Combine prepared spells and cantrips into selectedSpells array
+      const selectedSpells = [
+        ...preparedSpells.map(spell => ({
+          name: spell.name,
+          level: spell.level,
+          school: spell.school?.name || "Unknown",
+          desc: spell.desc ? (Array.isArray(spell.desc)) ? spell.desc.join('\n') : spell.desc : "No description available",
+          index: spell.index // Include index if needed for reference
+        })),
+        ...knownCantrips.map(cantrip => ({
+          name: cantrip.name,
+          level: 0, // Cantrips are level 0
+          school: cantrip.school?.name || "Unknown",
+          desc: cantrip.desc ? (Array.isArray(cantrip.desc)) ? cantrip.desc.join('\n') : cantrip.desc : "No description available",
+          index: cantrip.index
+        }))
+      ];
+  
+      // Create character data with selectedSpells
       const characterData = {
-        name: character.name,
+        name: character.name.trim(),
         race: character.race,
         class: character.class,
         level: parseInt(character.level) || 1,
         alignment: character.alignment || "Unaligned",
-        stats: Object.fromEntries(
-          Object.entries(character.stats).map(([stat, value]) => [
-            stat,
-            parseInt(value) || 0,
-          ])
-        ),
+        stats: {
+          strength: parseInt(character.stats.strength) || 10,
+          dexterity: parseInt(character.stats.dexterity) || 10,
+          constitution: parseInt(character.stats.constitution) || 10,
+          intelligence: parseInt(character.stats.intelligence) || 10,
+          wisdom: parseInt(character.stats.wisdom) || 10,
+          charisma: parseInt(character.stats.charisma) || 10,
+        },
+        campaignID: character.campaignID,
         speed: parseInt(character.speed) || 30,
         hitDice: character.hitDice,
-        proficiencies: character.proficiencies,
+        proficiencies: character.proficiencies || [],
         size: character.size,
         size_description: character.size_description,
-        languages: character.languages,
+        languages: character.languages || [],
         language_desc: character.language_desc,
-        traits: character.traits,
-        startingProficiencies: character.startingProficiencies,
-        classProficiencies: character.classProficiencies,
-        classFeatures: character.classFeatures,
-        campaignID: character.campaignID.toString(),
-        selectedSpells: character.selectedSpells || [],
+        traits: character.traits || [],
+        startingProficiencies: character.startingProficiencies || [],
+        classProficiencies: character.classProficiencies || [],
+        classFeatures: character.classFeatures || [],
+        selectedSpells: selectedSpells,
+        // Include spell slot tracking if needed
+        spellSlots: spellSlots,
+        usedSlots: usedSlots
       };
-
+  
+      console.log("Final character data with spells:", JSON.stringify(characterData, null, 2));
+  
       let result;
       if (character._id) {
-        console.log("Updating existing character with ID:", character._id);
+        console.log("Updating character with ID:", character._id);
         result = await modifyCharacter(character._id, characterData, token);
       } else {
         console.log("Creating new character");
         result = await createCharacter(characterData, token);
       }
-
+  
       if (!result) {
         throw new Error("Server returned invalid response");
       }
-
+  
       alert(`Character ${character._id ? "updated" : "created"} successfully!`);
       if (refreshCharacters) refreshCharacters();
     } catch (error) {
       console.error("Save operation failed:", {
         error: error.message,
-        characterData: character, // Log the current character state instead
         time: new Date().toISOString(),
+        stack: error.stack
       });
       alert(`Save failed: ${error.message || "Unknown server error"}`);
     } finally {
@@ -528,319 +649,467 @@ const CharacterStats = ({
   const formStyle =
     "w-full p-3 border border-brown rounded-lg outline-none bg-cream focus:shadow-yellow-800 placeholder-yellow-700 focus:shadow-sm transition-colors";
 
-    return (
-      <div className="p-6 max-w-6xl mx-auto bg-yellow-600 rounded-xl shadow-lg shadow-yellow-800/50 text-yellow-900 grid grid-cols-1 md:grid-cols-4 gap-6">
-        {/* Left Section - Race Details */}
-        <div className="bg-yellow-100 p-6 rounded-xl shadow-md border border-yellow-200 col-span-1">
-          <h2
-            className="text-xl font-bold mb-4 cursor-pointer flex items-center justify-between"
-            onClick={() => setShowRaceDetails(!showRaceDetails)}
-          >
-            <span className="hover:text-yellow-700 transition-colors">Race Details</span>
-            <span className="text-yellow-600">{showRaceDetails ? "▲" : "▼"}</span>
-          </h2>
-          {showRaceDetails && (
-            <div className="space-y-3 text-yellow-800">
-              {[
-                { label: "Size", value: character.size },
-                { label: "Size Description", value: character.size_description },
-                { label: "Languages", value: character.languages.join(", ") },
-                { label: "Language Description", value: character.language_desc },
-                { label: "Traits", value: character.traits.join(", ") }
-              ].map((item, index) => (
-                <div key={index} className="border-b border-yellow-200 pb-2 last:border-0">
-                  <p className="font-semibold text-yellow-700">{item.label}</p>
-                  <p className="text-yellow-900">{item.value || "-"}</p>
-                </div>
-              ))}
-            </div>
-          )}
+  return (
+    <div className="p-6 max-w-6xl mx-auto bg-yellow-600 rounded-xl shadow-lg shadow-yellow-800/50 text-yellow-900 grid grid-cols-1 md:grid-cols-4 gap-6">
+      {/* Left Section - Race Details */}
+      <div className="bg-yellow-100 p-6 rounded-xl shadow-md border border-yellow-200 col-span-1">
+        <h2
+          className="text-xl font-bold mb-4 cursor-pointer flex items-center justify-between"
+          onClick={() => setShowRaceDetails(!showRaceDetails)}
+        >
+          <span className="hover:text-yellow-700 transition-colors">
+            Race Details
+          </span>
+          <span className="text-yellow-600">{showRaceDetails ? "▲" : "▼"}</span>
+        </h2>
+        {showRaceDetails && (
+          <div className="space-y-3 text-yellow-800">
+            {[
+              { label: "Size", value: character.size },
+              { label: "Size Description", value: character.size_description },
+              { label: "Languages", value: character.languages.join(", ") },
+              { label: "Language Description", value: character.language_desc },
+              { label: "Traits", value: character.traits.join(", ") },
+            ].map((item, index) => (
+              <div
+                key={index}
+                className="border-b border-yellow-200 pb-2 last:border-0"
+              >
+                <p className="font-semibold text-yellow-700">{item.label}</p>
+                <p className="text-yellow-900">{item.value || "-"}</p>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Main Character Sheet Form */}
+      <div className="bg-yellow-100 p-6 rounded-xl shadow-md border border-yellow-200 col-span-2">
+        <div className="flex justify-between items-center mb-6">
+          <h1 className="text-3xl font-bold text-yellow-800 font-serif">
+            Character Sheet
+          </h1>
+          <div className="flex items-center space-x-2">
+            <span className="text-sm font-medium">Level</span>
+            <input
+              type="number"
+              className="w-16 px-3 py-1 rounded border border-yellow-300 bg-yellow-50 text-center"
+              value={characterLevel}
+              onChange={(e) => handleLevelChange(parseInt(e.target.value) || 1)}
+              min="1"
+              max="20"
+            />
+          </div>
         </div>
-    
-        {/* Main Character Sheet Form */}
-        <div className="bg-yellow-100 p-6 rounded-xl shadow-md border border-yellow-200 col-span-2">
-          <div className="flex justify-between items-center mb-6">
-            <h1 className="text-3xl font-bold text-yellow-800 font-serif">Character Sheet</h1>
-            <div className="flex items-center space-x-2">
-              <span className="text-sm font-medium">Level</span>
+
+        <form className="space-y-6">
+          {/* Character Info Section */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-yellow-700 mb-1">
+                Name
+              </label>
               <input
-                type="number"
-                className="w-16 px-3 py-1 rounded border border-yellow-300 bg-yellow-50 text-center"
-                value={characterLevel}
-                onChange={(e) => handleLevelChange(parseInt(e.target.value) || 1)}
-                min="1"
-                max="20"
+                type="text"
+                className="w-full px-3 py-2 rounded border border-yellow-300 bg-yellow-50 focus:ring-2 focus:ring-yellow-500 focus:border-transparent"
+                value={character.name}
+                onChange={(e) =>
+                  setCharacter({ ...character, name: e.target.value })
+                }
+                placeholder="Character name"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-yellow-700 mb-1">
+                Race
+              </label>
+              <select
+                className="w-full px-3 py-2 rounded border border-yellow-300 bg-yellow-50 focus:ring-2 focus:ring-yellow-500 focus:border-transparent"
+                value={
+                  races.find((race) => race.name === character.race)?.index ||
+                  ""
+                }
+                onChange={(e) => handleRaceChange(e.target.value)}
+              >
+                <option value="">Select Race</option>
+                {races.map((race) => (
+                  <option key={race.index} value={race.index}>
+                    {race.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-yellow-700 mb-1">
+                Class
+              </label>
+              <select
+                className="w-full px-3 py-2 rounded border border-yellow-300 bg-yellow-50 focus:ring-2 focus:ring-yellow-500 focus:border-transparent"
+                value={
+                  classes.find((cls) => cls.name === character.class)?.index ||
+                  ""
+                }
+                onChange={(e) => handleClassChange(e.target.value || "")}
+              >
+                <option value="">Select Class</option>
+                {classes.map((cls) => (
+                  <option key={cls.index} value={cls.index}>
+                    {cls.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-yellow-700 mb-1">
+                Hit Dice
+              </label>
+              <input
+                type="text"
+                className="w-full px-3 py-2 rounded border border-yellow-300 bg-yellow-50"
+                value={character.hitDice}
+                readOnly
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-yellow-700 mb-1">
+                Speed:
+              </label>
+              <input
+                type="text"
+                className="w-full px-3 py-2 rounded border border-yellow-300 bg-yellow-50"
+                value={character.speed}
+                readOnly
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-yellow-700 mb-1">
+                Passive Perception:
+              </label>
+              <input
+                type="text"
+                className="w-full px-3 py-2 rounded border border-yellow-300 bg-yellow-50"
+                value={10 + Math.floor((character.stats.wisdom - 10) / 2)}
+                readOnly
               />
             </div>
           </div>
-    
-          <form className="space-y-6">
-            {/* Character Info Section */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-yellow-700 mb-1">Name</label>
-                <input
-                  type="text"
-                  className="w-full px-3 py-2 rounded border border-yellow-300 bg-yellow-50 focus:ring-2 focus:ring-yellow-500 focus:border-transparent"
-                  value={character.name}
-                  onChange={(e) => setCharacter({ ...character, name: e.target.value })}
-                  placeholder="Character name"
-                />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-yellow-700 mb-1">Race</label>
-                <select
-                  className="w-full px-3 py-2 rounded border border-yellow-300 bg-yellow-50 focus:ring-2 focus:ring-yellow-500 focus:border-transparent"
-                  value={races.find((race) => race.name === character.race)?.index || ""}
-                  onChange={(e) => handleRaceChange(e.target.value)}
+
+          {/* Stats Section */}
+          <div className="bg-yellow-200/30 p-4 rounded-lg border border-yellow-200">
+            <h3 className="text-lg font-semibold text-yellow-800 mb-3">
+              Ability Scores
+            </h3>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+              {Object.entries(character.stats).map(([stat, value]) => (
+                <div
+                  key={stat}
+                  className="bg-yellow-100 p-2 rounded border border-yellow-200"
                 >
-                  <option value="">Select Race</option>
-                  {races.map((race) => (
-                    <option key={race.index} value={race.index}>
-                      {race.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-yellow-700 mb-1">Class</label>
-                <select
-                  className="w-full px-3 py-2 rounded border border-yellow-300 bg-yellow-50 focus:ring-2 focus:ring-yellow-500 focus:border-transparent"
-                  value={classes.find((cls) => cls.name === character.class)?.index || ""}
-                  onChange={(e) => handleClassChange(e.target.value || "")}
-                >
-                  <option value="">Select Class</option>
-                  {classes.map((cls) => (
-                    <option key={cls.index} value={cls.index}>
-                      {cls.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-yellow-700 mb-1">Hit Dice</label>
-                <input
-                  type="text"
-                  className="w-full px-3 py-2 rounded border border-yellow-300 bg-yellow-50"
-                  value={character.hitDice}
-                  readOnly
-                />
-              </div>
-            </div>
-    
-            {/* Stats Section */}
-            <div className="bg-yellow-200/30 p-4 rounded-lg border border-yellow-200">
-              <h3 className="text-lg font-semibold text-yellow-800 mb-3">Ability Scores</h3>
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                {Object.entries(character.stats).map(([stat, value]) => (
-                  <div key={stat} className="bg-yellow-100 p-2 rounded border border-yellow-200">
-                    <label className="block text-xs font-medium text-yellow-600 uppercase tracking-wider">
-                      {stat}
-                    </label>
-                    <input
-                      type="number"
-                      className="w-full px-2 py-1 bg-white rounded border border-yellow-300 text-center font-bold text-yellow-900"
-                      value={value}
-                      onChange={(e) => handleStatChange(stat, e.target.value)}
-                    />
-                    <div className="text-center text-sm mt-1">
-                      {Math.floor((value - 10) / 2) >= 0 ? "+" : ""}
-                      {Math.floor((value - 10) / 2)}
-                    </div>
+                  <label className="block text-xs font-medium text-yellow-600 uppercase tracking-wider">
+                    {stat}
+                  </label>
+                  <input
+                    type="number"
+                    className="w-full px-2 py-1 bg-white rounded border border-yellow-300 text-center font-bold text-yellow-900"
+                    value={value}
+                    onChange={(e) => handleStatChange(stat, e.target.value)}
+                  />
+                  <div className="text-center text-sm mt-1">
+                    {Math.floor((value - 10) / 2) >= 0 ? "+" : ""}
+                    {Math.floor((value - 10) / 2)}
                   </div>
-                ))}
-              </div>
+                </div>
+              ))}
             </div>
-    
-            {/* Spell Section */}
+          </div>
+
+          {/* Spell Management Section */}
+          {isSpellcastingClass(character.class) && (
             <div className="space-y-4">
-              <SpellSlotTracker
-                spellSlots={spellSlots}
-                onSpendSlot={handleSpendSlot}
-              />
-              
-              {Object.keys(spellSlots).length > 0 && (
-                <div className="bg-yellow-200/30 p-4 rounded-lg border border-yellow-200">
-                  <h3 className="text-lg font-semibold text-yellow-800 mb-3">Selected Spells</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    {selectedSpells.map((spell, index) => (
-                      <div key={index} className="bg-white p-3 rounded-lg border border-yellow-200 shadow-sm">
-                        <div className="flex justify-between items-start">
-                          <div>
-                            <h4 className="font-medium text-yellow-900 hover:text-yellow-700 cursor-pointer"
-                              onClick={() => setSelectedSpellForDescription(spell)}>
-                              {spell.name}
-                            </h4>
-                            <div className="flex space-x-2 text-xs text-yellow-600 mt-1">
-                              <span>Lvl {spell.level}</span>
-                              <span>•</span>
-                              <span>{spell.school?.name || "Unknown School"}</span>
-                            </div>
-                          </div>
+              <div className="bg-yellow-100 p-4 rounded-lg">
+                <SpellSlotTable
+                  className={character.class.toLowerCase()}
+                  level={character.level}
+                  onSpendSlot={handleSpendSlot}
+                  usedSlots={usedSlots}
+                  onResetSlots={handleResetSlots}
+                />
+
+                <div className="flex flex-wrap gap-2 mb-4">
+                  <button
+                    onClick={(e) => {
+                      e.preventDefault();
+                      setSelectedSpellLevel(0);
+                      setIsSpellModalOpen(true);
+                    }}
+                    className="px-3 py-1 bg-green-600 hover:bg-green-700 text-white rounded text-sm"
+                  >
+                    Add Cantrips
+                  </button>
+
+                  {[1, 2, 3, 4, 5, 6, 7, 8, 9].map(
+                    (level) =>
+                      spellSlots[level] > 0 && (
+                        <button
+                          key={level}
+                          onClick={(e) => {
+                            e.preventDefault();
+                            setSelectedSpellLevel(level);
+                            setIsSpellModalOpen(true);
+                          }}
+                          className={`px-3 py-1 rounded text-sm ${
+                            calculateRemainingSpellPoints(level) <= 0
+                              ? "bg-gray-400 text-gray-600 cursor-not-allowed"
+                              : "bg-blue-600 hover:bg-blue-700 text-white"
+                          }`}
+                          disabled={calculateRemainingSpellPoints(level) <= 0}
+                        >
+                          Add Level {level}
+                        </button>
+                      )
+                  )}
+                </div>
+
+                {isSpellModalOpen && (
+                  <SpellModal
+                    level={selectedSpellLevel}
+                    classIndex={character.class.toLowerCase()}
+                    onAddSpell={(spell) => {
+                      handlePrepareSpell(spell);
+                      setIsSpellModalOpen(false);
+                    }}
+                    onClose={() => setIsSpellModalOpen(false)}
+                    remainingSpellPoints={calculateRemainingSpellPoints(
+                      selectedSpellLevel
+                    )}
+                    selectedSpells={[...preparedSpells, ...knownCantrips]}
+                    availableSpells={availableSpells}
+                  />
+                )}
+
+                <div className="bg-white p-4 rounded-lg mb-4 border border-yellow-200">
+                  <h3 className="font-bold text-lg mb-2">Prepared Spells</h3>
+                  {preparedSpells.length > 0 ? (
+                    <div className="grid grid-cols-2 gap-2">
+                      {preparedSpells.map((spell) => (
+                        <div
+                          key={spell.index}
+                          className="bg-white p-2 rounded border border-yellow-200 flex justify-between items-center"
+                        >
+                          <span className="truncate">
+                            {spell.name} (Lvl {spell.level})
+                          </span>
                           <button
-                            onClick={() => removeSpellFromCharacter(index)}
-                            className="text-xs bg-yellow-100 hover:bg-yellow-200 px-2 py-1 rounded transition-colors"
+                            onClick={() => handleUnprepareSpell(spell)}
+                            className="px-2 py-1 bg-red-100 hover:bg-red-200 text-red-700 rounded text-sm whitespace-nowrap"
                           >
                             Remove
                           </button>
                         </div>
-                      </div>
-                    ))}
-                  </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-yellow-800 italic">No spells prepared</p>
+                  )}
                 </div>
-              )}
+
+                <div className="bg-white p-4 rounded-lg border border-yellow-200">
+                  <h3 className="font-bold text-lg mb-2">Known Cantrips</h3>
+                  {knownCantrips.length > 0 ? (
+                    <div className="grid grid-cols-2 gap-2">
+                      {knownCantrips.map((spell) => (
+                        <div
+                          key={spell.index}
+                          className="bg-white p-2 rounded border border-yellow-200 flex justify-between items-center"
+                        >
+                          <span className="truncate">{spell.name}</span>
+                          <button
+                            onClick={() => handleUnprepareSpell(spell)}
+                            className="px-2 py-1 bg-red-100 hover:bg-red-200 text-red-700 rounded text-sm whitespace-nowrap"
+                          >
+                            Remove
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-yellow-800 italic">No cantrips known</p>
+                  )}
+                </div>
+              </div>
             </div>
-    
-            {/* Action Buttons */}
-            <div className="flex flex-wrap gap-3 pt-4">
+          )}
+
+          {/* Action Buttons */}
+          <div className="flex flex-wrap gap-3 pt-4">
+            <button
+              onClick={handleSaveCharacter}
+              className={`px-4 py-2 rounded-lg font-medium ${
+                saving
+                  ? "bg-yellow-300 text-yellow-800"
+                  : "bg-yellow-600 hover:bg-yellow-700 text-white"
+              } transition-colors`}
+              disabled={saving}
+            >
+              {saving ? "Saving..." : "Save Character"}
+            </button>
+            <button
+              onClick={onCancel}
+              className="px-4 py-2 rounded-lg font-medium bg-yellow-100 hover:bg-yellow-200 text-yellow-800 transition-colors"
+            >
+              Cancel
+            </button>
+            {!isNew && (
               <button
-                onClick={handleSaveCharacter}
-                className={`px-4 py-2 rounded-lg font-medium ${
-                  saving ? "bg-yellow-300 text-yellow-800" : "bg-yellow-600 hover:bg-yellow-700 text-white"
-                } transition-colors`}
-                disabled={saving}
+                onClick={handleDeleteCharacter}
+                className="px-4 py-2 rounded-lg font-medium bg-red-100 hover:bg-red-200 text-red-800 transition-colors"
               >
-                {saving ? "Saving..." : "Save Character"}
+                Delete
               </button>
-              <button
-                onClick={onCancel}
-                className="px-4 py-2 rounded-lg font-medium bg-yellow-100 hover:bg-yellow-200 text-yellow-800 transition-colors"
-              >
-                Cancel
-              </button>
-              {!isNew && (
+            )}
+          </div>
+        </form>
+      </div>
+
+      {/* Right Section - Class Details */}
+      <div className="bg-yellow-100 p-6 rounded-xl shadow-md border border-yellow-200 col-span-1 space-y-6">
+        {/* Proficiencies */}
+        <div className="bg-white p-4 rounded-lg border border-yellow-200">
+          <h2
+            className="text-lg font-semibold text-yellow-800 mb-3 cursor-pointer flex justify-between items-center"
+            onClick={() => setShowClassProficiencies(!showClassProficiencies)}
+          >
+            <span>Class Proficiencies</span>
+            <span className="text-yellow-600">
+              {showClassProficiencies ? "▲" : "▼"}
+            </span>
+          </h2>
+          {showClassProficiencies && (
+            <div className="space-y-3 text-sm">
+              <div>
+                <h4 className="font-medium text-yellow-700">
+                  Starting Proficiencies:
+                </h4>
+                <p className="text-yellow-900">
+                  {character.startingProficiencies.join(", ") || "None"}
+                </p>
+              </div>
+              <div>
+                <h4 className="font-medium text-yellow-700">
+                  Proficiency Choices:
+                </h4>
+                <p className="text-yellow-900">
+                  {character.classProficiencies.join(", ") || "None"}
+                </p>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Features */}
+        <div className="bg-white p-4 rounded-lg border border-yellow-200">
+          <div className="flex justify-between items-center mb-3">
+            <h2
+              className="text-lg font-semibold text-yellow-800 cursor-pointer"
+              onClick={() => setShowClassFeatures(!showClassFeatures)}
+            >
+              Class Features
+            </h2>
+            <div className="flex items-center space-x-2">
+              <span className="text-xs text-yellow-600">
+                {showClassFeatures ? "▲" : "▼"}
+              </span>
+              {showClassFeatures && (
                 <button
-                  onClick={handleDeleteCharacter}
-                  className="px-4 py-2 rounded-lg font-medium bg-red-100 hover:bg-red-200 text-red-800 transition-colors"
+                  onClick={() => setExpandedLevels(new Set())}
+                  className="text-xs bg-yellow-100 hover:bg-yellow-200 px-2 py-1 rounded"
                 >
-                  Delete
+                  Collapse All
                 </button>
               )}
             </div>
-          </form>
-        </div>
-    
-        {/* Right Section - Class Details */}
-        <div className="bg-yellow-100 p-6 rounded-xl shadow-md border border-yellow-200 col-span-1 space-y-6">
-          {/* Proficiencies */}
-          <div className="bg-white p-4 rounded-lg border border-yellow-200">
-            <h2
-              className="text-lg font-semibold text-yellow-800 mb-3 cursor-pointer flex justify-between items-center"
-              onClick={() => setShowClassProficiencies(!showClassProficiencies)}
-            >
-              <span>Class Proficiencies</span>
-              <span className="text-yellow-600">{showClassProficiencies ? "▲" : "▼"}</span>
-            </h2>
-            {showClassProficiencies && (
-              <div className="space-y-3 text-sm">
-                <div>
-                  <h4 className="font-medium text-yellow-700">Starting Proficiencies:</h4>
-                  <p className="text-yellow-900">
-                    {character.startingProficiencies.join(", ") || "None"}
-                  </p>
-                </div>
-                <div>
-                  <h4 className="font-medium text-yellow-700">Proficiency Choices:</h4>
-                  <p className="text-yellow-900">
-                    {character.classProficiencies.join(", ") || "None"}
-                  </p>
-                </div>
-              </div>
-            )}
           </div>
-    
-          {/* Features */}
-          <div className="bg-white p-4 rounded-lg border border-yellow-200">
-            <div className="flex justify-between items-center mb-3">
-              <h2
-                className="text-lg font-semibold text-yellow-800 cursor-pointer"
-                onClick={() => setShowClassFeatures(!showClassFeatures)}
-              >
-                Class Features
-              </h2>
-              <div className="flex items-center space-x-2">
-                <span className="text-xs text-yellow-600">{showClassFeatures ? "▲" : "▼"}</span>
-                {showClassFeatures && (
-                  <button
-                    onClick={() => setExpandedLevels(new Set())}
-                    className="text-xs bg-yellow-100 hover:bg-yellow-200 px-2 py-1 rounded"
-                  >
-                    Collapse All
-                  </button>
-                )}
-              </div>
-            </div>
-            
-            {showClassFeatures && (
-              <div className="space-y-3">
-                {isLoadingFeatures ? (
-                  <div className="flex justify-center py-4">
-                    <div className="animate-spin rounded-full h-6 w-6 border-t-2 border-b-2 border-yellow-600"></div>
-                  </div>
-                ) : character.classFeatures.length > 0 ? (
-                  Array.from(new Set(character.classFeatures.map(f => f.level)))
-                    .sort((a, b) => a - b)
-                    .map(level => (
-                      <div key={level} className="border border-yellow-200 rounded-lg overflow-hidden">
-                        <div
-                          className="flex justify-between items-center p-2 bg-yellow-100 cursor-pointer"
-                          onClick={() => toggleLevelExpansion(level)}
-                        >
-                          <h3 className="font-medium text-yellow-800">Level {level}</h3>
-                          <span className="text-yellow-600">
-                            {expandedLevels.has(level) ? "−" : "+"}
-                          </span>
-                        </div>
-                        {expandedLevels.has(level) && (
-                          <ul className="divide-y divide-yellow-100">
-                            {character.classFeatures
-                              .filter(f => f.level === level)
-                              .map((feature, index) => (
-                                <li
-                                  key={index}
-                                  className="p-2 hover:bg-yellow-50 cursor-pointer"
-                                  onClick={() => setSelectedFeature(feature)}
-                                >
-                                  <h4 className="font-medium text-yellow-700">{feature.name}</h4>
-                                  {feature.desc && (
-                                    <p className="text-xs text-yellow-600 line-clamp-2">
-                                      {Array.isArray(feature.desc) ? feature.desc[0] : feature.desc}
-                                    </p>
-                                  )}
-                                </li>
-                              ))}
-                          </ul>
-                        )}
+
+          {showClassFeatures && (
+            <div className="space-y-3">
+              {isLoadingFeatures ? (
+                <div className="flex justify-center py-4">
+                  <div className="animate-spin rounded-full h-6 w-6 border-t-2 border-b-2 border-yellow-600"></div>
+                </div>
+              ) : character.classFeatures.length > 0 ? (
+                Array.from(new Set(character.classFeatures.map((f) => f.level)))
+                  .sort((a, b) => a - b)
+                  .map((level) => (
+                    <div
+                      key={level}
+                      className="border border-yellow-200 rounded-lg overflow-hidden"
+                    >
+                      <div
+                        className="flex justify-between items-center p-2 bg-yellow-100 cursor-pointer"
+                        onClick={() => toggleLevelExpansion(level)}
+                      >
+                        <h3 className="font-medium text-yellow-800">
+                          Level {level}
+                        </h3>
+                        <span className="text-yellow-600">
+                          {expandedLevels.has(level) ? "−" : "+"}
+                        </span>
                       </div>
-                    ))
-                ) : (
-                  <p className="text-center text-yellow-600 py-2">
-                    {character.class ? "No features available" : "Select a class"}
-                  </p>
-                )}
-              </div>
-            )}
-          </div>
+                      {expandedLevels.has(level) && (
+                        <ul className="divide-y divide-yellow-100">
+                          {character.classFeatures
+                            .filter((f) => f.level === level)
+                            .map((feature, index) => (
+                              <li
+                                key={index}
+                                className="p-2 hover:bg-yellow-50 cursor-pointer"
+                                onClick={() => setSelectedFeature(feature)}
+                              >
+                                <h4 className="font-medium text-yellow-700">
+                                  {feature.name}
+                                </h4>
+                                {feature.desc && (
+                                  <p className="text-xs text-yellow-600 line-clamp-2">
+                                    {Array.isArray(feature.desc)
+                                      ? feature.desc[0]
+                                      : feature.desc}
+                                  </p>
+                                )}
+                              </li>
+                            ))}
+                        </ul>
+                      )}
+                    </div>
+                  ))
+              ) : (
+                <p className="text-center text-yellow-600 py-2">
+                  {character.class ? "No features available" : "Select a class"}
+                </p>
+              )}
+            </div>
+          )}
         </div>
-    
-        {/* Modals */}
-        {selectedSpellForDescription && (
-          <SpellDescriptionModal
-            spell={selectedSpellForDescription}
-            onClose={() => setSelectedSpellForDescription(null)}
-          />
-        )}
-        {selectedFeature && (
-          <FeatureDescriptionModal
-            feature={selectedFeature}
-            onClose={() => setSelectedFeature(null)}
-          />
-        )}
       </div>
-    );
+
+      {/* Modals */}
+      {selectedSpellForDescription && (
+        <SpellDescriptionModal
+          spell={selectedSpellForDescription}
+          onClose={() => setSelectedSpellForDescription(null)}
+        />
+      )}
+      {selectedFeature && (
+        <FeatureDescriptionModal
+          feature={selectedFeature}
+          onClose={() => setSelectedFeature(null)}
+        />
+      )}
+    </div>
+  );
 };
 
 export default CharacterStats;

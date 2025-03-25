@@ -125,7 +125,9 @@ const makeRequest = async (url, method, token, body = null) => {
         classProficiencies: characterData.classProficiencies || [],
         classFeatures: characterData.classFeatures || [],
         campaignID: characterData.campaignID,
-        selectedSpells: characterData.selectedSpells || []
+        selectedSpells: characterData.selectedSpells || [],
+        spellSlots: characterData.spellSlots || {},
+        usedSlots: characterData.usedSlots || {}
       };
     
   
@@ -162,22 +164,46 @@ const makeRequest = async (url, method, token, body = null) => {
   // Update existing character
 // In pcMongoAPIs.js
 export const modifyCharacter = async (id, characterData, token) => {
-    try {
-      const response = await makeRequest(
-        `http://localhost:5050/characters/${id}`,
-        'PUT',
-        token,  // Token comes before body
-        characterData
+  if (!id) throw new Error("Character ID is required");
+  if (!token) throw new Error("Authentication token is required");
+
+  try {
+    const response = await fetch(`http://localhost:5050/characters/${id}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${token}`
+      },
+      body: JSON.stringify(characterData)
+    });
+
+    if (!response.ok) {
+      let errorDetails;
+      try {
+        errorDetails = await response.json();
+        console.error("Backend validation errors:", errorDetails);
+      } catch (e) {
+        console.error("Failed to parse error response:", e);
+      }
+      
+      throw new Error(
+        errorDetails?.message || 
+        errorDetails?.error || 
+        `HTTP error! status: ${response.status}`
       );
-      return response;
-    } catch (error) {
-      console.error('Error updating character:', {
-        error: error.message,
-        characterData
-      });
-      throw error;
     }
-  };
+
+    return await response.json();
+  } catch (error) {
+    console.error("API request failed:", {
+      endpoint: `PUT /characters/${id}`,
+      payload: characterData,
+      error: error.message,
+      stack: error.stack
+    });
+    throw error;
+  }
+};
   
   // Delete character
   export const removeCharacter = async (id, token) => {

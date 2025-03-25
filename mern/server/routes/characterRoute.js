@@ -41,6 +41,14 @@ const characterSchema = Joi.object({
       desc: Joi.string().optional(),
     })
   ),
+  spellSlots: Joi.object().pattern(
+    Joi.string().pattern(/^level_\d+$/),
+    Joi.number().integer().min(0)
+  ).optional(),
+  usedSlots: Joi.object().pattern(
+    Joi.string().pattern(/^level_\d+$/),
+    Joi.number().integer().min(0)
+  ).optional(),
 });
 
 // Validate MongoDB ObjectId
