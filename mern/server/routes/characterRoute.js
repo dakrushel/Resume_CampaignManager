@@ -33,21 +33,34 @@ const characterSchema = Joi.object({
   classProficiencies: Joi.array().items(Joi.string()),
   level: Joi.number().required(),
   classFeatures: Joi.array().items(
-    Joi.object({
-      index: Joi.string().required(),
-      name: Joi.string().required(),
-      url: Joi.string().optional(),
-      level: Joi.number().optional()
-    })
+    Joi.alternatives().try(
+      Joi.string(),
+      Joi.object({
+        index: Joi.string(),
+        name: Joi.string(),
+        url: Joi.string(),
+        level: Joi.number()
+      })
+    )
   ).optional(),
   selectedSpells: Joi.array().items(
     Joi.object({
       name: Joi.string().required(),
       level: Joi.number().required(),
-      school: Joi.string().required(),
-      desc: Joi.string().optional(),
+      school: Joi.string(),
+      desc: Joi.alternatives().try(Joi.string(), Joi.array().items(Joi.string())),
+      index: Joi.string(),
+      url: Joi.string(),
+      components: Joi.array().items(Joi.string()),
+      material: Joi.string().allow(''),  // Add this line
+      ritual: Joi.boolean(),
+      concentration: Joi.boolean(),
+      casting_time: Joi.string(),
+      range: Joi.string(),
+      duration: Joi.string(),
+      higher_level: Joi.array().items(Joi.string())
     })
-  ),
+  ).optional(),
   spellSlots: Joi.object().pattern(
     Joi.string().pattern(/^level_\d+$/),
     Joi.number().integer().min(0)

@@ -97,12 +97,9 @@ const CharacterStats = ({
     selectedSpells: [],
   });
 
-  // Replace your current loadSpellData effect with this:
-  // Add this effect to load spell data
-  // Update the spell loading effect
   useEffect(() => {
     const loadSpellData = async () => {
-      if (!character.class) return;
+      if (!character.class || !character.level) return;
 
       try {
         // Load spell slots
@@ -110,38 +107,62 @@ const CharacterStats = ({
           character.class.toLowerCase(),
           character.level
         );
-        setSpellSlots(slots);
-        setUsedSlots({});
+        setSpellSlots(slots || {});
+        setUsedSlots(character.usedSlots || {});
 
-        // Load spells from API
-        const spells = await fetchClassSpells(character.class.toLowerCase());
-        setAvailableSpells(spells);
+        // Load spells if they exist in character data
+        if (character.selectedSpells?.length > 0) {
+          const prepared = character.selectedSpells.filter((s) => s.level > 0);
+          const cantrips = character.selectedSpells.filter(
+            (s) => s.level === 0
+          );
+          setPreparedSpells(prepared);
+          setKnownCantrips(cantrips);
+        } else {
+          // Load spells from API if none saved
+          const spells = await fetchClassSpells(character.class.toLowerCase());
+          setAvailableSpells(spells);
+        }
       } catch (error) {
         console.error("Error loading spell data:", error);
       }
     };
 
     loadSpellData();
-  }, [character.class, character.level]);
-
-  useEffect(() => {
-    if (displayedCharacter?.selectedSpells) {
-      const spells = displayedCharacter.selectedSpells;
-      setPreparedSpells(spells.filter((s) => s.level > 0));
-      setKnownCantrips(spells.filter((s) => s.level === 0));
-    }
-  }, [displayedCharacter]);
+  }, [
+    character.class,
+    character.level,
+    character.selectedSpells,
+    character.usedSlots,
+  ]);
 
   useEffect(() => {
     if (displayedCharacter && Object.keys(displayedCharacter).length > 0) {
+      // Transform spell slots from backend format to frontend format
+      const transformFromBackend = (slots) => {
+        if (!slots) return {};
+        const transformed = {};
+        Object.entries(slots).forEach(([key, value]) => {
+          const level = key.replace('level_', '');
+          transformed[level] = value;
+        });
+        return transformed;
+      };
+  
+      const transformedCharacter = {
+        ...displayedCharacter,
+        spellSlots: transformFromBackend(displayedCharacter.spellSlots),
+        usedSlots: transformFromBackend(displayedCharacter.usedSlots)
+      };
+  
       // Update the character state
       setCharacter((prev) => ({
         ...prev,
-        ...displayedCharacter, // Merge new values
+        ...transformedCharacter,
       }));
-
+  
       // Set the initial character state
-      setInitialCharacter(displayedCharacter);
+      setInitialCharacter(transformedCharacter);
     }
   }, [displayedCharacter]);
 
@@ -395,24 +416,24 @@ const CharacterStats = ({
       setAvailableSpells((prev) => prev.filter((s) => s.index !== spell.index));
       return;
     }
-  
+
     // Check available slots
     const remainingSlots = calculateRemainingSpellPoints(spell.level);
     if (remainingSlots <= 0) {
       alert(`No remaining spell slots for level ${spell.level} spells.`);
       return;
     }
-  
+
     // Deduct slot first
     setUsedSlots((prev) => ({
       ...prev,
       [spell.level]: (prev[spell.level] || 0) + 1,
     }));
-  
+
     // Then add the spell
     setPreparedSpells((prev) => [...prev, spell]);
     setAvailableSpells((prev) => prev.filter((s) => s.index !== spell.index));
-    
+
     // Close modal if you want
     setIsSpellModalOpen(false);
   };
@@ -455,7 +476,7 @@ const CharacterStats = ({
   }
 
   const calculateRemainingSpellPoints = (spellLevel) => {
-    // Handle both "level_X" and numeric keys
+    // Handle both numeric keys (1) and string keys ("level_1")
     const slotKey = spellLevel in spellSlots ? spellLevel : `level_${spellLevel}`;
     const totalSlots = spellSlots[slotKey] || 0;
     const used = usedSlots[slotKey] || 0;
@@ -492,36 +513,35 @@ const CharacterStats = ({
       alert("Authentication error. Please log in again.");
       return;
     }
-
+  
     setSaving(true);
     try {
-      // Combine prepared spells and cantrips into selectedSpells array
-      const selectedSpells = [
-        ...preparedSpells.map((spell) => ({
-          name: spell.name,
-          level: spell.level,
-          school: spell.school?.name || "Unknown",
-          desc: spell.desc
-            ? Array.isArray(spell.desc)
-              ? spell.desc.join("\n")
-              : spell.desc
-            : "No description available",
-          index: spell.index, // Include index if needed for reference
-        })),
-        ...knownCantrips.map((cantrip) => ({
-          name: cantrip.name,
-          level: 0, // Cantrips are level 0
-          school: cantrip.school?.name || "Unknown",
-          desc: cantrip.desc
-            ? Array.isArray(cantrip.desc)
-              ? cantrip.desc.join("\n")
-              : cantrip.desc
-            : "No description available",
-          index: cantrip.index,
-        })),
-      ];
-
-      // Create character data with selectedSpells
+      // Transform spell slots to backend format
+      const transformSpellSlots = (slots) => {
+        if (!slots) return {};
+        const transformed = {};
+        Object.entries(slots).forEach(([level, value]) => {
+          // Handle both numeric keys (1) and string keys ("level_1")
+          const levelNum = typeof level === 'string' && level.startsWith('level_') 
+            ? level.replace('level_', '')
+            : level;
+          transformed[`level_${levelNum}`] = value;
+        });
+        return transformed;
+      };
+  
+      // Prepare spells data
+      const preparedSpellsData = preparedSpells.map(spell => ({
+        ...spell,
+        desc: Array.isArray(spell.desc) ? spell.desc.join('\n\n') : spell.desc || ''
+      }));
+  
+      const knownCantripsData = knownCantrips.map(cantrip => ({
+        ...cantrip,
+        level: 0,
+        desc: Array.isArray(cantrip.desc) ? cantrip.desc.join('\n\n') : cantrip.desc || ''
+      }));
+  
       const characterData = {
         name: character.name.trim(),
         alignment: character.alignment || "Unaligned",
@@ -547,19 +567,17 @@ const CharacterStats = ({
         traits: character.traits || [],
         startingProficiencies: character.startingProficiencies || [],
         classProficiencies: character.classProficiencies || [],
-        classFeatures: character.classFeatures || [],
-        selectedSpells: [],
-        spellSlots: {},
-        usedSlots: {}
+        classFeatures: character.classFeatures?.map(f => f.name || f) || [],
+        selectedSpells: [
+          ...preparedSpellsData,
+          ...knownCantripsData
+        ],
+        spellSlots: transformSpellSlots(spellSlots),
+        usedSlots: transformSpellSlots(usedSlots)
       };
-
-      console.log(
-        "Final character data with spells:",
-        JSON.stringify(characterData, null, 2)
-      );
-
-      console.log("Final character data with spells:", characterData);
-    
+  
+      console.log("Final character data:", characterData);
+      
       let result;
       if (character._id) {
         result = await modifyCharacter(character._id, characterData, token);
@@ -575,14 +593,7 @@ const CharacterStats = ({
         time: new Date().toISOString(),
         stack: error.stack
       });
-      
-      // Show more detailed error message
-      let userMessage = error.message;
-      if (error.message.includes('Validation')) {
-        userMessage = error.message.replace(/\n/g, '\n• ');
-      }
-      
-      alert(`Save failed:\n${userMessage}`);
+      alert(`Save failed: ${error.message || "Unknown server error"}`);
     } finally {
       setSaving(false);
     }
@@ -861,189 +872,199 @@ const CharacterStats = ({
           </div>
 
           {/* Spell Management Section */}
-{isSpellcastingClass(character.class) && (
-  <div className="space-y-4">
-    <div className="bg-yellow-100 p-4 rounded-lg">
-      {/* Spell Slot Tracker */}
-      <div className="mb-6 bg-blue-50 p-3 rounded-lg border border-blue-200">
-        <h3 className="font-bold text-lg mb-2">Spell Slots</h3>
-        <SpellSlotTable
-          className={character.class.toLowerCase()}
-          level={character.level}
-          onSpendSlot={handleSpendSlot}
-          usedSlots={usedSlots}
-          onResetSlots={handleResetSlots}
-        />
-        
-        {/* Slot Status Summary */}
-        <div className="flex flex-wrap gap-2 mt-3">
-          {[0, 1, 2, 3, 4, 5, 6, 7, 8, 9].map(level => {
-            const remaining = calculateRemainingSpellPoints(level);
-            const total = spellSlots[level] || spellSlots[`level_${level}`] || 0;
-            if (total <= 0 && level !== 0) return null;
-            
-            return (
-              <div 
-                key={level} 
-                className={`px-3 py-1 rounded-full text-xs font-medium ${
-                  level === 0 
-                    ? 'bg-purple-100 text-purple-800' 
-                    : remaining <= 0 
-                      ? 'bg-red-100 text-red-800' 
-                      : 'bg-green-100 text-green-800'
-                }`}
-              >
-                {level === 0 ? 'Cantrips' : `Lvl ${level}`}: {remaining}/{total}
-              </div>
-            );
-          })}
-        </div>
-      </div>
+          {isSpellcastingClass(character.class) && (
+            <div className="space-y-4">
+              <div className="bg-yellow-100 p-4 rounded-lg">
+                {/* Spell Slot Tracker */}
+                <div className="mb-6 bg-blue-50 p-3 rounded-lg border border-blue-200">
+                  <h3 className="font-bold text-lg mb-2">Spell Slots</h3>
+                  <SpellSlotTable
+                    className={character.class.toLowerCase()}
+                    level={character.level}
+                    onSpendSlot={handleSpendSlot}
+                    usedSlots={usedSlots}
+                    onResetSlots={handleResetSlots}
+                  />
 
-      {/* Spell Management Buttons */}
-      <div className="flex flex-wrap gap-2 mb-6">
+                  {/* Slot Status Summary */}
+                  <div className="flex flex-wrap gap-2 mt-3">
+                    {[0, 1, 2, 3, 4, 5, 6, 7, 8, 9].map((level) => {
+                      const remaining = calculateRemainingSpellPoints(level);
+                      const total =
+                        spellSlots[level] || spellSlots[`level_${level}`] || 0;
+                      if (total <= 0 && level !== 0) return null;
 
-        {[1, 2, 3, 4, 5, 6, 7, 8, 9].map(level => {
-          const remaining = calculateRemainingSpellPoints(level);
-          const total = spellSlots[level] || spellSlots[`level_${level}`] || 0;
-          if (total <= 0) return null;
-          
-          return (
-            <button
-              key={level}
-              onClick={(e) => {
-                e.preventDefault();
-                setSelectedSpellLevel(level);
-                setIsSpellModalOpen(true);
-              }}
-              disabled={remaining <= 0}
-              className={`px-4 py-2 rounded-lg flex items-center gap-2 ${
-                remaining <= 0
-                  ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-                  : "bg-blue-600 hover:bg-blue-700 text-white"
-              }`}
-            >
-              <span>+</span>
-              <span>Lvl {level} Spells</span>
-              <span className={`text-xs px-2 py-1 rounded-full ${
-                remaining <= 0 ? 'bg-gray-400' : 'bg-blue-800'
-              }`}>
-                {remaining}/{total}
-              </span>
-            </button>
-          );
-        })}
-      </div>
-
-      {/* Spell Modal */}
-      {isSpellModalOpen && (
-        <SpellModal
-          level={selectedSpellLevel}
-          classIndex={character.class.toLowerCase()}
-          onAddSpell={handlePrepareSpell}
-          onClose={() => setIsSpellModalOpen(false)}
-          remainingSpellPoints={calculateRemainingSpellPoints(selectedSpellLevel)}
-          selectedSpells={[...preparedSpells, ...knownCantrips]}
-          availableSpells={availableSpells}
-        />
-      )}
-
-      {/* Prepared Spells Section */}
-      <div className="bg-white p-4 rounded-lg mb-4 border border-yellow-200 shadow-sm">
-        <div className="flex justify-between items-center mb-3">
-          <h3 className="font-bold text-lg">Prepared Spells</h3>
-          <span className="text-sm text-gray-500">
-            {preparedSpells.length} spells prepared
-          </span>
-        </div>
-        
-        {preparedSpells.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-            {preparedSpells.map((spell) => (
-              <div
-                key={spell.index}
-                className="group bg-white p-3 rounded-lg border border-gray-200 hover:border-blue-300 flex justify-between items-center transition-colors"
-              >
-                <div className="flex items-center gap-2">
-                  <span className="text-xs font-medium px-2 py-1 bg-blue-100 text-blue-800 rounded-full">
-                    Lvl {spell.level}
-                  </span>
-                  <span className="font-medium">{spell.name}</span>
+                      return (
+                        <div
+                          key={level}
+                          className={`px-3 py-1 rounded-full text-xs font-medium ${
+                            level === 0
+                              ? "bg-purple-100 text-purple-800"
+                              : remaining <= 0
+                              ? "bg-red-100 text-red-800"
+                              : "bg-green-100 text-green-800"
+                          }`}
+                        >
+                          {level === 0 ? "Cantrips" : `Lvl ${level}`}:{" "}
+                          {remaining}/{total}
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
-                <button
-                  onClick={() => handleUnprepareSpell(spell)}
-                  className="opacity-0 group-hover:opacity-100 px-2 py-1 bg-red-50 hover:bg-red-100 text-red-600 rounded text-sm transition-opacity"
-                >
-                  Remove
-                </button>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <div className="text-center py-6 bg-gray-50 rounded">
-            <p className="text-gray-500 italic">No spells prepared yet</p>
-            <button
-              onClick={() => {
-                setSelectedSpellLevel(1);
-                setIsSpellModalOpen(true);
-              }}
-              className="mt-2 px-3 py-1 bg-blue-50 text-blue-600 rounded text-sm hover:bg-blue-100"
-            >
-              + Add Level 1 Spells
-            </button>
-          </div>
-        )}
-      </div>
 
-      {/* Known Cantrips Section */}
-      <div className="bg-white p-4 rounded-lg border border-yellow-200 shadow-sm">
-        <div className="flex justify-between items-center mb-3">
-          <h3 className="font-bold text-lg">Known Cantrips</h3>
-          <span className="text-sm text-gray-500">
-            {knownCantrips.length} cantrips known
-          </span>
-        </div>
-        
-        {knownCantrips.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-            {knownCantrips.map((spell) => (
-              <div
-                key={spell.index}
-                className="group bg-white p-3 rounded-lg border border-gray-200 hover:border-purple-300 flex justify-between items-center transition-colors"
-              >
-                <div className="flex items-center gap-2">
-                  <span className="text-xs font-medium px-2 py-1 bg-purple-100 text-purple-800 rounded-full">
-                    Cantrip
-                  </span>
-                  <span className="font-medium">{spell.name}</span>
+                {/* Spell Management Buttons */}
+                <div className="flex flex-wrap gap-2 mb-6">
+                  {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((level) => {
+                    const remaining = calculateRemainingSpellPoints(level);
+                    const total =
+                      spellSlots[level] || spellSlots[`level_${level}`] || 0;
+                    if (total <= 0) return null;
+
+                    return (
+                      <button
+                        key={level}
+                        onClick={(e) => {
+                          e.preventDefault();
+                          setSelectedSpellLevel(level);
+                          setIsSpellModalOpen(true);
+                        }}
+                        disabled={remaining <= 0}
+                        className={`px-4 py-2 rounded-lg flex items-center gap-2 ${
+                          remaining <= 0
+                            ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                            : "bg-blue-600 hover:bg-blue-700 text-white"
+                        }`}
+                      >
+                        <span>+</span>
+                        <span>Lvl {level} Spells</span>
+                        <span
+                          className={`text-xs px-2 py-1 rounded-full ${
+                            remaining <= 0 ? "bg-gray-400" : "bg-blue-800"
+                          }`}
+                        >
+                          {remaining}/{total}
+                        </span>
+                      </button>
+                    );
+                  })}
                 </div>
-                <button
-                  onClick={() => handleUnprepareSpell(spell)}
-                  className="opacity-0 group-hover:opacity-100 px-2 py-1 bg-red-50 hover:bg-red-100 text-red-600 rounded text-sm transition-opacity"
-                >
-                  Remove
-                </button>
+
+                {/* Spell Modal */}
+                {isSpellModalOpen && (
+                  <SpellModal
+                    level={selectedSpellLevel}
+                    classIndex={character.class.toLowerCase()}
+                    onAddSpell={handlePrepareSpell}
+                    onClose={() => setIsSpellModalOpen(false)}
+                    remainingSpellPoints={calculateRemainingSpellPoints(
+                      selectedSpellLevel
+                    )}
+                    selectedSpells={[...preparedSpells, ...knownCantrips]}
+                    availableSpells={availableSpells}
+                  />
+                )}
+
+                {/* Prepared Spells Section */}
+                <div className="bg-white p-4 rounded-lg mb-4 border border-yellow-200 shadow-sm">
+                  <div className="flex justify-between items-center mb-3">
+                    <h3 className="font-bold text-lg">Prepared Spells</h3>
+                    <span className="text-sm text-gray-500">
+                      {preparedSpells.length} spells prepared
+                    </span>
+                  </div>
+
+                  {preparedSpells.length > 0 ? (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      {preparedSpells.map((spell) => (
+                        <div
+                          key={spell.index}
+                          className="group bg-white p-3 rounded-lg border border-gray-200 hover:border-blue-300 flex justify-between items-center transition-colors"
+                        >
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs font-medium px-2 py-1 bg-blue-100 text-blue-800 rounded-full">
+                              Lvl {spell.level}
+                            </span>
+                            <span className="font-medium">{spell.name}</span>
+                          </div>
+                          <button
+                            onClick={() => handleUnprepareSpell(spell)}
+                            className="opacity-0 group-hover:opacity-100 px-2 py-1 bg-red-50 hover:bg-red-100 text-red-600 rounded text-sm transition-opacity"
+                          >
+                            Remove
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-center py-6 bg-gray-50 rounded">
+                      <p className="text-gray-500 italic">
+                        No spells prepared yet
+                      </p>
+                      <button
+                        onClick={() => {
+                          setSelectedSpellLevel(1);
+                          setIsSpellModalOpen(true);
+                        }}
+                        className="mt-2 px-3 py-1 bg-blue-50 text-blue-600 rounded text-sm hover:bg-blue-100"
+                      >
+                        + Add Level 1 Spells
+                      </button>
+                    </div>
+                  )}
+                </div>
+
+                {/* Known Cantrips Section */}
+                <div className="bg-white p-4 rounded-lg border border-yellow-200 shadow-sm">
+                  <div className="flex justify-between items-center mb-3">
+                    <h3 className="font-bold text-lg">Known Cantrips</h3>
+                    <span className="text-sm text-gray-500">
+                      {knownCantrips.length} cantrips known
+                    </span>
+                  </div>
+
+                  {knownCantrips.length > 0 ? (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      {knownCantrips.map((spell) => (
+                        <div
+                          key={spell.index}
+                          className="group bg-white p-3 rounded-lg border border-gray-200 hover:border-purple-300 flex justify-between items-center transition-colors"
+                        >
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs font-medium px-2 py-1 bg-purple-100 text-purple-800 rounded-full">
+                              Cantrip
+                            </span>
+                            <span className="font-medium">{spell.name}</span>
+                          </div>
+                          <button
+                            onClick={() => handleUnprepareSpell(spell)}
+                            className="opacity-0 group-hover:opacity-100 px-2 py-1 bg-red-50 hover:bg-red-100 text-red-600 rounded text-sm transition-opacity"
+                          >
+                            Remove
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-center py-6 bg-gray-50 rounded">
+                      <p className="text-gray-500 italic">
+                        No cantrips known yet
+                      </p>
+                      <button
+                        onClick={() => {
+                          setSelectedSpellLevel(0);
+                          setIsSpellModalOpen(true);
+                        }}
+                        className="mt-2 px-3 py-1 bg-purple-50 text-purple-600 rounded text-sm hover:bg-purple-100"
+                      >
+                        + Learn Cantrips
+                      </button>
+                    </div>
+                  )}
+                </div>
               </div>
-            ))}
-          </div>
-        ) : (
-          <div className="text-center py-6 bg-gray-50 rounded">
-            <p className="text-gray-500 italic">No cantrips known yet</p>
-            <button
-              onClick={() => {
-                setSelectedSpellLevel(0);
-                setIsSpellModalOpen(true);
-              }}
-              className="mt-2 px-3 py-1 bg-purple-50 text-purple-600 rounded text-sm hover:bg-purple-100"
-            >
-              + Learn Cantrips
-            </button>
-          </div>
-        )}
-      </div>
-    </div>
-  </div>
-)}
+            </div>
+          )}
 
           {/* Action Buttons */}
           <div className="flex flex-wrap gap-3 pt-4">
@@ -1246,7 +1267,17 @@ CharacterStats.propTypes = {
     traits: PropTypes.arrayOf(PropTypes.string),
     startingProficiencies: PropTypes.arrayOf(PropTypes.string),
     classProficiencies: PropTypes.arrayOf(PropTypes.string),
-    classFeatures: PropTypes.arrayOf(PropTypes.string),
+    classFeatures: PropTypes.arrayOf(
+      PropTypes.oneOfType([
+        PropTypes.string,
+        PropTypes.shape({
+          index: PropTypes.string,
+          name: PropTypes.string,
+          url: PropTypes.string,
+          level: PropTypes.number
+        })
+      ])
+    ),
     campaignID: PropTypes.string,
     selectedSpells: PropTypes.arrayOf(
       PropTypes.shape({
