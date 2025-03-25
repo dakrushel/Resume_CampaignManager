@@ -9,7 +9,13 @@ import CharacterStats from "./characterstats";
 import { useAuthToken } from "./characterAPIs/useauthtoken";
 import { PropTypes } from "prop-types";
 
-const CharacterDisplay = ({ character, isNew, onCancel, refreshCharacters, campaignID }) => {
+const CharacterDisplay = ({
+  character,
+  isNew,
+  onCancel,
+  refreshCharacters,
+  campaignID,
+}) => {
   const [selectedClass, setSelectedClass] = useState("");
   const [characterLevel, setCharacterLevel] = useState(character?.level || 1);
   const token = useAuthToken();
@@ -18,10 +24,10 @@ const CharacterDisplay = ({ character, isNew, onCancel, refreshCharacters, campa
   const [spellSlots, setSpellSlots] = useState(character?.spellSlots || {});
   const [usedSlots, setUsedSlots] = useState(character?.usedSlots || {});
   const [preparedSpells, setPreparedSpells] = useState(
-    character?.selectedSpells?.filter(s => s.level > 0) || []
+    character?.selectedSpells?.filter((s) => s.level > 0) || []
   );
   const [knownCantrips, setKnownCantrips] = useState(
-    character?.selectedSpells?.filter(s => s.level === 0) || []
+    character?.selectedSpells?.filter((s) => s.level === 0) || []
   );
 
   if (!character) {
@@ -29,9 +35,9 @@ const CharacterDisplay = ({ character, isNew, onCancel, refreshCharacters, campa
   }
 
   const handleSpendSlot = (level) => {
-    setUsedSlots(prev => ({
+    setUsedSlots((prev) => ({
       ...prev,
-      [level]: (prev[level] || 0) + 1
+      [level]: (prev[level] || 0) + 1,
     }));
   };
 
@@ -50,15 +56,14 @@ const CharacterDisplay = ({ character, isNew, onCancel, refreshCharacters, campa
           ...character,
           campaignID: campaignID,
           // Ensure classFeatures are in the correct format
-          classFeatures: character.classFeatures?.map(f => 
-            typeof f === 'string' ? f : f.name
-          )
+          classFeatures: character.classFeatures?.map((f) =>
+            typeof f === "string" ? f : f.name
+          ),
         }}
         token={token}
         isNew={isNew}
         onCancel={onCancel}
         refreshCharacters={refreshCharacters}
-        
         // Spell-related props
         spellSlots={spellSlots}
         usedSlots={usedSlots}
@@ -67,12 +72,16 @@ const CharacterDisplay = ({ character, isNew, onCancel, refreshCharacters, campa
         preparedSpells={preparedSpells}
         knownCantrips={knownCantrips}
         onPrepareSpell={setPreparedSpells}
-        onUnprepareSpell={spell => {
-          setPreparedSpells(prev => prev.filter(s => s.index !== spell.index));
+        onUnprepareSpell={(spell) => {
+          setPreparedSpells((prev) =>
+            prev.filter((s) => s.index !== spell.index)
+          );
         }}
         onLearnCantrip={setKnownCantrips}
-        onForgetCantrip={cantrip => {
-          setKnownCantrips(prev => prev.filter(c => c.index !== cantrip.index));
+        onForgetCantrip={(cantrip) => {
+          setKnownCantrips((prev) =>
+            prev.filter((c) => c.index !== cantrip.index)
+          );
         }}
       />
     </div>
@@ -113,8 +122,8 @@ CharacterDisplay.propTypes = {
           index: PropTypes.string,
           name: PropTypes.string,
           url: PropTypes.string,
-          level: PropTypes.number
-        })
+          level: PropTypes.number,
+        }),
       ])
     ),
     selectedSpells: PropTypes.arrayOf(
@@ -123,16 +132,16 @@ CharacterDisplay.propTypes = {
         level: PropTypes.number.isRequired,
         school: PropTypes.string,
         desc: PropTypes.string,
-        index: PropTypes.string
+        index: PropTypes.string,
       })
     ),
     spellSlots: PropTypes.object,
-    usedSlots: PropTypes.object
+    usedSlots: PropTypes.object,
   }).isRequired,
   isNew: PropTypes.bool,
   onCancel: PropTypes.func,
   refreshCharacters: PropTypes.func.isRequired,
-  campaignID: PropTypes.string.isRequired
+  campaignID: PropTypes.string.isRequired,
 };
 
 export default CharacterDisplay;

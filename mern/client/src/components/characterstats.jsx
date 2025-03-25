@@ -45,6 +45,9 @@ const CharacterStats = ({
   const [showRaceDetails, setShowRaceDetails] = useState(false);
   const [showClassProficiencies, setShowClassProficiencies] = useState(false);
   const [showClassFeatures, setShowClassFeatures] = useState(false);
+  const [previousLevel, setPreviousLevel] = useState(characterLevel);
+  const [savedLevel, setSavedLevel] = useState(1);
+  const [featureLoading, setFeatureLoading] = useState(false);
 
   const [spellSlots, setSpellSlots] = useState({});
   const [usedSlots, setUsedSlots] = useState({});
@@ -138,31 +141,46 @@ const CharacterStats = ({
 
   useEffect(() => {
     if (displayedCharacter && Object.keys(displayedCharacter).length > 0) {
-      // Transform spell slots from backend format to frontend format
       const transformFromBackend = (slots) => {
         if (!slots) return {};
         const transformed = {};
         Object.entries(slots).forEach(([key, value]) => {
-          const level = key.replace('level_', '');
+          const level = key.replace("level_", "");
           transformed[level] = value;
         });
         return transformed;
       };
-  
+
       const transformedCharacter = {
         ...displayedCharacter,
+        level: displayedCharacter.level || 1, // Ensure level exists
         spellSlots: transformFromBackend(displayedCharacter.spellSlots),
-        usedSlots: transformFromBackend(displayedCharacter.usedSlots)
+        usedSlots: transformFromBackend(displayedCharacter.usedSlots),
       };
-  
-      // Update the character state
-      setCharacter((prev) => ({
-        ...prev,
-        ...transformedCharacter,
-      }));
-  
-      // Set the initial character state
+
+      // Update all relevant states
+      setCharacter(transformedCharacter);
       setInitialCharacter(transformedCharacter);
+      setSavedLevel(transformedCharacter.level); // Track saved level
+      setPreviousLevel(transformedCharacter.level);
+
+      // Trigger level-dependent updates
+      if (transformedCharacter.class) {
+        updateLevelDependentData(
+          transformedCharacter.level,
+          transformedCharacter.class
+        );
+      }
+
+      // Load spells if needed (only for current level)
+      if (isSpellcastingClass(transformedCharacter.class)) {
+        const slots = getLocalSpellSlots(
+          transformedCharacter.class.toLowerCase(),
+          transformedCharacter.level
+        );
+        setSpellSlots(slots || {});
+        setUsedSlots(transformFromBackend(displayedCharacter.usedSlots) || {});
+      }
     }
   }, [displayedCharacter]);
 
@@ -225,6 +243,69 @@ const CharacterStats = ({
     updateSpellSlots();
   }, [character.class, character.level]);
 
+  const handleFeatureClick = async (feature) => {
+    // If we already have the description, show it immediately
+    if (feature.desc) {
+      setSelectedFeature(feature);
+      return;
+    }
+
+    // Otherwise, fetch the details first
+    try {
+      setFeatureLoading(true);
+      const featureDetails = await fetchFeatureDetails(feature.index);
+      setSelectedFeature({
+        ...feature,
+        ...featureDetails,
+      });
+    } catch (error) {
+      console.error("Error loading feature details:", error);
+      setSelectedFeature({
+        ...feature,
+        desc: ["Could not load feature details"],
+      });
+    } finally {
+      setFeatureLoading(false);
+    }
+  };
+
+  const updateLevelDependentData = async (level, className) => {
+    // Update class features if class exists
+    if (className) {
+      try {
+        setIsLoadingFeatures(true);
+        const features = await fetchClassFeatures(className, level);
+        setCharacter((prev) => ({
+          ...prev,
+          classFeatures: features,
+        }));
+
+        // Maintain expanded levels
+        const newLevels = new Set(features.map((f) => f.level));
+        const maintainedExpansion = new Set(
+          [...expandedLevels].filter((l) => newLevels.has(l))
+        );
+        setExpandedLevels(maintainedExpansion);
+      } catch (error) {
+        console.error("Error loading features:", error);
+        setFeatureError("Failed to load class features");
+      } finally {
+        setIsLoadingFeatures(false);
+      }
+    }
+
+    // Update spell slots if spellcasting class
+    if (className && isSpellcastingClass(className)) {
+      try {
+        const slots = getLocalSpellSlots(className.toLowerCase(), level);
+        setSpellSlots(slots || {});
+        setUsedSlots({});
+      } catch (error) {
+        console.error("Error loading spell slots:", error);
+      }
+    }
+  };
+
   const handleRaceChange = async (raceIndex) => {
     if (!raceIndex) {
       setCharacter((prev) => ({ ...prev, race: "" }));
@@ -267,8 +348,8 @@ const CharacterStats = ({
       setFeatureError(null);
 
       const classDetails = await fetchClassDetails(classIndex);
-      const features = await fetchClassFeatures(classIndex, character.level);
 
+      // Update character with class details
       setCharacter((prev) => ({
         ...prev,
         class: classDetails.name,
@@ -276,12 +357,10 @@ const CharacterStats = ({
         proficiencies: classDetails.proficiencies.map((p) => p.name),
         startingProficiencies: classDetails.proficiencies.map((p) => p.name),
         classProficiencies: classDetails.proficiency_choices.map((p) => p.desc),
-        classFeatures: features,
       }));
 
-      // Expand all levels by default
-      const levels = new Set(features.map((f) => f.level));
-      setExpandedLevels(levels);
+      // Then update level-dependent data for the new class
+      await updateLevelDependentData(character.level, classDetails.name);
     } catch (error) {
       console.error("Error fetching class details:", error);
       setFeatureError("Failed to load class features. Please try again.");
@@ -291,50 +370,47 @@ const CharacterStats = ({
   };
 
   const handleLevelChange = async (newLevel) => {
-    const clampedLevel = Math.min(Math.max(newLevel, 1), 20);
-    onLevelChange(clampedLevel);
+    const clampedLevel = Math.min(Math.max(parseInt(newLevel), 1), 20) || 1;
 
-    // Immediately update level to prevent flicker
+    // Update the character's level immediately
     setCharacter((prev) => ({
       ...prev,
       level: clampedLevel,
     }));
 
-    if (character.class) {
-      try {
-        setIsLoadingFeatures(true);
-        setFeatureError(null);
+    // Only update features if class exists
+    if (!character.class) return;
 
-        const features = await fetchClassFeatures(
-          character.class,
-          clampedLevel
-        );
+    try {
+      setIsLoadingFeatures(true);
+      const features = await fetchClassFeatures(character.class, clampedLevel);
 
-        // Update spell slots for new level
-        const slots = getLocalSpellSlots(
-          character.class.toLowerCase(),
-          clampedLevel
-        );
-        setSpellSlots(slots);
-        setUsedSlots({});
+      setCharacter((prev) => ({
+        ...prev,
+        classFeatures: features,
+      }));
 
-        setCharacter((prev) => ({
-          ...prev,
-          classFeatures: features,
-        }));
+      // Update expanded levels UI
+      const newLevels = new Set(features.map((f) => f.level));
+      const maintainedExpansion = new Set(
+        [...expandedLevels].filter((l) => newLevels.has(l))
+      );
+      setExpandedLevels(maintainedExpansion);
+    } catch (error) {
+      console.error("Error loading features:", error);
+      setFeatureError("Failed to load features");
+    } finally {
+      setIsLoadingFeatures(false);
+    }
 
-        // Maintain expanded state
-        const newLevels = new Set(features.map((f) => f.level));
-        const maintainedExpansion = new Set(
-          [...expandedLevels].filter((l) => newLevels.has(l))
-        );
-        setExpandedLevels(maintainedExpansion);
-      } catch (error) {
-        console.error("Error fetching class features:", error);
-        setFeatureError("Failed to load features for this level.");
-      } finally {
-        setIsLoadingFeatures(false);
-      }
+    // Update spell slots if spellcasting class
+    if (isSpellcastingClass(character.class)) {
+      const slots = getLocalSpellSlots(
+        character.class.toLowerCase(),
+        clampedLevel
+      );
+      setSpellSlots(slots || {});
+      setUsedSlots({});
     }
   };
 
@@ -356,12 +432,17 @@ const CharacterStats = ({
     return (
       <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
         <div className="bg-light-tan p-6 rounded-lg shadow-lg max-w-2xl w-full max-h-[80vh] overflow-y-auto">
+          {featureLoading && (
+            <div className="flex justify-center py-4">
+              <div className="animate-spin rounded-full h-6 w-6 border-t-2 border-b-2 border-yellow-600"></div>
+            </div>
+          )}
           <div className="flex justify-between items-start mb-4">
             <div>
               <h3 className="font-bold text-xl">{feature.name}</h3>
               {feature.level && (
                 <p className="text-sm text-brown">
-                  Level {feature.level} Feature
+                  Level {feature.level} {feature.class?.name || ""} Feature
                 </p>
               )}
             </div>
@@ -386,9 +467,18 @@ const CharacterStats = ({
             )}
           </div>
 
-          {feature.subclass && (
+          {feature.prerequisites && feature.prerequisites.length > 0 && (
             <div className="mt-4 p-3 bg-tan rounded">
-              <h4 className="font-bold">Subclass: {feature.subclass.name}</h4>
+              <h4 className="font-bold mb-2">Prerequisites:</h4>
+              <ul className="list-disc pl-5">
+                {feature.prerequisites.map((prereq, i) => (
+                  <li key={i}>
+                    {prereq.type === "level" && `Level ${prereq.level}`}
+                    {prereq.type === "feature" && `Feature: ${prereq.name}`}
+                    {prereq.type === "spell" && `Spell: ${prereq.name}`}
+                  </li>
+                ))}
+              </ul>
             </div>
           )}
         </div>
@@ -477,7 +567,8 @@ const CharacterStats = ({
 
   const calculateRemainingSpellPoints = (spellLevel) => {
     // Handle both numeric keys (1) and string keys ("level_1")
-    const slotKey = spellLevel in spellSlots ? spellLevel : `level_${spellLevel}`;
+    const slotKey =
+      spellLevel in spellSlots ? spellLevel : `level_${spellLevel}`;
     const totalSlots = spellSlots[slotKey] || 0;
     const used = usedSlots[slotKey] || 0;
     return Math.max(totalSlots - used, 0);
@@ -513,41 +604,43 @@ const CharacterStats = ({
       alert("Authentication error. Please log in again.");
       return;
     }
-  
+
     setSaving(true);
     try {
-      // Transform spell slots to backend format
       const transformSpellSlots = (slots) => {
         if (!slots) return {};
         const transformed = {};
         Object.entries(slots).forEach(([level, value]) => {
-          // Handle both numeric keys (1) and string keys ("level_1")
-          const levelNum = typeof level === 'string' && level.startsWith('level_') 
-            ? level.replace('level_', '')
-            : level;
+          const levelNum =
+            typeof level === "string" && level.startsWith("level_")
+              ? level.replace("level_", "")
+              : level;
           transformed[`level_${levelNum}`] = value;
         });
         return transformed;
       };
-  
-      // Prepare spells data
-      const preparedSpellsData = preparedSpells.map(spell => ({
+
+      const preparedSpellsData = preparedSpells.map((spell) => ({
         ...spell,
-        desc: Array.isArray(spell.desc) ? spell.desc.join('\n\n') : spell.desc || ''
+        desc: Array.isArray(spell.desc)
+          ? spell.desc.join("\n\n")
+          : spell.desc || "",
       }));
-  
-      const knownCantripsData = knownCantrips.map(cantrip => ({
+
+      const knownCantripsData = knownCantrips.map((cantrip) => ({
         ...cantrip,
         level: 0,
-        desc: Array.isArray(cantrip.desc) ? cantrip.desc.join('\n\n') : cantrip.desc || ''
+        desc: Array.isArray(cantrip.desc)
+          ? cantrip.desc.join("\n\n")
+          : cantrip.desc || "",
       }));
-  
+
       const characterData = {
         name: character.name.trim(),
         alignment: character.alignment || "Unaligned",
         race: character.race,
         class: character.class,
-        level: parseInt(character.level) || 1,
+        level: character.level,
         stats: {
           strength: parseInt(character.stats.strength) || 10,
           dexterity: parseInt(character.stats.dexterity) || 10,
@@ -567,32 +660,29 @@ const CharacterStats = ({
         traits: character.traits || [],
         startingProficiencies: character.startingProficiencies || [],
         classProficiencies: character.classProficiencies || [],
-        classFeatures: character.classFeatures?.map(f => f.name || f) || [],
-        selectedSpells: [
-          ...preparedSpellsData,
-          ...knownCantripsData
-        ],
+        classFeatures: character.classFeatures?.map((f) => f.name || f) || [],
+        selectedSpells: [...preparedSpellsData, ...knownCantripsData],
         spellSlots: transformSpellSlots(spellSlots),
-        usedSlots: transformSpellSlots(usedSlots)
+        usedSlots: transformSpellSlots(usedSlots),
       };
-  
+
       console.log("Final character data:", characterData);
-      
+
       let result;
       if (character._id) {
         result = await modifyCharacter(character._id, characterData, token);
       } else {
         result = await createCharacter(characterData, token);
       }
-  
+
+      // Update saved states after successful save
+      setInitialCharacter(characterData);
+      setSavedLevel(character.level);
+
       alert(`Character ${character._id ? "updated" : "created"} successfully!`);
       if (refreshCharacters) refreshCharacters();
     } catch (error) {
-      console.error("Save operation failed:", {
-        error: error.message,
-        time: new Date().toISOString(),
-        stack: error.stack
-      });
+      console.error("Save operation failed:", error);
       alert(`Save failed: ${error.message || "Unknown server error"}`);
     } finally {
       setSaving(false);
@@ -738,8 +828,8 @@ const CharacterStats = ({
             <input
               type="number"
               className="w-16 px-3 py-1 rounded border border-yellow-300 bg-yellow-50 text-center"
-              value={characterLevel}
-              onChange={(e) => handleLevelChange(parseInt(e.target.value) || 1)}
+              value={character.level || 1}
+              onChange={(e) => handleLevelChange(e.target.value)}
               min="1"
               max="20"
             />
@@ -1001,15 +1091,6 @@ const CharacterStats = ({
                       <p className="text-gray-500 italic">
                         No spells prepared yet
                       </p>
-                      <button
-                        onClick={() => {
-                          setSelectedSpellLevel(1);
-                          setIsSpellModalOpen(true);
-                        }}
-                        className="mt-2 px-3 py-1 bg-blue-50 text-blue-600 rounded text-sm hover:bg-blue-100"
-                      >
-                        + Add Level 1 Spells
-                      </button>
                     </div>
                   )}
                 </div>
@@ -1050,15 +1131,6 @@ const CharacterStats = ({
                       <p className="text-gray-500 italic">
                         No cantrips known yet
                       </p>
-                      <button
-                        onClick={() => {
-                          setSelectedSpellLevel(0);
-                          setIsSpellModalOpen(true);
-                        }}
-                        className="mt-2 px-3 py-1 bg-purple-50 text-purple-600 rounded text-sm hover:bg-purple-100"
-                      >
-                        + Learn Cantrips
-                      </button>
                     </div>
                   )}
                 </div>
@@ -1187,18 +1259,35 @@ const CharacterStats = ({
                             .filter((f) => f.level === level)
                             .map((feature, index) => (
                               <li
-                                key={index}
-                                className="p-2 hover:bg-yellow-50 cursor-pointer"
+                                key={feature.index || index} // Use feature.index if available
+                                className="p-2 hover:bg-yellow-50 cursor-pointer group"
                                 onClick={() => setSelectedFeature(feature)}
                               >
-                                <h4 className="font-medium text-yellow-700">
-                                  {feature.name}
-                                </h4>
+                                <div className="flex justify-between items-start">
+                                  <h4 className="font-medium text-yellow-700">
+                                    {feature.name}
+                                  </h4>
+                                  <button
+                                    className="opacity-0 group-hover:opacity-100 text-xs bg-yellow-200 hover:bg-yellow-300 px-2 py-1 rounded"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setSelectedFeature(feature);
+                                    }}
+                                  >
+                                    View
+                                  </button>
+                                </div>
                                 {feature.desc && (
-                                  <p className="text-xs text-yellow-600 line-clamp-2">
+                                  <p className="text-xs text-yellow-600 line-clamp-2 mt-1">
                                     {Array.isArray(feature.desc)
-                                      ? feature.desc[0]
-                                      : feature.desc}
+                                      ? feature.desc[0].substring(0, 100) +
+                                        (feature.desc[0].length > 100
+                                          ? "..."
+                                          : "")
+                                      : feature.desc.substring(0, 100) +
+                                        (feature.desc.length > 100
+                                          ? "..."
+                                          : "")}
                                   </p>
                                 )}
                               </li>
@@ -1274,8 +1363,8 @@ CharacterStats.propTypes = {
           index: PropTypes.string,
           name: PropTypes.string,
           url: PropTypes.string,
-          level: PropTypes.number
-        })
+          level: PropTypes.number,
+        }),
       ])
     ),
     campaignID: PropTypes.string,
@@ -1283,7 +1372,7 @@ CharacterStats.propTypes = {
       PropTypes.shape({
         name: PropTypes.string.isRequired,
         level: PropTypes.number.isRequired,
-        school: PropTypes.shape({
+        school: PropTypes.oneOfType({
           name: PropTypes.string.isRequired,
         }),
         desc: PropTypes.string,
