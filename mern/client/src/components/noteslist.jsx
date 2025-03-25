@@ -124,7 +124,7 @@ export default function NoteList({ parentLocationID, campaignID }) {
                     onCancel={() => setShowForm(false)}
                 />
             ) : (
-                <button onClick={() => setShowForm(true)} className="mt-2 bg-goblin-green text-xl text-gold px-4 py-2 rounded-full shadow-sm shadow-amber-800">
+                <button onClick={() => setShowForm(true)} className="button mt-2 bg-goblin-green text-xl text-gold px-4 py-2 rounded-full shadow-sm shadow-amber-700 hover:shadow-amber-900">
                     +
                 </button>
             )}
