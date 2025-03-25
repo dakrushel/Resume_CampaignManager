@@ -32,7 +32,14 @@ const characterSchema = Joi.object({
   startingProficiencies: Joi.array().items(Joi.string()),
   classProficiencies: Joi.array().items(Joi.string()),
   level: Joi.number().required(),
-  classFeatures: Joi.array().items(Joi.string()),
+  classFeatures: Joi.array().items(
+    Joi.object({
+      index: Joi.string().required(),
+      name: Joi.string().required(),
+      url: Joi.string().optional(),
+      level: Joi.number().optional()
+    })
+  ).optional(),
   selectedSpells: Joi.array().items(
     Joi.object({
       name: Joi.string().required(),
@@ -101,28 +108,31 @@ router.get("/campaign/:campaignID", async (req, res) => {
 
 // Add a new character
 router.post("/", async (req, res) => {
-    try {
-    //   console.log("🔍 Incoming Character Data:", req.body); // Log input
-    //   console.log("🔍 Type of proficiencies:", typeof req.body.proficiencies); // Check data type
-  
-      const sanitizedData = sanitizeInput(req.body);
-  
-    //   console.log("🔍 After sanitization:", sanitizedData); // Log sanitized input
-    //   console.log("🔍 Type of proficiencies after sanitization:", typeof sanitizedData.proficiencies);
-  
-      const { error } = characterSchema.validate(sanitizedData);
-      if (error) {
-        console.error("Joi Validation Error:", error.details);
-        return res.status(400).json({ error: error.details[0].message });
-      }
-  
-      const result = await addCharacter(sanitizedData);
-      res.status(201).json(result);
-    } catch (error) {
-      console.error("Failed to add character:", error);
-      res.status(500).json({ error: "Failed to add character" });
+  try {
+    console.log("Incoming character data:", req.body);
+    
+    const sanitizedData = sanitizeInput(req.body);
+    const { error } = characterSchema.validate(sanitizedData);
+    
+    if (error) {
+      console.error("Validation error details:", error.details);
+      return res.status(400).json({ 
+        error: "Validation failed",
+        message: error.details[0].message,
+        details: error.details 
+      });
     }
-  });
+
+    const result = await addCharacter(sanitizedData);
+    res.status(201).json(result);
+  } catch (error) {
+    console.error("Failed to add character:", error);
+    res.status(500).json({ 
+      error: "Failed to add character",
+      message: error.message 
+    });
+  }
+});
   
 
 // Update a character

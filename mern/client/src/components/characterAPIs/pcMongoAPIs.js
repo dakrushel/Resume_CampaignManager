@@ -69,7 +69,7 @@ const makeRequest = async (url, method, token, body = null) => {
   };
   
   // Create new character
-  export const createCharacter = async (characterData, token) => { // Remove campaignID parameter
+  export const createCharacter = async (characterData, token) => {
     if (!token) throw new Error("Authentication token is required");
     
     // Enhanced validation
@@ -85,7 +85,7 @@ const makeRequest = async (url, method, token, body = null) => {
     
     // Check required fields
     for (const [field, type] of Object.entries(requiredFields)) {
-      const value = characterData[field]; // Always get from characterData
+      const value = characterData[field];
       
       if (value === undefined || value === null) {
         validationErrors.push(`Missing required field: ${field}`);
@@ -95,41 +95,34 @@ const makeRequest = async (url, method, token, body = null) => {
     }
   
     if (validationErrors.length > 0) {
-      throw new Error(`Validation errors:\n${validationErrors.join('\n')}`);
+      throw new Error(`Frontend validation errors:\n${validationErrors.join('\n')}`);
     }
   
     // Prepare clean data
     const cleanData = {
-        name: characterData.name.trim(),
-        alignment: characterData.alignment || 'Unaligned',
-        race: characterData.race,
-        class: characterData.class, // Don't lowercase
-        level: parseInt(characterData.level) || 1,
-        speed: parseInt(characterData.speed) || 30,
-        hitDice: characterData.hitDice,
-        proficiencies: characterData.proficiencies || [],
-        stats: {
-          strength: parseInt(characterData.stats?.strength) || 10,
-          dexterity: parseInt(characterData.stats?.dexterity) || 10,
-          constitution: parseInt(characterData.stats?.constitution) || 10,
-          intelligence: parseInt(characterData.stats?.intelligence) || 10,
-          wisdom: parseInt(characterData.stats?.wisdom) || 10,
-          charisma: parseInt(characterData.stats?.charisma) || 10,
-        },
-        size: characterData.size,
-        size_description: characterData.size_description,
-        languages: characterData.languages || [],
-        language_desc: characterData.language_desc,
-        traits: characterData.traits || [],
-        startingProficiencies: characterData.startingProficiencies || [],
-        classProficiencies: characterData.classProficiencies || [],
-        classFeatures: characterData.classFeatures || [],
-        campaignID: characterData.campaignID,
-        selectedSpells: characterData.selectedSpells || [],
-        spellSlots: characterData.spellSlots || {},
-        usedSlots: characterData.usedSlots || {}
-      };
-    
+      ...characterData,
+      name: characterData.name.trim(),
+      alignment: characterData.alignment || 'Unaligned',
+      level: parseInt(characterData.level) || 1,
+      speed: parseInt(characterData.speed) || 30,
+      stats: {
+        strength: parseInt(characterData.stats?.strength) || 10,
+        dexterity: parseInt(characterData.stats?.dexterity) || 10,
+        constitution: parseInt(characterData.stats?.constitution) || 10,
+        intelligence: parseInt(characterData.stats?.intelligence) || 10,
+        wisdom: parseInt(characterData.stats?.wisdom) || 10,
+        charisma: parseInt(characterData.stats?.charisma) || 10,
+      },
+      proficiencies: characterData.proficiencies || [],
+      languages: characterData.languages || [],
+      traits: characterData.traits || [],
+      startingProficiencies: characterData.startingProficiencies || [],
+      classProficiencies: characterData.classProficiencies || [],
+      classFeatures: characterData.classFeatures || [],
+      selectedSpells: characterData.selectedSpells || [],
+      spellSlots: characterData.spellSlots || {},
+      usedSlots: characterData.usedSlots || {}
+    };
   
     console.log("Final character data for API:", cleanData);
   
@@ -144,8 +137,27 @@ const makeRequest = async (url, method, token, body = null) => {
       });
   
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+        // Try to get detailed error from backend
+        let errorDetails = {};
+        try {
+          errorDetails = await response.json();
+          console.error("Backend validation errors:", errorDetails);
+        } catch (e) {
+          console.error("Failed to parse error response:", e);
+        }
+        
+        // Create a more helpful error message
+        const errorMessage = errorDetails.error 
+          ? `Backend error: ${errorDetails.error}`
+          : errorDetails.message 
+            ? errorDetails.message 
+            : `HTTP error! status: ${response.status}`;
+        
+        if (errorDetails.details) {
+          console.error("Validation details:", errorDetails.details);
+        }
+        
+        throw new Error(errorMessage);
       }
   
       return await response.json();

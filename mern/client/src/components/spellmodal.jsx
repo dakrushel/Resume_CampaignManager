@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { fetchClassSpells, fetchSpellDetails } from './characterAPIs/pc5eAPIs';
 import PropTypes from 'prop-types';
+import { fetchClassSpells } from './characterAPIs/pc5eAPIs';
 
 const SpellModal = ({ 
   level, 
@@ -25,7 +25,6 @@ const SpellModal = ({
         const spellsForLevel = availableSpells.filter(spell => spell.level === level);
         
         if (spellsForLevel.length === 0) {
-          // Fallback to API if no spells in availableSpells
           const apiSpells = await fetchClassSpells(classIndex);
           setSpells(apiSpells.filter(spell => spell.level === level));
         } else {
@@ -47,6 +46,12 @@ const SpellModal = ({
     return selectedSpells.some(s => s.index === spellIndex);
   };
 
+  const canAddSpell = (spell) => {
+    if (level === 0) return true; // Cantrips don't consume slots
+    if (isSpellSelected(spell.index)) return false;
+    return remainingSpellPoints > 0;
+  };
+
   if (!level) return null;
 
   return (
@@ -57,9 +62,13 @@ const SpellModal = ({
             <h2 className="text-xl font-bold">
               {level === 0 ? "Cantrips" : `Level ${level} Spells`}
             </h2>
-            <p className="text-sm text-gray-600">
-              Remaining Slots: {remainingSpellPoints}
-            </p>
+            {level > 0 && (
+              <p className={`text-sm ${
+                remainingSpellPoints <= 0 ? 'text-red-500' : 'text-gray-600'
+              }`}>
+                Slots remaining: {remainingSpellPoints}
+              </p>
+            )}
           </div>
           <button
             onClick={onClose}
@@ -83,29 +92,32 @@ const SpellModal = ({
         ) : (
           <div className="overflow-y-auto flex-1">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {spells.map((spell) => (
-                <div key={spell.index} className="p-4 border rounded shadow">
-                  <h3 className="font-bold">{spell.name}</h3>
-                  <p>Level: {spell.level}</p>
-                  <p>School: {spell.school?.name || 'Unknown'}</p>
-                  <button
-                    type="button"
-                    onClick={() => onAddSpell(spell)}
-                    disabled={remainingSpellPoints <= 0 || isSpellSelected(spell.index)}
-                    className={`mt-2 p-2 ${
-                      isSpellSelected(spell.index)
-                        ? 'bg-gray-400 text-gray-600 cursor-not-allowed'
-                        : remainingSpellPoints <= 0
-                          ? 'bg-gray-400 text-gray-600 cursor-not-allowed'
+              {spells.map((spell) => {
+                const canAdd = canAddSpell(spell);
+                return (
+                  <div key={spell.index} className="p-4 border rounded shadow hover:bg-gray-50">
+                    <h3 className="font-bold">{spell.name}</h3>
+                    <p className="text-sm text-gray-600">
+                      {spell.school?.name || 'Unknown'} {level > 0 ? `(Level ${level})` : '(Cantrip)'}
+                    </p>
+                    <button
+                      onClick={() => canAdd && onAddSpell(spell)}
+                      disabled={!canAdd}
+                      className={`mt-2 p-2 w-full rounded transition-colors ${
+                        !canAdd
+                          ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
                           : 'bg-green-500 hover:bg-green-600 text-white'
-                    } rounded`}
-                  >
-                    {isSpellSelected(spell.index) 
-                      ? 'Already Selected' 
-                      : 'Add to Character'}
-                  </button>
-                </div>
-              ))}
+                      }`}
+                    >
+                      {isSpellSelected(spell.index) 
+                        ? 'Already Prepared' 
+                        : level === 0 
+                          ? 'Learn Cantrip' 
+                          : 'Prepare Spell'}
+                    </button>
+                  </div>
+                );
+              })}
             </div>
           </div>
         )}
@@ -114,8 +126,6 @@ const SpellModal = ({
   );
 };
 
-export default SpellModal;
-
 SpellModal.propTypes = {
   level: PropTypes.number,
   classIndex: PropTypes.string,
@@ -123,4 +133,7 @@ SpellModal.propTypes = {
   onClose: PropTypes.func.isRequired,
   remainingSpellPoints: PropTypes.number.isRequired,
   selectedSpells: PropTypes.arrayOf(PropTypes.object).isRequired,
+  availableSpells: PropTypes.arrayOf(PropTypes.object).isRequired,
 };
+
+export default SpellModal;
