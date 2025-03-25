@@ -15,7 +15,7 @@ export const fetchRaces = async () => {
 
 export const fetchRaceDetails = async (index) => {
     try {
-        const response = await axios.get(`${BASE_URL}/races/${index}`);
+        const response = await axios.get(`${BASE_URL}/races/${index.toLowerCase()}`);
         return response.data;
     } catch (error) {
         console.error("Error fetching race details:", error);
@@ -49,27 +49,37 @@ export const fetchClassDetails = async (classIndex) => {
 export const fetchClassSpells = async (classIndex) => {
     try {
         const response = await axios.get(`${BASE_URL}/classes/${classIndex.toLowerCase()}/spells`);
-        return response.data.results || [];
+        return response.data.results;
     } catch (error) {
         console.error("Error fetching spells for class:", error);
-        return []; // Return empty array instead of throwing error
+        throw error;
     }
 };
 
-// Fetch class features by level
 export const fetchClassFeatures = async (classIndex, level) => {
     try {
-        // First get all levels up to the current level
-        const features = [];
-        for (let l = 1; l <= level; l++) {
-            const response = await axios.get(`${BASE_URL}/classes/${classIndex}/levels/${l}/features`);
-            if (response.data.features) {
-                features.push(...response.data.features);
-            }
+      // First get all features up to the current level
+      const allFeatures = [];
+      
+      // Fetch features for each level from 1 to specified level
+      for (let l = 1; l <= level; l++) {
+        const response = await axios.get(
+          `${BASE_URL}/classes/${classIndex.toLowerCase()}/levels/${l}`
+        );
+        
+        if (response.data.features && response.data.features.length > 0) {
+          // Enhance each feature with its level
+          const featuresWithLevel = response.data.features.map(feature => ({
+            ...feature,
+            level: l // Add level information to each feature
+          }));
+          allFeatures.push(...featuresWithLevel);
         }
-        return features;
+      }
+      
+      return allFeatures;
     } catch (error) {
-        console.error("Error fetching class features:", error);
-        return []; // Return empty array instead of throwing error
+      console.error("Error fetching class features:", error);
+      return []; // Return empty array instead of throwing error
     }
-};
+  };

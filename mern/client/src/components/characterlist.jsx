@@ -76,9 +76,13 @@ const CharacterList = ({ campaignID }) => {
     setDisplayedCharacter(null);
   };
 
-  const refreshCharacters = () => {
-    fetchCharacters();
-    setExpandedCharacter(null);
+  const refreshCharacters = async () => {
+    try {
+      const updatedCharacters = await fetchCharactersByCampaign(campaignID, token);
+      setCharacters(updatedCharacters);
+    } catch (error) {
+      console.error("Failed to refresh characters:", error);
+    }
   };
 
   return (

@@ -182,12 +182,36 @@ export const modifyCharacter = async (id, characterData, token) => {
   // Delete character
   export const removeCharacter = async (id, token) => {
     if (!id) throw new Error("Character ID is required");
-    if (!token) throw new Error("Authentication token is required");
+    if (!token) {
+      console.error("No token provided for delete operation");
+      throw new Error("Authentication token is required");
+    }
     
-    console.log("Deleting character with ID:", id);
-    return makeRequest(
-      `http://localhost:5050/characters/${id}`,
-      "DELETE",
-      token
-    );
+    try {
+      console.log("Making DELETE request to:", `http://localhost:5050/characters/${id}`);
+      const response = await fetch(`http://localhost:5050/characters/${id}`, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        }
+      });
+  
+      console.log("Delete response status:", response.status);
+      
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        console.error("Delete failed with:", errorData);
+        throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+      }
+  
+      return await response.json();
+    } catch (error) {
+      console.error("Full delete error:", {
+        id,
+        error: error.message,
+        stack: error.stack
+      });
+      throw error;
+    }
   };
