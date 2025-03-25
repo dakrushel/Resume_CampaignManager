@@ -8,21 +8,24 @@ const makeRequest = async (url, method, token, body = null) => {
     const config = {
       method,
       headers,
-      body: body ? JSON.stringify(body) : null,
     };
+  
+    // Only add body if it exists
+    if (body) {
+      config.body = JSON.stringify(body);
+    }
   
     try {
       const response = await fetch(url, config);
       
       if (!response.ok) {
-        let errorMsg = `Request failed with status ${response.status}`;
+        let errorData;
         try {
-          const errorData = await response.json();
-          errorMsg = errorData.message || errorMsg;
+          errorData = await response.json();
         } catch (e) {
-          // Failed to parse JSON error response
+          errorData = { message: `Request failed with status ${response.status}` };
         }
-        throw new Error(errorMsg);
+        throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
       }
   
       return await response.json();
@@ -157,23 +160,23 @@ const makeRequest = async (url, method, token, body = null) => {
   };
   
   // Update existing character
-  export const modifyCharacter = async (id, characterData, token) => {
-    if (!id) throw new Error("Character ID is required");
-    if (!token) throw new Error("Authentication token is required");
-  
-    // Remove MongoDB-specific fields
-    const { _id, __v, createdAt, ...updateData } = characterData;
-    
-    // Add updated timestamp
-    updateData.updatedAt = new Date().toISOString();
-  
-    console.log("Updating character with data:", updateData);
-    return makeRequest(
-      `http://localhost:5050/characters/${id}`,
-      "PUT",
-      token,
-      updateData
-    );
+// In pcMongoAPIs.js
+export const modifyCharacter = async (id, characterData, token) => {
+    try {
+      const response = await makeRequest(
+        `http://localhost:5050/characters/${id}`,
+        'PUT',
+        token,  // Token comes before body
+        characterData
+      );
+      return response;
+    } catch (error) {
+      console.error('Error updating character:', {
+        error: error.message,
+        characterData
+      });
+      throw error;
+    }
   };
   
   // Delete character

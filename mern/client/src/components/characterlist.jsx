@@ -37,7 +37,7 @@ const CharacterList = ({ campaignID }) => {
     classProficiencies: [],
     level: 1,
     classFeatures: [],
-    campaignID: campaignID, // Include campaignID in blank character
+    campaignID: campaignID,
   };
 
   const fetchCharacters = async () => {
@@ -66,7 +66,7 @@ const CharacterList = ({ campaignID }) => {
   const handleNewCharacter = () => {
     setDisplayedCharacter({
       ...blankCharacter,
-      campaignID: campaignID, // Ensure campaignID is set
+      campaignID: campaignID,
     });
     setExpandedCharacter("new");
   };
@@ -111,11 +111,11 @@ const CharacterList = ({ campaignID }) => {
               {expandedCharacter === char._id && (
                 <div className="mt-2 p-4 border rounded-lg bg-gray-50">
                   <CharacterDisplay
-                    character={displayedCharacter || blankCharacter}
-                    isNew={isNew}
+                    character={char}
+                    isNew={false}
                     onCancel={handleCancel}
                     refreshCharacters={refreshCharacters}
-                    campaignID={campaignID} // Pass through
+                    campaignID={campaignID}
                   />
                 </div>
               )}

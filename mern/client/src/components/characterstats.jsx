@@ -299,26 +299,8 @@ const CharacterStats = ({
       return;
     }
   
-    // Enhanced validation with type checking
-    const requiredFields = {
-      name: { value: character.name, type: 'string' },
-      race: { value: character.race, type: 'string' },
-      class: { value: character.class, type: 'string' },
-      campaignID: { value: character.campaignID, type: 'string' }
-    };
-  
-    const validationErrors = Object.entries(requiredFields)
-      .filter(([field, { value, type }]) => !value || typeof value !== type)
-      .map(([field]) => field);
-  
-    if (validationErrors.length > 0) {
-      alert(`Invalid or missing fields: ${validationErrors.join(', ')}`);
-      return;
-    }
-  
     setSaving(true);
     try {
-      // Prepare character data for saving
       const characterData = {
         name: character.name,
         race: character.race,
@@ -342,53 +324,29 @@ const CharacterStats = ({
         campaignID: character.campaignID.toString(),
         selectedSpells: character.selectedSpells || [],
       };
-
-      console.debug("Sending character data:", {
-        ...characterData,
-        stats: characterData.stats, // Already converted
-        token: token ? "***REDACTED***" : "MISSING"
-      });
-
-      console.log("Final payload being sent:", JSON.stringify(characterData, null, 2));
-      console.log("Auth token exists:", !!token);
   
-      let response;
-      const startTime = performance.now();
-      
+      let result;
       if (character._id) {
         console.log("Updating existing character with ID:", character._id);
-        response = await modifyCharacter(character._id, characterData, token);
+        result = await modifyCharacter(character._id, characterData, token);
       } else {
         console.log("Creating new character");
-        response = await createCharacter(characterData, token);
+        result = await createCharacter(characterData, token);
       }
   
-      const duration = performance.now() - startTime;
-      console.log(`API call took ${duration.toFixed(2)}ms`);
-      console.log("API response:", response);
-  
-      const apiStart = Date.now();
-  
-      console.log(`API call completed in ${Date.now() - apiStart}ms`, response);
-  
-      if (!response?._id) {
+      if (!result) {
         throw new Error("Server returned invalid response");
       }
   
       alert(`Character ${character._id ? 'updated' : 'created'} successfully!`);
       if (refreshCharacters) refreshCharacters();
+      
     } catch (error) {
       console.error("Save operation failed:", {
         error: error.message,
-        stack: error.stack,
-        characterData: {
-          ...character,
-          stats: character.stats,
-          campaignID: character.campaignID
-        },
+        characterData: character, // Log the current character state instead
         time: new Date().toISOString()
       });
-      
       alert(`Save failed: ${error.message || 'Unknown server error'}`);
     } finally {
       setSaving(false);
@@ -449,43 +407,43 @@ const CharacterStats = ({
   const formStyle =
     "w-full p-3 border border-brown rounded-lg outline-none bg-cream focus:shadow-amber-800 placeholder-yellow-700 focus:shadow-sm transition-colors";
 
-  return (
-    <div className="p-6 max-w-6xl mx-auto bg-cream rounded-lg shadow-lg shadow-amber-800 text-brown grid grid-cols-1 md:grid-cols-4 gap-6">
-      {/* Left Section - Race Details */}
-      <div className="bg-light-tan p-6 rounded-lg shadow-md shadow-amber-800 col-span-1">
-        <h2
-          className="button text-xl hover:underline font-bold mb-4 cursor-pointer transition-colors"
-          onClick={() => setShowRaceDetails(!showRaceDetails)}
-        >
-          Race Details {showRaceDetails ? "▲" : "▼"}
-        </h2>
-        {showRaceDetails && (
-          <div className="space-y-3">
-            <p>
-              <strong>Size:</strong> {character.size}
-            </p>
-            <p>
-              <strong>Size Description:</strong> {character.size_description}
-            </p>
-            <p>
-              <strong>Languages:</strong> {character.languages.join(", ")}
-            </p>
-            <p>
-              <strong>Language Description:</strong> {character.language_desc}
-            </p>
-            <p>
-              <strong>Traits:</strong> {character.traits.join(", ")}
-            </p>
-          </div>
-        )}
-      </div>
-
-      {/* Main Character Sheet Form */}
-      <div className="bg-light-tan p-6 rounded-lg shadow-md col-span-2">
-        <h1 className="text-3xl font-bold mb-6 sancreek-regular">
-          D&D Character Sheet
-        </h1>
-        <form className="space-y-6">
+    return (
+      <div className="p-6 max-w-6xl mx-auto bg-cream rounded-lg shadow-lg shadow-amber-800 text-brown grid grid-cols-1 md:grid-cols-4 gap-6">
+        {/* Left Section - Race Details */}
+        <div className="bg-light-tan p-6 rounded-lg shadow-md shadow-amber-800 col-span-1">
+          <h2
+            className="button text-xl hover:underline font-bold mb-4 cursor-pointer transition-colors"
+            onClick={() => setShowRaceDetails(!showRaceDetails)}
+          >
+            Race Details {showRaceDetails ? "▲" : "▼"}
+          </h2>
+          {showRaceDetails && (
+            <div className="space-y-3">
+              <p>
+                <strong>Size:</strong> {character.size}
+              </p>
+              <p>
+                <strong>Size Description:</strong> {character.size_description}
+              </p>
+              <p>
+                <strong>Languages:</strong> {character.languages.join(", ")}
+              </p>
+              <p>
+                <strong>Language Description:</strong> {character.language_desc}
+              </p>
+              <p>
+                <strong>Traits:</strong> {character.traits.join(", ")}
+              </p>
+            </div>
+          )}
+        </div>
+    
+        {/* Main Character Sheet Form */}
+        <div className="bg-light-tan p-6 rounded-lg shadow-md col-span-2">
+          <h1 className="text-3xl font-bold mb-6 sancreek-regular">
+            D&D Character Sheet
+          </h1>
+          <form className="space-y-6">
           {/* Character Name Input */}
           <div>
             <label className="block text-lg font-medium mb-2">Name:</label>
@@ -679,7 +637,8 @@ const CharacterStats = ({
             />
           </div>
 
-          {/* Save button */}
+        {/* Action Buttons Group */}
+        <div className="flex flex-wrap gap-2">
           <button
             onClick={handleSaveCharacter}
             className={`px-4 py-2 rounded ${
@@ -691,24 +650,24 @@ const CharacterStats = ({
           </button>
           <button
             onClick={onCancel}
-            className="mt-2 bg-cancel-red text-gold px-4 py-2 rounded shadow-sm shadow-amber-800"
+            className="bg-cancel-red text-gold px-4 py-2 rounded shadow-sm shadow-amber-800 hover:bg-red-700 transition-colors"
           >
             Cancel
           </button>
-        </form>
-      </div>
-
-      {/* Add this button near your save/cancel buttons */}
-      {!isNew && (
+          {!isNew && (
         <button
           onClick={handleDeleteCharacter}
-          className="mt-2 bg-cancel-red text-gold px-4 py-2 rounded shadow-sm shadow-amber-800"
+          className="bg-cancel-red text-gold px-4 py-2 rounded shadow-sm shadow-amber-800 hover:bg-red-700 transition-colors"
+          title="Permanently delete this character"
         >
           Delete Character
         </button>
       )}
+        </div>
+      </form>
+    </div>
 
-      {/* Right Section - Class Proficiencies and Features */}
+    {/* Right Section - Class Proficiencies and Features */}
       <div className="bg-light-tan p-6 rounded-lg shadow-md col-span-1">
         {/* Class Proficiencies */}
         <div className="mb-6">
@@ -799,6 +758,10 @@ CharacterStats.propTypes = {
       })
     ),
   }).isRequired,
+  isNew: PropTypes.bool,
+  onCancel: PropTypes.func,
+  refreshCharacters: PropTypes.func.isRequired,
+  campaignID: PropTypes.string.isRequired,
 
   // Spell management props
   spellSlots: PropTypes.object,
@@ -814,11 +777,6 @@ CharacterStats.propTypes = {
     })
   ),
   onAddSpell: PropTypes.func,
-
-  // Modal and flow control props
-  isNew: PropTypes.bool,
-  onCancel: PropTypes.func.isRequired,
-  refreshCharacters: PropTypes.func,
   token: PropTypes.string,
 
   // Optional spell display props

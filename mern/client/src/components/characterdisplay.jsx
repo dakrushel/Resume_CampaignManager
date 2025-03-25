@@ -14,6 +14,10 @@ const CharacterDisplay = ({ character, isNew, onCancel, refreshCharacters, campa
   const [characterLevel, setCharacterLevel] = useState(1);
   const token = useAuthToken();
 
+  if (!character) {
+    return <div className="mt-16 p-6 text-center">Loading character...</div>;
+  }
+
   // Initialize state for spell management
   const [spellSlots, setSpellSlots] = useState({});
   const [selectedSpells, setSelectedSpells] = useState([]);
@@ -33,6 +37,7 @@ const CharacterDisplay = ({ character, isNew, onCancel, refreshCharacters, campa
   return (
     <div className="mt-16">
       <CharacterStats
+      campaignID={campaignID}
         onClassSelect={setSelectedClass}
         characterLevel={characterLevel}
         onLevelChange={setCharacterLevel}
