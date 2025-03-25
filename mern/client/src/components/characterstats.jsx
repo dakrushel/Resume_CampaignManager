@@ -534,7 +534,8 @@ const CharacterStats = ({
         size: character.size || "Medium",
         languages: character.languages || [],
         traits: character.traits || [],
-        selectedSpells: formattedSpells
+        selectedSpells: formattedSpells,
+        _id: character._id === 'new' ? undefined : character._id // Handle new character ID
       };
   
       // Validate spells before sending
@@ -558,11 +559,13 @@ const CharacterStats = ({
       console.log("Sending character data:", characterToSave);
   
       let response;
-      if (character._id && !isNew) {
-        response = await modifyCharacter(character._id, characterToSave, token);
-      } else {
-        response = await createCharacter(characterToSave, token);
-      }
+    if (character._id && character._id !== 'new') {
+      // Update existing
+      response = await modifyCharacter(character._id, characterToSave, token);
+    } else {
+      // Create new
+      response = await createCharacter(characterToSave, token); 
+    }
   
       // Update local state with normalized spells (convert school back to object format)
       const normalizedResponse = {
@@ -737,7 +740,7 @@ const CharacterStats = ({
           <div className="p-6 max-w-4xl mx-auto bg-cream rounded-lg shadow-md mt-6">
             <h2 className="text-xl font-bold mb-4">Selected Spells</h2>
             {/* Display Remaining Spell Points for Each Level */}
-            {Object.keys(spellSlots).map((level) => (
+            {Object.keys(spellSlots || {}).map((level) => (
               <div key={level} className="mb-4">
                 <h3 className="font-bold">Level {level} Spells</h3>
                 <p>

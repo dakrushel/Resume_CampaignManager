@@ -13,6 +13,7 @@ const CharacterList = ({ campaignID }) => {
   const [expandedCharacter, setExpandedCharacter] = useState(null);
 
   const blankCharacter = {
+    _id: 'new',
     name: "",
     alignment: "",
     race: "",
