@@ -112,7 +112,7 @@ const CharacterList = ({ campaignID }) => {
                 }
                 className="w-full text-left font-semibold text-blue-600 hover:underline focus:outline-none"
               >
-                {`${char.name}`} 
+                {`${char.name}`} {expandedCharacter === char._id ? "▲" : "▼"}
               </button>
 
               {expandedCharacter === char._id && (
