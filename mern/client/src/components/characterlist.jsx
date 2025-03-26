@@ -19,6 +19,11 @@ const CharacterList = ({ campaignID }) => {
     class: "",
     speed: 0,
     hitDice: "",
+    hitPoints: {
+      max: 0,
+      current: 0,
+      temporary: 0
+    },
     proficiencies: [],
     stats: {
       strength: 10,

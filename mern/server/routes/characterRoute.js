@@ -22,6 +22,11 @@ const characterSchema = Joi.object({
   class: Joi.string().required(),
   speed: Joi.number().required(),
   hitDice: Joi.string().required(),
+  hitPoints: Joi.object({
+    max: Joi.number().integer().min(0).required(),
+    current: Joi.number().integer().min(0).required(),
+    temporary: Joi.number().integer().min(0).default(0),
+  }).required(),
   proficiencies: Joi.array().items(Joi.string()),
   stats: Joi.object({
     strength: Joi.number().min(1).max(30).required(),

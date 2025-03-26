@@ -141,6 +141,7 @@ const CharacterStats = ({
 
   useEffect(() => {
     if (displayedCharacter && Object.keys(displayedCharacter).length > 0) {
+      // In the transformFromBackend function
       const transformFromBackend = (slots) => {
         if (!slots) return {};
         const transformed = {};
@@ -267,6 +268,64 @@ const CharacterStats = ({
     } finally {
       setFeatureLoading(false);
     }
+  };
+
+  // Add this helper function near your other utility functions
+  const calculateHP = (character) => {
+    if (!character.hitDice) return 0;
+
+    const hitDieSize = parseInt(character.hitDice.substring(1)); // Extract the number from "d8"
+    const conModifier = Math.floor((character.stats.constitution - 10) / 2);
+
+    // Level 1 gets max hit die + CON mod
+    if (character.level === 1) {
+      return hitDieSize + conModifier;
+    }
+
+    // Higher levels get average (rounded up) + CON mod per level
+    const averagePerLevel = Math.ceil(hitDieSize / 2 + 1);
+    return (
+      hitDieSize +
+      conModifier +
+      (averagePerLevel + conModifier) * (character.level - 1)
+    );
+  };
+
+  // Add this effect to update HP when relevant stats change
+  useEffect(() => {
+    if (character.hitDice && character.stats?.constitution && character.level) {
+      const newMaxHP = calculateHP(character);
+      setCharacter((prev) => ({
+        ...prev,
+        hitPoints: {
+          ...prev.hitPoints,
+          max: newMaxHP,
+          // Keep current HP at max if it was 0 (new character)
+          current: prev.hitPoints?.current || newMaxHP,
+        },
+      }));
+    }
+  }, [character.hitDice, character.stats?.constitution, character.level]);
+
+  // Add this handler for HP changes
+  const handleHPChange = (type, value) => {
+    const numValue = parseInt(value) || 0;
+    setCharacter((prev) => {
+      const newHP = {
+        ...prev.hitPoints,
+        [type]: Math.max(0, numValue),
+      };
+
+      // Ensure current doesn't exceed max
+      if (type === "max" && newHP.current > numValue) {
+        newHP.current = numValue;
+      }
+
+      return {
+        ...prev,
+        hitPoints: newHP,
+      };
+    });
   };
 
   const updateLevelDependentData = async (level, className) => {
@@ -640,6 +699,11 @@ const CharacterStats = ({
         alignment: character.alignment || "Unaligned",
         race: character.race,
         class: character.class,
+        hitPoints: {
+          max: character.hitPoints?.max || calculateHP(character),
+          current: character.hitPoints?.current || calculateHP(character),
+          temporary: character.hitPoints?.temporary || 0,
+        },
         level: character.level,
         stats: {
           strength: parseInt(character.stats.strength) || 10,
@@ -907,7 +971,117 @@ const CharacterStats = ({
                 readOnly
               />
             </div>
+            {/* Add this after the Hit Dice input */}
+            {/* Compact HP Section */}
+            <div className="space-y-2">
+              {/* HP Values - Horizontal Layout */}
+              <div className="grid grid-cols-3 gap-3">
+                {/* Max HP */}
+                <div>
+                  <label className="block text-xs font-medium text-yellow-700 mb-0.5">
+                    Max HP
+                  </label>
+                  <input
+                    type="number"
+                    className="w-full px-2 py-1 text-sm rounded border border-yellow-300 bg-yellow-50"
+                    value={character.hitPoints?.max || 0}
+                    readOnly
+                  />
+                </div>
 
+                {/* Current HP */}
+                <div>
+                  <label className="block text-xs font-medium text-yellow-700 mb-0.5">
+                    Current HP
+                  </label>
+                  <div className="flex">
+                    <input
+                      type="number"
+                      className="flex-1 px-2 py-1 text-sm rounded-l border border-yellow-300 bg-yellow-50"
+                      value={character.hitPoints?.current || 0}
+                      onChange={(e) =>
+                        handleHPChange("current", Number(e.target.value))
+                      }
+                      min="0"
+                      max={character.hitPoints?.max || 0}
+                    />
+                    <div className="flex flex-col border border-l-0 border-yellow-300 rounded-r overflow-hidden">
+                      <button
+                        onClick={() =>
+                          handleHPChange(
+                            "current",
+                            Math.min(
+                              (character.hitPoints?.current || 0) + 1,
+                              character.hitPoints?.max || 0
+                            )
+                          )
+                        }
+                        className="px-1 bg-green-50 hover:bg-green-100 text-xs h-1/2 border-b border-yellow-300"
+                        title="Heal 1 HP"
+                      >
+                        +
+                      </button>
+                      <button
+                        onClick={() =>
+                          handleHPChange(
+                            "current",
+                            Math.max((character.hitPoints?.current || 0) - 1, 0)
+                          )
+                        }
+                        className="px-1 bg-red-50 hover:bg-red-100 text-xs h-1/2"
+                        title="Damage 1 HP"
+                      >
+                        -
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Temp HP */}
+                <div>
+                  <label className="block text-xs font-medium text-yellow-700 mb-0.5">
+                    Temp HP
+                  </label>
+                  <input
+                    type="number"
+                    className="w-full px-2 py-1 text-sm rounded border border-yellow-300 bg-yellow-50"
+                    value={character.hitPoints?.temporary || 0}
+                    onChange={(e) =>
+                      handleHPChange("temporary", Number(e.target.value))
+                    }
+                    min="0"
+                  />
+                </div>
+              </div>
+
+              {/* Compact Health Bar */}
+              <div className="pt-1">
+                <div className="flex justify-between text-xs text-yellow-700 mb-0.5">
+                  <span>
+                    {character.hitPoints?.current || 0}/
+                    {character.hitPoints?.max || 0}
+                  </span>
+                  {character.hitPoints?.temporary > 0 && (
+                    <span className="text-amber-700">
+                      +{character.hitPoints.temporary} Temp
+                    </span>
+                  )}
+                </div>
+                <div className="w-full bg-yellow-100 rounded-full h-1.5">
+                  <div
+                    className="bg-red-500 h-1.5 rounded-full"
+                    style={{
+                      width: `${Math.min(
+                        100,
+                        ((character.hitPoints?.current || 0) /
+                          (character.hitPoints?.max || 1)) *
+                          100
+                      )}%`,
+                    }}
+                  ></div>
+                </div>
+              </div>
+            </div>
             <div>
               <label className="block text-sm font-medium text-yellow-700 mb-1">
                 Speed:

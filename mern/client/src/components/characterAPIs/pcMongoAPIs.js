@@ -83,6 +83,7 @@ export const createCharacter = async (characterData, token) => {
     class: "string",
     level: "number",
     campaignID: "string",
+    hitPoints: "object"
   };
 
   const validationErrors = [];
@@ -120,6 +121,17 @@ export const createCharacter = async (characterData, token) => {
       intelligence: parseInt(characterData.stats?.intelligence) || 10,
       wisdom: parseInt(characterData.stats?.wisdom) || 10,
       charisma: parseInt(characterData.stats?.charisma) || 10,
+    },
+    hitPoints: {
+      max: Math.max(0, parseInt(characterData.hitPoints?.max) || 0),
+      current: Math.max(
+        0, 
+        Math.min(
+          parseInt(characterData.hitPoints?.max) || 0,
+          parseInt(characterData.hitPoints?.current) || 0
+        )
+      ),
+      temporary: Math.max(0, parseInt(characterData.hitPoints?.temporary) || 0)
     },
     proficiencies: characterData.proficiencies || [],
     languages: characterData.languages || [],
