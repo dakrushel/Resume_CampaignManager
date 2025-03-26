@@ -4,7 +4,7 @@ import PropTypes from "prop-types";
 import LocationForm from "./locationform";
 import { useAuth0 } from "@auth0/auth0-react";
 
-export default function LocationList({ parentLocationID, locationType, campaignID, isOverview }) {
+export default function LocationList({ parentLocationID, locationType, campaignID }) {
     const [locations, setLocations] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -95,8 +95,8 @@ export default function LocationList({ parentLocationID, locationType, campaignI
                     onSave={handleSaveLocation}
                     onCancel={() => setShowForm(false)}
                 />
-            ) : (!isOverview || locationType === "Plane" ? <button onClick={() => setShowForm(true)} className="mt-2 bg-goblin-green text-xl text-gold px-4 py-2 rounded-full shadow-sm shadow-amber-800"> + </button> : ""
-            )}
+            ) : (
+                <button onClick={() => setShowForm(true)} className="mt-2 bg-goblin-green text-xl text-gold px-4 py-2 rounded-full shadow-sm shadow-amber-800"> + </button>)}
 
         </div>
     );

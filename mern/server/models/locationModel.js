@@ -113,6 +113,15 @@ export const addLocation = async (locationData) => {
       locationData.parentLocationID = null;
     }
 
+    // Only retain children and nestDepth if type is "Site"
+    if (locationData.locationType === "Site") {
+      locationData.children = Array.isArray(locationData.children) ? locationData.children : [];
+      locationData.nestDepth = typeof locationData.nestDepth === "number" ? locationData.nestDepth : 0;
+    } else {
+      delete locationData.children;
+      delete locationData.nestDepth;
+    }
+
     const result = await db.collection(collectionName).insertOne(locationData);
 
     return {
@@ -146,12 +155,21 @@ export const updateLocation = async (id, locationData) => {
       locationData.parentLocationID = null;
     }
 
+    // Enforce schema consistency for Site vs non-Site
+    if (locationData.locationType === "Site") {
+      locationData.children = Array.isArray(locationData.children) ? locationData.children : [];
+      locationData.nestDepth = typeof locationData.nestDepth === "number" ? locationData.nestDepth : 0;
+    } else {
+      delete locationData.children;
+      delete locationData.nestDepth;
+    }    
+
     const result = await db.collection(collectionName).updateOne(
       { _id: new ObjectId(id) },
       { $set: locationData }
     );
 
-    if (result.modifiedCount === 0) {
+    if (result.matchedCount === 0) {
       throw new Error("No location found to update");
     }
 
@@ -161,6 +179,43 @@ export const updateLocation = async (id, locationData) => {
     throw error;
   }
 };
+
+// **Add a child site to a parent site
+export const addChildToLocation = async (parentID, childID) => {
+  if (!ObjectId.isValid(parentID) || !ObjectId.isValid(childID)) {
+    throw new Error("Invalid ID format");
+  }
+
+  const result = await db.collection("locations").updateOne(
+    { _id: new ObjectId(parentID) },
+    { $addToSet: { children: new ObjectId(childID) } }
+  );
+
+  if (result.matchedCount === 0) {
+    throw new Error("No parent location found");
+  }
+
+  return { message: "Child added", result };
+};
+
+// **Remove a child site from a parent site
+export const removeChildFromLocation = async (parentID, childID) => {
+  if (!ObjectId.isValid(parentID) || !ObjectId.isValid(childID)) {
+    throw new Error("Invalid ID format");
+  }
+
+  const result = await db.collection("locations").updateOne(
+    { _id: new ObjectId(parentID) },
+    { $pull: { children: new ObjectId(childID) } }
+  );
+
+  if (result.matchedCount === 0) {
+    throw new Error("No parent location found");
+  }
+
+  return { message: "Child removed", result };
+};
+
 
 // **Delete a location**
 export const deleteLocation = async (id) => {

@@ -34,7 +34,7 @@ const CharacterDisplay = ({ character, isNew, onCancel, refreshCharacters }) => 
 
 CharacterDisplay.propTypes = {
   character: PropTypes.shape({
-    _id: PropTypes.string.isRequired,
+    _id: PropTypes.string,
     name: PropTypes.string.isRequired,
     class: PropTypes.string.isRequired,
     level: PropTypes.number.isRequired,

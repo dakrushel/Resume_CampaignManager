@@ -25,6 +25,18 @@
 
 // export default db;
 
+import path from "path";
+import { fileURLToPath } from "url";
+import dotenv from "dotenv";
+
+// Resolve __dirname in ES module context
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// Absolute path to config.env in server/
+dotenv.config({ path: path.resolve(__dirname, "../config.env") });
+
+
 import { MongoClient, ServerApiVersion } from "mongodb";
 
 const uri = process.env.ATLAS_URI || "";

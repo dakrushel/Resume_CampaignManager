@@ -30,7 +30,7 @@ export default function NpcForm({ campaignID, parentLocationID, existingNpc, onS
         campaignID: existingNpc?.campaignID || campaignID || "",
         parentLocationID: existingNpc?.parentLocationID || parentLocationID || null,
     });
-
+    const statFields = ["strength", "dexterity", "constitution", "intelligence", "wisdom", "charisma"];
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState(null);
     const { getAccessTokenSilently } = useAuth0();
@@ -46,6 +46,7 @@ export default function NpcForm({ campaignID, parentLocationID, existingNpc, onS
 
     const handleChange = (e) => {
         const { name, value } = e.target;
+        if (statFields.includes(name)) return; //Cannot be allowed to handle stat block
         setFormData((prevData) => ({
             ...prevData,
             [name]: value,
@@ -61,36 +62,54 @@ export default function NpcForm({ campaignID, parentLocationID, existingNpc, onS
     };
 
     const handleSave = async (e) => {
-        console.log("npcform - formData before: ", formData);
         e.preventDefault();
         if (saving) return;
         setSaving(true);
-
+    
+        // Debug log
+        console.log("npcform - formData before:", formData);
+    
         try {
             const token = await getAccessTokenSilently({ audience: "https://campaignapi.com" });
-
+    
+            // Clone and sanitize stats
+            const sanitizedStats = { ...formData.stats };
+    
+            for (let stat of statFields) {
+                if (typeof sanitizedStats[stat] !== "number" || isNaN(sanitizedStats[stat])) {
+                    sanitizedStats[stat] = 10;
+                }
+            }
+    
+            const npcPayload = {
+                ...formData,
+                stats: sanitizedStats,
+            };
+    
             const endpoint = existingNpc
                 ? `http://localhost:5050/npcs/${existingNpc._id}`
                 : "http://localhost:5050/npcs";
-
+    
             const method = existingNpc ? "PUT" : "POST";
-
-            console.log("npcform - formData to save: ", formData);
+    
+            console.log("npcform - formData to save:", npcPayload);
+    
             const response = await fetch(endpoint, {
                 method,
                 headers: {
                     "Content-Type": "application/json",
                     Authorization: `Bearer ${token}`,
                 },
-                body: JSON.stringify(formData),
+                body: JSON.stringify(npcPayload),
             });
-
+    
             if (!response.ok) {
-                throw new Error(`Failed to ${existingNpc ? "update" : "create"} NPC`);
+                const errText = await response.text(); // Get detailed error from backend
+                throw new Error(`Failed to ${existingNpc ? "update" : "create"} NPC: ${errText}`);
             }
-
+    
             const npcData = await response.json();
-            console.log("Updated NPC recieved: ", npcData);
+            console.log("Updated NPC received:", npcData);
             onSave(npcData);
         } catch (error) {
             console.error("Error saving NPC:", error);
@@ -99,6 +118,7 @@ export default function NpcForm({ campaignID, parentLocationID, existingNpc, onS
             setSaving(false);
         }
     };
+    
 
     return (
         <div className="p-4 border-0 rounded-lg bg-cream shadow-md">
@@ -124,6 +144,26 @@ export default function NpcForm({ campaignID, parentLocationID, existingNpc, onS
                     value={formData.race}
                     onChange={handleChange}
                     placeholder="Race"
+                    className="border border-brown p-2 w-full rounded bg-cream"
+                />
+
+                <label>Age:</label>
+                <input
+                    type="number"
+                    name="age"
+                    value={formData.age}
+                    onChange={handleChange}
+                    placeholder="age"
+                    className="border border-brown p-2 w-full rounded bg-cream"
+                />
+
+                <label>Gender:</label>
+                <input
+                    type="text"
+                    name="gender"
+                    value={formData.gender}
+                    onChange={handleChange}
+                    placeholder="gender"
                     className="border border-brown p-2 w-full rounded bg-cream"
                 />
 
@@ -153,6 +193,16 @@ export default function NpcForm({ campaignID, parentLocationID, existingNpc, onS
                     name="level"
                     value={formData.level}
                     onChange={handleChange}
+                    className="border border-brown p-2 w-full rounded bg-cream"
+                />
+
+                <label>Size:</label>
+                <input
+                    type="text"
+                    name="size"
+                    value={formData.size}
+                    onChange={handleChange}
+                    placeholder="size"
                     className="border border-brown p-2 w-full rounded bg-cream"
                 />
 
@@ -213,6 +263,16 @@ export default function NpcForm({ campaignID, parentLocationID, existingNpc, onS
                     name="virtues"
                     value={formData.virtues}
                     onChange={handleChange}
+                    className="border border-brown p-2 w-full rounded bg-cream"
+                />
+
+                <label>Ideals:</label>
+                <input
+                    type="text"
+                    name="ideals"
+                    value={formData.ideals}
+                    onChange={handleChange}
+                    placeholder="Ideals"
                     className="border border-brown p-2 w-full rounded bg-cream"
                 />
 
