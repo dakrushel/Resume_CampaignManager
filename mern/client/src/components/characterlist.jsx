@@ -109,7 +109,7 @@ const CharacterList = ({ campaignID }) => {
                 </ul>
             )}
                 {expandedCharacter === "new" && (
-                    <div className="mt-4 p-4 border rounded-lg bg-gray-50">
+                    <div className="mt-4 p-4 rounded-lg">
                         <CharacterDisplay character={blankCharacter} isNew={true} onCancel={handleCancel} />
                     </div>
             )}

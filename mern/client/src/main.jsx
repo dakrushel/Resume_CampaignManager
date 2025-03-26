@@ -19,7 +19,7 @@ import MonsterItem from "./components/monsteritem";
 import APISearch from "./components/search";
 import RulesLookUp from "./components/rulebook";
 import Home from "./components/home";
-import CharacterDisplay from "./components/characterdisplay";
+import PlayerCharacters from "./components/playercharacters";
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
@@ -44,7 +44,7 @@ ReactDOM.createRoot(document.getElementById("root")).render(
           <Route path="/monsters" element={<MonsterItem />} />
           <Route path="/search" element={<APISearch />} />
           <Route path="/rules" element={<RulesLookUp />} />
-          <Route path="/characterdisplay" element={<CharacterDisplay/>} />
+          <Route path="/playercharacters" element={<PlayerCharacters/>} />
         </Routes>
         <App/>
       </BrowserRouter>

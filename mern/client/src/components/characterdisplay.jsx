@@ -15,7 +15,7 @@ const CharacterDisplay = ({ character, isNew, onCancel, refreshCharacters }) => 
   const token = useAuthToken(); // Get the authentication token
 
   return (
-    <div className="mt-16">
+    <div>
       {/* Render the CharacterStats component */}
       <CharacterStats
         onClassSelect={setSelectedClass}

@@ -36,7 +36,7 @@ export default function Navbar() {
         className={navButtonStyle}>
           <p className="text-center m-auto">Campaign</p>
         </NavLink>
-        {campaignSelected && <NavLink to="/characterdisplay" className={navButtonStyle}>
+        {campaignSelected && <NavLink to="/playercharacters" className={navButtonStyle}>
           <p className="text-center m-auto">PCs</p>
         </NavLink>}
         {campaignSelected && <NavLink to="/characters" title="All your awesome NPCs." alt="Non Player Characters" className={navButtonStyle}>
