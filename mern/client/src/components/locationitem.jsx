@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useParams, useNavigate, useLocation, } from "react-router-dom";
+import { useParams, useNavigate, useLocation, Link, } from "react-router-dom";
 import LocationList from "./locationlist";
 import LocationForm from "./locationform";
 import PropTypes from "prop-types";
@@ -214,6 +214,7 @@ export default function LocationItem() {
     }
 
     console.log("Rendering location item: ", location);
+    console.log(formData.campaignID)
     return (
         <div className="p-8 border-0 rounded-lg bg-cream shadow-md text-brown shadow-amber-800 mt-16">
             {editMode ? (
@@ -230,9 +231,8 @@ export default function LocationItem() {
                 <div className="flex flex-col">
                     <h1 className="text-3xl sancreek-regular">{location.name || "Unknown Location"}</h1>
                     <p className="text-lg italic px-4 py-2">{location.description || "No description available."}</p>
-                    <p><strong>Campaign:</strong> {campaignName || "Unspecified Campaign"}</p>
-                    {formData.locationType !== "Plane" && (<p><strong>Located in:</strong> {parentLocationName || "Unspecified Parent Location"}</p>)}
-                    <p>Children: luslbadfl, slkjhedfsuh</p>
+                    <p><strong>Campaign:</strong> <Link className="hover:underline" to={`/campaigns/${formData.campaignID}`}>{campaignName || "Unspecified Campaign"}</Link></p>
+                    {formData.locationType !== "Plane" && (<p><strong>Located in:</strong> <Link className="hover:underline" to={`/locations/${formData.parentLocationID}`}>{parentLocationName || "Unspecified Parent Location"}</Link></p>)}
                     {/* <p><strong>Location Type:</strong> {formData.locationType}</p> */}
                     <div className="flex space-x-2 mt-4 mx-auto">
                         <button onClick={() => setEditMode(true)} className="bg-goblin-green font-bold button shadow-sm shadow-amber-700 hover:shadow-amber-900 text-gold px-4 py-2 rounded">
