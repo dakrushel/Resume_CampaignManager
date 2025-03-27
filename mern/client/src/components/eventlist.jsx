@@ -72,13 +72,13 @@ export default function EventList({ parentLocationID, campaignID }) {
     setEvents((prevEvents) => prevEvents.filter((event) => event._id !== deletedEventID));
   };
 
-  if (loading) return <p className="text-gray-600">Loading events...</p>;
-  if (error) return <p className="text-red-500">{error}</p>;
+  if (loading) return <p className="text-brown text-lg">Loading events...</p>;
+  if (error) return <p className="bg-light-tan text-red-800 font-bold text-lg">{error}</p>;
 
   return (
-    <div className="p-2 bg-yellow-200 rounded-lg">
+    <div className="p-4 bg-light-tan rounded-lg">
       {events.length === 0 && !showForm ? (
-        <p>No events available. Try creating one!</p>
+        <p className="text-lg">No events available. Try creating one!</p>
       ) : (
         events.map((event) => (
           <EventItem
@@ -105,7 +105,7 @@ export default function EventList({ parentLocationID, campaignID }) {
           onCancel={() => setShowForm(false)}
         />
       ) : (
-        <button onClick={() => setShowForm(true)} className="bg-green-600 text-white px-4 py-2 rounded mt-4">
+        <button onClick={() => setShowForm(true)} className="button mt-2 bg-goblin-green text-xl text-gold px-4 py-2 rounded-full shadow-sm shadow-amber-700 hover:shadow-amber-900">
           +
         </button>
       )}

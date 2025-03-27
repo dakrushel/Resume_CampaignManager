@@ -123,31 +123,20 @@ export default function CampaignOverview() {
 
     const handleDelete = async () => {
         if (!window.confirm("Are you sure you want to delete this campaign?")) return;
-        
         try {
-          const token = await getAccessTokenSilently({ audience: "https://campaignapi.com" });
-          const response = await fetch(`http://localhost:5050/campaigns/${id}`, { 
-            method: "DELETE",
-            headers: {  // Fixed: headers should be an object
-              "Content-Type": "application/json",
-              "Authorization": `Bearer ${token}`
-            }
-          });
-      
-          if (!response.ok) {
-            const errorData = await response.json().catch(() => ({}));
-            throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
-          }
-          
-          navigate("/campaigns");
+            const token = await getAccessTokenSilently({ audience: "https://campaignapi.com" });
+            const response = await fetch(`http://localhost:5050/campaigns/${id}`, { 
+                method: "DELETE",
+                Authorization: `Bearer ${token}`,
+            });
+            console.log(response)
+            if (!response.ok) throw new Error("Failed to delete campaign");
+            navigate("/campaigns");
         } catch (error) {
-          console.error("Delete campaign failed:", {
-            error: error.message,
-            campaignId: id
-          });
-          setError(error.message || "Failed to delete campaign.");
+            console.error(error);
+            setError("Failed to delete campaign.");
         }
-      };
+    };
 
     const handleCancel = () => {
         navigate("/campaigns");
@@ -196,14 +185,14 @@ export default function CampaignOverview() {
                 <div className="flex space-x-2">
                     <button 
                         onClick={isNew ? handleSave : handleUpdate} 
-                        className={`px-4 py-2 rounded button ${saving ? "bg-tan" : "bg-goblin-green text-gold"}`}
+                        className={`px-4 py-2 rounded button ${saving ? "bg-tan" : "bg-goblin-green button hover:shadow-sm hover:shadow-amber-800 text-gold"}`}
                         disabled={saving}
                     >
                         {saving ? "Saving..." : "Save"}
                     </button>
                     <button 
                         onClick={handleCancel} 
-                        className="bg-cancel-red text-gold button px-4 py-2 rounded"
+                        className="bg-cancel-red text-gold button hover:shadow-sm hover:shadow-amber-800 px-4 py-2 rounded"
                     >
                         Cancel
                     </button>
@@ -216,10 +205,10 @@ export default function CampaignOverview() {
                     <div className="flex space-x-2 mt-4 items-center justify-center mb-4">
                         {!isNew && (
                             <>
-                                <button onClick={() => setEditMode(true)} className="button bg-goblin-green text-gold font-bold px-4 py-2 rounded shadow-sm shadow-amber-700">
+                                <button onClick={() => setEditMode(true)} className="button bg-goblin-green text-gold font-bold px-4 py-2 rounded shadow-sm shadow-amber-700 hover:shadow-amber-900">
                                     Edit Campaign
                                 </button>
-                                <button onClick={handleDelete} className="button bg-cancel-red text-gold px-4 py-2 font-bold rounded shadow-sm shadow-amber-700">
+                                <button onClick={handleDelete} className="button bg-cancel-red text-gold px-4 py-2 font-bold rounded shadow-sm shadow-amber-700 hover:shadow-amber-900">
                                     Delete Campaign
                                 </button>
                             </>
