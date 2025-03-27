@@ -96,7 +96,7 @@ export default function LocationList({ parentLocationID, locationType, campaignI
                     onCancel={() => setShowForm(false)}
                 />
             ) : (
-                <button onClick={() => setShowForm(true)} className="mt-2 bg-goblin-green text-xl text-gold px-4 py-2 rounded-full shadow-sm shadow-amber-800"> + </button>)}
+                <button onClick={() => setShowForm(true)} className="mt-2 bg-goblin-green text-xl text-gold px-4 py-2 rounded-full button shadow-sm shadow-amber-800"> + </button>)}
 
         </div>
     );

@@ -195,13 +195,14 @@ export default function Monster ({ monsterName, id, onRemove }) {
       return <li>Failed to wrangle {monsterName}, I rolled a 1 -- {error}</li>
     }
     return (
-      <li className="monster-item"
-      style={{ marginBottom: "10px", paddingBottom: "2px", paddingTop: "2px", paddingLeft: "5px", paddingRight: "5px", border: "2px solid #e9bf69", backgroundColor: "#F4CE88", borderRadius: "5px" }}>
-          <div className="monster-summary">
-              <span>{monster.name}</span>
-              <span>AC:{getArmorClassValue(monster.armor_class)}</span>
-              <span>HP: {monster.hit_points}</span>
-              <span>Speed: {getSpeedString(monster.speed)}</span>
+      <li className="monster-item bg-cream rounded py-4 shadow-md shadow-amber-800">
+          <div className="monster-summary flex flex-col items-center">
+              <span className="text-lg font-bold">{monster.name}</span>
+              <div className="space-x-2">
+                <span>AC:{getArmorClassValue(monster.armor_class)}</span>
+                <span>HP: {monster.hit_points}</span>
+                <span>Speed: {getSpeedString(monster.speed)}</span>
+              </div>
               <button
                   className="chevron-button"
                   onClick={toggleDetails}
@@ -210,7 +211,7 @@ export default function Monster ({ monsterName, id, onRemove }) {
               </button>
               <button
                   onClick={() => onRemove(id)}
-                  className="mt-2 bg-cancel-red text-gold px-3 py-1 rounded"
+                  className="mt-2 bg-cancel-red button font-bold text-gold px-3 py-1 rounded max-w-20"
                   // aria-label={`Remove ${monster.name}`}
                   // style={{
                   //   background: "#105b10",

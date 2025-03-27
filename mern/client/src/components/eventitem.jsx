@@ -59,7 +59,7 @@ export default function EventItem({ event, campaignID, parentLocationID, onEvent
             />
           ) : (
             <>
-              <p className="p-2 bg-light-tan rounded">{event.body}</p>
+              <p className="p-4 bg-light-tan rounded text-left">{event.body}</p>
               <button onClick={handleEditClick} className="font-bold mt-2 mr-2 button bg-goblin-green text-gold px-3 py-1 rounded hover:shadow-sm hover:shadow-amber-800">
                 Edit
               </button>
