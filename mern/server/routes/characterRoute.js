@@ -1,12 +1,5 @@
 import express from "express";
-import {
-  getAllCharacters,
-  getCharacterById,
-  getCharactersByCampaignID,
-  addCharacter,
-  updateCharacter,
-  deleteCharacter,
-} from "../models/characterModel.js";
+import { getAllCharacters, getCharacterById, getCharactersByCampaignID, addCharacter, updateCharacter, deleteCharacter } from "../models/characterModel.js";
 import Joi from "joi";
 import { sanitizeInput } from "../utils/sanitization.js";
 import { ObjectId } from "mongodb";
@@ -22,19 +15,14 @@ const characterSchema = Joi.object({
   class: Joi.string().required(),
   speed: Joi.number().required(),
   hitDice: Joi.string().required(),
-  hitPoints: Joi.object({
-    max: Joi.number().integer().min(0).required(),
-    current: Joi.number().integer().min(0).required(),
-    temporary: Joi.number().integer().min(0).default(0),
-  }).required(),
   proficiencies: Joi.array().items(Joi.string()),
   stats: Joi.object({
-    strength: Joi.number().min(1).max(30).required(),
-    dexterity: Joi.number().min(1).max(30).required(),
-    constitution: Joi.number().min(1).max(30).required(),
-    intelligence: Joi.number().min(1).max(30).required(),
-    wisdom: Joi.number().min(1).max(30).required(),
-    charisma: Joi.number().min(1).max(30).required(),
+    strength: Joi.number().required(),
+    dexterity: Joi.number().required(),
+    constitution: Joi.number().required(),
+    intelligence: Joi.number().required(),
+    wisdom: Joi.number().required(),
+    charisma: Joi.number().required(),
   }).required(),
   size: Joi.string().required(),
   size_description: Joi.string().optional(),
@@ -44,48 +32,15 @@ const characterSchema = Joi.object({
   startingProficiencies: Joi.array().items(Joi.string()),
   classProficiencies: Joi.array().items(Joi.string()),
   level: Joi.number().required(),
-  classFeatures: Joi.array()
-    .items(
-      Joi.alternatives().try(
-        Joi.string(),
-        Joi.object({
-          index: Joi.string(),
-          name: Joi.string(),
-          url: Joi.string(),
-          level: Joi.number(),
-        })
-      )
-    )
-    .optional(),
-  selectedSpells: Joi.array()
-    .items(
-      Joi.object({
-        name: Joi.string().required(),
-        level: Joi.number().required(),
-        school: Joi.string(),
-        desc: Joi.alternatives().try(
-          Joi.string(),
-          Joi.array().items(Joi.string())
-        ),
-        index: Joi.string(),
-        url: Joi.string(),
-        components: Joi.array().items(Joi.string()),
-        material: Joi.string().allow(""), // Add this line
-        ritual: Joi.boolean(),
-        concentration: Joi.boolean(),
-        casting_time: Joi.string(),
-        range: Joi.string(),
-        duration: Joi.string(),
-        higher_level: Joi.array().items(Joi.string()),
-      })
-    )
-    .optional(),
-  spellSlots: Joi.object()
-    .pattern(Joi.string().pattern(/^level_\d+$/), Joi.number().integer().min(0))
-    .optional(),
-  usedSlots: Joi.object()
-    .pattern(Joi.string().pattern(/^level_\d+$/), Joi.number().integer().min(0))
-    .optional(),
+  classFeatures: Joi.array().items(Joi.string()),
+  selectedSpells: Joi.array().items(
+    Joi.object({
+      name: Joi.string().required(),
+      level: Joi.number().required(),
+      school: Joi.string().required(),
+      desc: Joi.string().optional(),
+    })
+  ),
 });
 
 // Validate MongoDB ObjectId
@@ -109,8 +64,7 @@ router.get("/:id", async (req, res) => {
     }
     const sanitizedId = sanitizeInput(req.params.id);
     const character = await getCharacterById(sanitizedId);
-    if (!character)
-      return res.status(404).json({ error: "Character not found" });
+    if (!character) return res.status(404).json({ error: "Character not found" });
     res.json(character);
   } catch (error) {
     res.status(500).json({ error: "Failed to fetch character" });
@@ -119,53 +73,49 @@ router.get("/:id", async (req, res) => {
 
 // Get characters by campaign ID
 router.get("/campaign/:campaignID", async (req, res) => {
-  try {
-    const { campaignID } = req.params;
-    if (!campaignID) {
-      return res.status(400).json({ error: "Missing campaignID parameter" });
+    try {
+      const { campaignID } = req.params;
+      if (!campaignID) {
+        return res.status(400).json({ error: "Missing campaignID parameter" });
+      }
+  
+      const characters = await getCharactersByCampaignID(campaignID);
+      if (!characters.length) {
+        return res.status(404).json({ error: "No characters found for this campaign" });
+      }
+  
+      res.json(characters);
+    } catch (error) {
+      console.error("Failed to fetch characters by campaignID:", error);
+      res.status(500).json({ error: "Failed to fetch characters" });
     }
-
-    const characters = await getCharactersByCampaignID(campaignID);
-    if (!characters.length) {
-      return res
-        .status(404)
-        .json({ error: "No characters found for this campaign" });
-    }
-
-    res.json(characters);
-  } catch (error) {
-    console.error("Failed to fetch characters by campaignID:", error);
-    res.status(500).json({ error: "Failed to fetch characters" });
-  }
-});
+  });
 
 // Add a new character
 router.post("/", async (req, res) => {
-  try {
-    console.log("Incoming character data:", req.body);
-
-    const sanitizedData = sanitizeInput(req.body);
-    const { error } = characterSchema.validate(sanitizedData);
-
-    if (error) {
-      console.error("Validation error details:", error.details);
-      return res.status(400).json({
-        error: "Validation failed",
-        message: error.details[0].message,
-        details: error.details,
-      });
+    try {
+    //   console.log("🔍 Incoming Character Data:", req.body); // Log input
+    //   console.log("🔍 Type of proficiencies:", typeof req.body.proficiencies); // Check data type
+  
+      const sanitizedData = sanitizeInput(req.body);
+  
+    //   console.log("🔍 After sanitization:", sanitizedData); // Log sanitized input
+    //   console.log("🔍 Type of proficiencies after sanitization:", typeof sanitizedData.proficiencies);
+  
+      const { error } = characterSchema.validate(sanitizedData);
+      if (error) {
+        console.error("Joi Validation Error:", error.details);
+        return res.status(400).json({ error: error.details[0].message });
+      }
+  
+      const result = await addCharacter(sanitizedData);
+      res.status(201).json(result);
+    } catch (error) {
+      console.error("Failed to add character:", error);
+      res.status(500).json({ error: "Failed to add character" });
     }
-
-    const result = await addCharacter(sanitizedData);
-    res.status(201).json(result);
-  } catch (error) {
-    console.error("Failed to add character:", error);
-    res.status(500).json({
-      error: "Failed to add character",
-      message: error.message,
-    });
-  }
-});
+  });
+  
 
 // Update a character
 router.put("/:id", async (req, res) => {

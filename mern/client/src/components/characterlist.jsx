@@ -6,26 +6,20 @@ import PropTypes from "prop-types";
 import { normalizeCharacterSpells } from "../utils/spellNormalizer";
 
 const CharacterList = ({ campaignID }) => {
-
-  const token = useAuthToken();
+  const token = useAuthToken(); // Get Auth0 token
   const [characters, setCharacters] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [expandedCharacter, setExpandedCharacter] = useState(null);
-  const [displayedCharacter, setDisplayedCharacter] = useState(null);
 
   const blankCharacter = {
+    _id: 'new',
     name: "",
     alignment: "",
     race: "",
     class: "",
     speed: 0,
     hitDice: "",
-    hitPoints: {
-      max: 0,
-      current: 0,
-      temporary: 0
-    },
     proficiencies: [],
     stats: {
       strength: 10,
@@ -44,7 +38,6 @@ const CharacterList = ({ campaignID }) => {
     classProficiencies: [],
     level: 1,
     classFeatures: [],
-    campaignID: campaignID,
   };
 
   const fetchCharacters = async () => {
@@ -52,46 +45,49 @@ const CharacterList = ({ campaignID }) => {
       if (!campaignID || !token) return;
       setLoading(true);
       const data = await fetchCharactersByCampaign(campaignID, token);
-      setCharacters(Array.isArray(data) ? data : []);
+      setCharacters(
+        Array.isArray(data) ? data.map(normalizeCharacterSpells) : []
+      );
     } catch (err) {
-      if (err.message.includes("404")) {
-        console.log("No characters found for this campaign");
-        setCharacters([]);
-      } else {
-        console.error("Error fetching characters:", err);
-        setError("Failed to load characters.");
-      }
+      console.error("Error fetching characters:", err);
+      setError("Failed to load characters.");
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchCharacters();
-  }, [campaignID, token]);
+    // if (!campaignID || !token) return; // Wait for token before fetching
 
-  const handleNewCharacter = () => {
-    setDisplayedCharacter({
-      ...blankCharacter,
-      campaignID: campaignID,
-    });
-    setExpandedCharacter("new");
-  };
+    // const loadCharacters = async () => {
+    //     try {
+    //         setLoading(true);
+    //         const data = await fetchCharactersByCampaign(campaignID, token);
+    //         setCharacters(Array.isArray(data) ? data : []);
+    //     } catch (err) {
+    //         console.error("Error fetching characters:", err);
+    //         setError("Failed to load characters.");
+    //     } finally {
+    //         setLoading(false);
+    //     }
+    // };
+
+    fetchCharacters();
+  }, [campaignID, token]); // Fetch when campaignID or token changes
+
+  // const toggleCharacter = (characterId) => {
+  //     setExpandedCharacter(expandedCharacter === characterId ? null : characterId);
+  // };
 
   const handleCancel = () => {
     setExpandedCharacter(null);
-    setDisplayedCharacter(null);
   };
 
-  const refreshCharacters = async () => {
-    try {
-      const updatedCharacters = await fetchCharactersByCampaign(campaignID, token);
-      setCharacters(updatedCharacters);
-    } catch (error) {
-      console.error("Failed to refresh characters:", error);
-    }
+  const refreshCharacters = () => {
+    fetchCharacters();
   };
 
+                          
   return (
     <div className="p-4 bg-light-tan text-lg rounded-lg">
       <h2 className="text-lg font-semibold mb-2">Player Characters</h2>
@@ -118,14 +114,14 @@ const CharacterList = ({ campaignID }) => {
               >
                 {`${char.name}`} {expandedCharacter === char._id ? "▲" : "▼"}
               </button>
+
               {expandedCharacter === char._id && (
                 <div className="mt-2 p-4 border rounded-lg bg-gray-50">
+                  {/* {console.log("characterlist - character: ", char)} */}
                   <CharacterDisplay
                     character={char}
-                    isNew={false}
-                    onCancel={handleCancel}
+                    onCancel={() => setExpandedCharacter(null)}
                     refreshCharacters={refreshCharacters}
-                    campaignID={campaignID}
                   />
                 </div>
               )}
@@ -133,21 +129,18 @@ const CharacterList = ({ campaignID }) => {
           ))}
         </ul>
       )}
-
       {expandedCharacter === "new" && (
         <div className="mt-4 p-4 border rounded-lg bg-gray-50">
           <CharacterDisplay
-            character={displayedCharacter || blankCharacter}
+            character={blankCharacter}
             isNew={true}
             onCancel={handleCancel}
-            refreshCharacters={refreshCharacters}
-            campaignID={campaignID}
           />
         </div>
       )}
 
       <button
-        onClick={handleNewCharacter}
+        onClick={() => setExpandedCharacter("new")}
         className="mt-2 bg-goblin-green text-xl text-gold px-4 py-2 rounded-full shadow-sm shadow-amber-800"
       >
         +
