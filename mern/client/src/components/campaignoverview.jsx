@@ -123,31 +123,20 @@ export default function CampaignOverview() {
 
     const handleDelete = async () => {
         if (!window.confirm("Are you sure you want to delete this campaign?")) return;
-        
         try {
-          const token = await getAccessTokenSilently({ audience: "https://campaignapi.com" });
-          const response = await fetch(`http://localhost:5050/campaigns/${id}`, { 
-            method: "DELETE",
-            headers: {  // Fixed: headers should be an object
-              "Content-Type": "application/json",
-              "Authorization": `Bearer ${token}`
-            }
-          });
-      
-          if (!response.ok) {
-            const errorData = await response.json().catch(() => ({}));
-            throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
-          }
-          
-          navigate("/campaigns");
+            const token = await getAccessTokenSilently({ audience: "https://campaignapi.com" });
+            const response = await fetch(`http://localhost:5050/campaigns/${id}`, { 
+                method: "DELETE",
+                Authorization: `Bearer ${token}`,
+            });
+            console.log(response)
+            if (!response.ok) throw new Error("Failed to delete campaign");
+            navigate("/campaigns");
         } catch (error) {
-          console.error("Delete campaign failed:", {
-            error: error.message,
-            campaignId: id
-          });
-          setError(error.message || "Failed to delete campaign.");
+            console.error(error);
+            setError("Failed to delete campaign.");
         }
-      };
+    };
 
     const handleCancel = () => {
         navigate("/campaigns");
