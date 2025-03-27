@@ -18,19 +18,26 @@ export default function EventForm({ campaignID, parentLocationID, existingEvent,
   const { getAccessTokenSilently } = useAuth0();
 
   // Fetch campaigns for the dropdown
+  const userId = window.localStorage.getItem("userId")
   useEffect(() => {
     async function fetchCampaigns() {
       try {
         const token = await getAccessTokenSilently({ audience: "https://campaignapi.com" });
         const response = await fetch("http://localhost:5050/campaigns", {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+            headers: {
+                Authorization: `Bearer ${token}`,
+            },
         });
-        const data = await response.json();
-        setCampaigns(Array.isArray(data) ? data : []);
+          const data = await response.json();
+          let myCampaigns = []
+          for (let i = 0; i < data.length; i++) {
+            if (data[i].createdBy == userId){
+              myCampaigns = [...myCampaigns, data[i]]
+            }
+          }
+          setCampaigns(myCampaigns);
       } catch (error) {
-        console.error("Failed to fetch campaigns:", error);
+          console.error("Failed to fetch campaigns: ", error);
       }
     }
     fetchCampaigns();
@@ -145,16 +152,16 @@ export default function EventForm({ campaignID, parentLocationID, existingEvent,
   };
 
   return (
-    <div className="p-4 border rounded-lg bg-white shadow-md">
+    <div className="p-4 border-0 rounded-lg bg-cream shadow-md shadow-amber-800">
       <h2 className="text-xl font-bold">{existingEvent ? "Edit Event" : "New Event"}</h2>
-      {error && <p className="text-red-500">{error}</p>}
+      {error && <p className="text-red-800">{error}</p>}
       <form onSubmit={handleSave} className="space-y-3">
         <label>Campaign:</label>
         <select
           name="campaignID"
           value={formData.campaignID}
           onChange={handleChange}
-          className="border p-2 w-full rounded"
+          className="border border-brown outline-none p-2 w-full rounded bg-cream hover:cursor-pointer hover:shadow-sm hover:shadow-amber-800"
         >
           <option value="">Select a Campaign</option>
           {campaigns.map((campaign) => (
@@ -168,7 +175,7 @@ export default function EventForm({ campaignID, parentLocationID, existingEvent,
           name="parentLocationType"
           value={parentLocationType}
           onChange={(e) => setParentLocationType(e.target.value)}
-          className="border p-2 w-full rounded"
+          className="border border-brown outline-none p-2 w-full rounded bg-cream hover:cursor-pointer hover:shadow-sm hover:shadow-amber-800"
         >
           <option value="">Select a Location Type</option>
           <option value="Plane">Plane</option>
@@ -182,7 +189,7 @@ export default function EventForm({ campaignID, parentLocationID, existingEvent,
           name="parentLocationID"
           value={formData.parentLocationID}
           onChange={handleChange}
-          className="border p-2 w-full rounded"
+          className="border border-brown outline-none p-2 w-full rounded bg-cream hover:cursor-pointer hover:shadow-sm hover:shadow-amber-800"
         >
           <option value="">Select a Parent Location</option>
           {parentLocations.map((location) => (
@@ -198,7 +205,10 @@ export default function EventForm({ campaignID, parentLocationID, existingEvent,
           onChange={handleChange}
           placeholder="Event Title"
           required
-          className="border p-2 w-full rounded"
+          className="border border-brown p-2 w-full rounded bg-cream 
+                    placeholder-yellow-700 outline-none 
+                    hover:shadow-sm hover:shadow-amber-800
+                    focus:shadow-sm focus:shadow-amber-600"
         />
         <textarea
           name="body"
@@ -206,13 +216,16 @@ export default function EventForm({ campaignID, parentLocationID, existingEvent,
           onChange={handleChange}
           placeholder="Describe the event..."
           required
-          className="border p-2 w-full rounded"
+          className="border border-brown p-2 w-full rounded bg-cream 
+                    placeholder-yellow-700 outline-none 
+                    hover:shadow-sm hover:shadow-amber-800
+                    focus:shadow-sm focus:shadow-amber-600"
         />
         <div className="flex space-x-2">
-          <button type="submit" className="bg-blue-600 text-white px-4 py-2 rounded">
+          <button type="submit" className={saving ? "bg-tan font-bold text-brown px-4 py-2 rounded" : "button font-bold bg-goblin-green text-gold px-4 py-2 rounded hover:shadow-sm hover:shadow-amber-800"}>
             {saving ? "Saving..." : "Save"}
           </button>
-          <button type="button" onClick={onCancel} className="bg-gray-400 text-white px-4 py-2 rounded">
+          <button type="button" onClick={onCancel} className="bg-cancel-red font-bold button text-gold px-4 py-2 rounded hover:shadow-sm hover:shadow-amber-800">
             Cancel
           </button>
         </div>

@@ -42,9 +42,9 @@ export default function EventItem({ event, campaignID, parentLocationID, onEvent
   };
 
   return (
-    <div className="p-2 border-b bg-white rounded-md shadow">
+    <div className="p-2 border-b bg-cream border-brown rounded-md shadow-sm shadow-amber-700">
       <button onClick={() => setExpanded(!expanded)} className="text-lg font-semibold">
-        {expanded ? "▼" : "▶"} {event.title}
+        {expanded ? "▲" : "▼"} {event.title}
       </button>
 
       {expanded && (
@@ -59,13 +59,13 @@ export default function EventItem({ event, campaignID, parentLocationID, onEvent
             />
           ) : (
             <>
-              <p className="p-2 bg-gray-100 rounded">{event.body}</p>
-              <button onClick={handleEditClick} className="mt-2 bg-blue-600 text-white px-3 py-1 rounded">
+              <p className="p-2 bg-light-tan rounded">{event.body}</p>
+              <button onClick={handleEditClick} className="font-bold mt-2 mr-2 button bg-goblin-green text-gold px-3 py-1 rounded hover:shadow-sm hover:shadow-amber-800">
                 Edit
               </button>
               <button
                 onClick={handleDelete}
-                className={`bg-red-600 text-white px-3 py-1 rounded ${deleting ? "opacity-50" : ""}`}
+                className={`font-bold bg-cancel-red button ml-2 hover:shadow-sm hover:shadow-amber-800 text-gold px-3 py-1 rounded ${deleting ? "opacity-50" : ""}`}
                 disabled={deleting}
               >
                 {deleting ? "Deleting..." : "Delete"}

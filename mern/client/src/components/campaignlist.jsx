@@ -47,7 +47,7 @@ export default function CampaignList() {
         navigate("/campaigns/new");
     };
 
-    if (loading) return (<div className="mt-16 flex flex-col justify-center items-center"><img src="/loader.gif" height="256" width="256"/><p className="text-lg text-brown">Loading campaigns...</p></div>);
+    if (loading) return (<div className="mt-16 flex flex-col justify-center items-center"><img src="../graphics/loader.gif" height="256" width="256"/><p className="text-lg text-brown">Loading campaigns...</p></div>);
     if (error)
         return (
             <div className="mt-16 bg-light-tan text-lg text-red-800 p-2 rounded">

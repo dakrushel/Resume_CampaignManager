@@ -18,6 +18,7 @@ export default function NoteForm({ campaignID, parentLocationID, existingNote, o
     const { getAccessTokenSilently } = useAuth0();
 
   // Fetch campaigns for the campaign dropdown
+  const userId = window.localStorage.getItem("userId")
   useEffect(() => {
     async function fetchCampaigns() {
         try {
@@ -28,7 +29,13 @@ export default function NoteForm({ campaignID, parentLocationID, existingNote, o
                 },
             });
                 const data = await response.json();
-                setCampaigns(Array.isArray(data) ? data : []);
+                let myCampaigns = []
+                for (let i = 0; i < data.length; i++) {
+                    if (data[i].createdBy == userId){
+                        myCampaigns = [...myCampaigns, data[i]]
+                    }
+                }
+                setCampaigns(myCampaigns);
         } catch (error) {
             console.error("Failed to fetch campaigns: ", error);
         }
@@ -169,9 +176,9 @@ export default function NoteForm({ campaignID, parentLocationID, existingNote, o
     };
 
     return (
-        <div className="p-4 border-0 rounded-lg bg-cream shadow-md">
+        <div className="p-4 border-0 rounded-lg bg-cream shadow-md shadow-amber-800">
             <h2 className="text-xl font-bold">{existingNote ? "Edit Note" : "New Note"}</h2>
-            {error && <p className="bg-cancel-red text-gold">{error}</p>}
+            {error && <p className="text-red-800">{error}</p>}
 
             <form onSubmit={handleSave} className="space-y-3">
             <label>Campaign:</label>
@@ -179,7 +186,7 @@ export default function NoteForm({ campaignID, parentLocationID, existingNote, o
                   name="campaignID"
                   value={formData.campaignID}
                   onChange={handleChange}
-                  className="border border-brown outline-none p-2 w-full rounded bg-cream"
+                  className="border border-brown outline-none p-2 w-full rounded bg-cream hover:cursor-pointer hover:shadow-sm hover:shadow-amber-800"
                 >
                   <option value="">Select a Campaign</option>
                   {campaigns.map((campaign) => (
@@ -193,7 +200,7 @@ export default function NoteForm({ campaignID, parentLocationID, existingNote, o
                   name="parentLocationType"
                   value={parentLocationType}
                   onChange={(e) => setParentLocationType(e.target.value)}
-                  className="border border-brown outline-none p-2 w-full rounded bg-cream"
+                  className="border border-brown outline-none p-2 w-full rounded bg-cream hover:cursor-pointer hover:shadow-sm hover:shadow-amber-800"
                 >
                   <option value="">Select a Location Type</option>
                   <option value="Plane">Plane</option>
@@ -207,7 +214,7 @@ export default function NoteForm({ campaignID, parentLocationID, existingNote, o
                   name="parentLocationID"
                   value={formData.parentLocationID}
                   onChange={handleChange}
-                  className="border border-brown outline-none p-2 w-full rounded bg-cream"
+                  className="border border-brown outline-none p-2 w-full rounded bg-cream hover:cursor-pointer hover:shadow-sm hover:shadow-amber-800"
                 >
                   <option value="">Select a Parent Location</option>
                   {parentLocations.map((location) => (
@@ -223,7 +230,10 @@ export default function NoteForm({ campaignID, parentLocationID, existingNote, o
                     onChange={handleChange}
                     placeholder="Note Title"
                     required
-                    className="border border-brown p-2 w-full rounded bg-cream placeholder-yellow-700 outline-none"
+                    className="border border-brown p-2 w-full rounded bg-cream 
+                    placeholder-yellow-700 outline-none 
+                    hover:shadow-sm hover:shadow-amber-800
+                    focus:shadow-sm focus:shadow-amber-600"
                 />
                 <textarea
                     name="body"
@@ -231,14 +241,16 @@ export default function NoteForm({ campaignID, parentLocationID, existingNote, o
                     onChange={handleChange}
                     placeholder="Write your note here..."
                     required
-                    className="border border-brown p-2 w-full rounded bg-cream placeholder-yellow-700 outline-none"
+                    className="border border-brown p-2 w-full rounded bg-cream placeholder-yellow-700 outline-none 
+                    hover:shadow-sm hover:shadow-amber-800
+                    focus:shadow-sm focus:shadow-amber-600"
                 />
 
                 <div className="flex space-x-2">
-                    <button type="submit" className={saving ? "bg-tan text-brown px-4 py-2 rounded" : "bg-goblin-green text-gold px-4 py-2 rounded"}>
+                    <button type="submit" className={saving ? "bg-tan font-bold text-brown px-4 py-2 rounded" : "button font-bold bg-goblin-green text-gold px-4 py-2 rounded hover:shadow-sm hover:shadow-amber-800"}>
                         {saving ? "Saving..." : "Save"}
                     </button>
-                    <button type="button" onClick={onCancel} className="bg-cancel-red text-gold px-4 py-2 rounded">
+                    <button type="button" onClick={onCancel} className="bg-cancel-red font-bold button text-gold px-4 py-2 rounded hover:shadow-sm hover:shadow-amber-800">
                         Cancel
                     </button>
                 </div>

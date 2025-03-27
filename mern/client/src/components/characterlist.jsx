@@ -3,8 +3,10 @@ import { useAuthToken } from "./characterAPIs/useauthtoken";
 import { fetchCharactersByCampaign } from "./characterAPIs/pcMongoAPIs";
 import CharacterDisplay from "./characterdisplay";
 import PropTypes from "prop-types";
+import { normalizeCharacterSpells } from "../utils/spellNormalizer";
 
 const CharacterList = ({ campaignID }) => {
+
   const token = useAuthToken();
   const [characters, setCharacters] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -116,7 +118,6 @@ const CharacterList = ({ campaignID }) => {
               >
                 {`${char.name}`} {expandedCharacter === char._id ? "▲" : "▼"}
               </button>
-
               {expandedCharacter === char._id && (
                 <div className="mt-2 p-4 border rounded-lg bg-gray-50">
                   <CharacterDisplay

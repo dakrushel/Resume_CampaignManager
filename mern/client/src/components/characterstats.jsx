@@ -48,12 +48,12 @@ const CharacterStats = ({
   const [previousLevel, setPreviousLevel] = useState(characterLevel);
   const [savedLevel, setSavedLevel] = useState(1);
   const [featureLoading, setFeatureLoading] = useState(false);
-
   const [spellSlots, setSpellSlots] = useState({});
   const [usedSlots, setUsedSlots] = useState({});
   const [isSpellModalOpen, setIsSpellModalOpen] = useState(false);
   const [selectedSpellLevel, setSelectedSpellLevel] = useState(null);
   const [spellsByLevel, setSpellsByLevel] = useState({});
+  const [error, setError] = useState(null);
   const [selectedSpells, setSelectedSpells] = useState([]);
   const [spells, setSpells] = useState([]);
   const [spellsLoading, setSpellsLoading] = useState(false);
@@ -70,13 +70,12 @@ const CharacterStats = ({
   const [preparedSpells, setPreparedSpells] = useState([]);
   const [knownCantrips, setKnownCantrips] = useState([]);
   const [availableSpells, setAvailableSpells] = useState([]);
-
   const [character, setCharacter] = useState({
     name: "",
-    alignment: "",
+    alignment: "Neutral",
     race: "",
     class: "",
-    speed: 0,
+    speed: 0, // Initialize with 0
     hitDice: "",
     proficiencies: [],
     stats: {
@@ -94,7 +93,7 @@ const CharacterStats = ({
     traits: [],
     startingProficiencies: [],
     classProficiencies: [],
-    level: 1, // Default level
+    level: 1,
     classFeatures: [],
     spellSlots: {},
     selectedSpells: [],
@@ -197,52 +196,41 @@ const CharacterStats = ({
     loadRaces();
   }, []);
 
+  // New useEffect for initialization
   useEffect(() => {
-    const loadClasses = async () => {
-      try {
-        const classData = await fetchClasses();
-        setClasses(classData);
-      } catch (err) {
-        console.error("Error fetching classes:", err);
+    if (displayedCharacter && Object.keys(displayedCharacter).length > 0) {
+      setCharacter(displayedCharacter);
+      setInitialCharacter(displayedCharacter);
+      if (displayedCharacter.selectedSpells) {
+        setSelectedSpells(displayedCharacter.selectedSpells);
       }
-    };
-    loadClasses();
-  }, []);
-
-  useEffect(() => {
-    const fetchSpells = async () => {
-      if (!character.class) return;
-
-      try {
-        const spells = await fetchClassSpells(character.class);
-        const groupedSpells = spells.reduce((acc, spell) => {
-          acc[spell.level] = acc[spell.level] || [];
-          acc[spell.level].push(spell);
-          return acc;
-        }, {});
-        setSpellsByLevel(groupedSpells);
-      } catch (error) {
-        console.error("Error fetching spells:", error);
+      if (displayedCharacter.class) {
+        setSelectedClass(displayedCharacter.class.toLowerCase());
       }
     };
 
     fetchSpells();
   }, [character.class]); // Only re-run when class changes
 
+  {
+    /* Fetch races and classes on mount */
+  }
   useEffect(() => {
-    const updateSpellSlots = async () => {
-      if (!character.class) return;
-
+    const fetchData = async () => {
       try {
-        const spellSlotData = await fetchClassDetails(character.class);
-        const levelSlots = spellSlotData.spellcasting?.spell_slots || {};
-        setSpellSlots(levelSlots[character.level] || {});
+        const [raceRes, classRes] = await Promise.all([
+          axios.get("https://www.dnd5eapi.co/api/races"),
+          axios.get("https://www.dnd5eapi.co/api/classes"),
+        ]);
+        setRaces(raceRes.data.results);
+        setClasses(classRes.data.results);
       } catch (error) {
-        console.error("Error fetching spell slots:", error);
+        console.error("Error fetching data:", error);
       }
     };
-    updateSpellSlots();
-  }, [character.class, character.level]);
+    
+    fetchData();
+  }, []);
 
   const handleFeatureClick = async (feature) => {
     // If we already have the description, show it immediately
@@ -383,13 +371,34 @@ const CharacterStats = ({
         language_desc: raceDetails.language_desc || "",
         traits: raceDetails.traits?.map((trait) => trait.name) || [],
       }));
-    } catch (error) {
-      console.error("Error fetching race details:", error);
+      return;
     }
+
+    {
+      /* Fetch the race details from DnDAPI */
+    }
+    const raceDetails = await axios.get(
+      `https://www.dnd5eapi.co/api/races/${index}`
+    );
+    setSelectedRace(raceDetails.data);
+    setCharacter((prev) => ({
+      ...prev,
+      race: raceDetails.data.name,
+      speed: raceDetails.data.speed,
+      size: raceDetails.data.size,
+      size_description: raceDetails.data.size_description,
+      languages: raceDetails.data.languages.map((lang) => lang.name),
+      language_desc: raceDetails.data.language_desc,
+      traits: raceDetails.data.traits.map((trait) => trait.name),
+      stats: { ...baseStats },
+    }));
+    applyRaceBonuses(raceDetails.data.ability_bonuses);
   };
 
-  const handleClassChange = async (classIndex) => {
-    if (!classIndex) {
+  /* Handle class change */
+  const handleClassChange = async (index) => {
+    if (!index) {
+      setSelectedClass(null);
       setCharacter((prev) => ({
         ...prev,
         class: "",
@@ -399,8 +408,15 @@ const CharacterStats = ({
         classProficiencies: [],
         classFeatures: [],
       }));
+      onClassSelect("");
+
+      // Clear all spell-related state
+      setSpellSlots({});
+      setSelectedSpells([]);
+      setSpellsByLevel({});
       return;
     }
+
 
     try {
       setIsLoadingFeatures(true);
@@ -426,8 +442,28 @@ const CharacterStats = ({
     } finally {
       setIsLoadingFeatures(false);
     }
+    return () => {
+      isMounted = false;
+    };
+  }, [selectedClass]);
+
+  /* Spending a spell slot */
+  const handleSpendSlot = (level) => {
+    setSelectedSpellLevel(level);
+    setIsSpellModalOpen(true);
   };
 
+  useEffect(() => {
+    if (isSpellModalOpen) {
+      document.body.classList.add("no-scroll");
+    } else {
+      document.body.classList.remove("no-scroll");
+    }
+  }, [isSpellModalOpen]);
+
+  {
+  }
+  /* Handle level change */
   const handleLevelChange = async (newLevel) => {
     const clampedLevel = Math.min(Math.max(parseInt(newLevel), 1), 20) || 1;
 
@@ -436,7 +472,8 @@ const CharacterStats = ({
       ...prev,
       level: clampedLevel,
     }));
-
+    onLevelChange(clampedLevel);
+    
     // Only update features if class exists
     if (!character.class) return;
 
@@ -665,6 +702,8 @@ const CharacterStats = ({
     }
 
     setSaving(true);
+    setError(null);
+  
     try {
       const transformSpellSlots = (slots) => {
         if (!slots) return {};
@@ -877,6 +916,7 @@ const CharacterStats = ({
                 <p className="text-yellow-900">{item.value || "-"}</p>
               </div>
             ))}
+
           </div>
         )}
       </div>

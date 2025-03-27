@@ -196,14 +196,14 @@ export default function CampaignOverview() {
                 <div className="flex space-x-2">
                     <button 
                         onClick={isNew ? handleSave : handleUpdate} 
-                        className={`px-4 py-2 rounded button ${saving ? "bg-tan" : "bg-goblin-green text-gold"}`}
+                        className={`px-4 py-2 rounded button ${saving ? "bg-tan" : "bg-goblin-green button hover:shadow-sm hover:shadow-amber-800 text-gold"}`}
                         disabled={saving}
                     >
                         {saving ? "Saving..." : "Save"}
                     </button>
                     <button 
                         onClick={handleCancel} 
-                        className="bg-cancel-red text-gold button px-4 py-2 rounded"
+                        className="bg-cancel-red text-gold button hover:shadow-sm hover:shadow-amber-800 px-4 py-2 rounded"
                     >
                         Cancel
                     </button>
@@ -216,10 +216,10 @@ export default function CampaignOverview() {
                     <div className="flex space-x-2 mt-4 items-center justify-center mb-4">
                         {!isNew && (
                             <>
-                                <button onClick={() => setEditMode(true)} className="button bg-goblin-green text-gold font-bold px-4 py-2 rounded shadow-sm shadow-amber-700">
+                                <button onClick={() => setEditMode(true)} className="button bg-goblin-green text-gold font-bold px-4 py-2 rounded shadow-sm shadow-amber-700 hover:shadow-amber-900">
                                     Edit Campaign
                                 </button>
-                                <button onClick={handleDelete} className="button bg-cancel-red text-gold px-4 py-2 font-bold rounded shadow-sm shadow-amber-700">
+                                <button onClick={handleDelete} className="button bg-cancel-red text-gold px-4 py-2 font-bold rounded shadow-sm shadow-amber-700 hover:shadow-amber-900">
                                     Delete Campaign
                                 </button>
                             </>

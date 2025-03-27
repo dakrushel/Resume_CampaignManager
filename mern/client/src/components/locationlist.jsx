@@ -46,7 +46,7 @@ export default function LocationList({ parentLocationID, locationType, campaignI
                 if (!Array.isArray(data)) {
                     throw new Error("Invalid response: Expected an array of locations.");
                 }
-
+                
                 setLocations(data);
             } catch (err) {
                 console.error("Failed to fetch locations:", err);
@@ -75,9 +75,9 @@ export default function LocationList({ parentLocationID, locationType, campaignI
         );
 
     return (
-        <div style={{ background: "#e9bf69" }} className="flex-1 flex-col justify-center rounded-lg p-2 pb-4">
+        <div className="flex-1 flex-col justify-center rounded-lg p-4 pb-4 bg-light-tan">
             {locations.length === 0 && !showForm ? (
-                <p>No locations of type {locationType} available. Try creating one!</p>
+                <p className="text-lg">No locations of type {locationType} available. Try creating one!</p>
             ) : (
                 locations.map((location) => (
                     <div key={location._id} className="p-2 border-b border-brown rounded">
