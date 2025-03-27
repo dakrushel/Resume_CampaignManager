@@ -87,45 +87,98 @@ export default function MonstersList({ parentLocationID, campaignID }) {
   if (loading) return <p>Loading monsters...</p>;
   if (error) return <p style={{ color: "red" }}>{error}</p>;
 
+  if (monsters.length == 0) {
+    return (
+      <div className="bg-light-tan text-brown rounded-lg p-4">
+
+        {!showLookup && <div><p className="text-lg">There aren't any monsters here. Want to add some?</p>
+        <button className="mt-2 bg-goblin-green text-xl text-gold px-4 py-2 rounded-full button shadow-sm shadow-amber-800"
+        onClick={() => {setShowLookup(true)}}>+</button></div>}
+        {showLookup && (
+          <div className="monster-lookup">
+            <h3 className="text-xl font-bold">Monster Lookup</h3>
+            <input
+              type="text"
+              placeholder="Enter monster name"
+              value={searchTerm}
+              className="mt-2 rounded px-2 py-2 text-left placeholder:text-yellow-700 bg-cream border border-brown "
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+            <div className="space-x-2 mt-2">
+              <button onClick={searchMonsters}
+                className="font-bold mt-2 mr-2 button bg-goblin-green text-gold px-3 py-1 rounded hover:shadow-sm hover:shadow-amber-800">Search</button>
+              <button onClick={() => setShowLookup(false)}
+                className="font-bold bg-cancel-red button ml-2 hover:shadow-sm hover:shadow-amber-800 text-gold px-3 py-1 rounded ">Close</button>
+            </div>
+
+            {error && <p style={{ color: "red" }}>Error: {error}</p>}
+
+            <ul className="flex flex-col items-center">
+              {searchResults.map((monster) => (
+                <li key={monster.index}
+                className="bg-cream border border-brown shadow-sm shadow-amber-800 rounded flex w-80 mt-2 p-4 items-center relative">
+                  <img src={monster.image}/>
+                  <span>{monster.name}</span>
+                  <button 
+                  className="absolute right-2 top-1 font-bold mt-2 mr-2 button bg-goblin-green text-gold px-3 py-1 rounded hover:shadow-sm hover:shadow-amber-800"
+                  onClick={() => handleAddMonster(monster)}>Add</button>
+                </li>
+              ))}
+            </ul>
+          </div>
+          )}
+      </div>
+    )
+  } else {
   return (
-    <div>
-      <ul>
-        {monsters.map((monster) => (
-          <MonsterItem key={monster._id} id={monster._id} monsterName={monster.monsterReference} onRemove={handleRemove} />
-        ))}
-      </ul>
-      <button
-          onClick={() => {setShowLookup(true)}}
-          className="mt-2 bg-goblin-green text-xl text-gold px-4 py-2 rounded-full shadow-sm shadow-amber-800"
-      >
-          +
-      </button>
-      {showLookup && (
-        <div className="monster-lookup">
-          <h3>Monster Lookup</h3>
-          <input
-            type="text"
-            placeholder="Enter monster name"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
-          <button onClick={searchMonsters}>Search</button>
-          <button onClick={() => setShowLookup(false)}>Close</button>
+      <div className="bg-light-tan text-brown rounded-lg p-4">
+        <ul className="mb-2">
+          {monsters.map((monster) => (
+            <MonsterItem key={monster._id} id={monster._id} monsterName={monster.monsterReference} onRemove={handleRemove} />
+          ))}
+        </ul>
+        {!showLookup && <button
+            onClick={() => {setShowLookup(true)}}
+            className="mt-2 bg-goblin-green text-xl text-gold px-4 py-2 rounded-full shadow-sm shadow-amber-800"
+        >
+            +
+        </button>}
+        {showLookup && (
+          <div className="monster-lookup">
+            <h3 className="text-xl font-bold">Monster Lookup</h3>
+            <input
+              type="text"
+              placeholder="Enter monster name"
+              value={searchTerm}
+              className="mt-2 rounded px-2 py-2 text-left placeholder:text-yellow-700 bg-cream border border-brown "
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+            <div className="space-x-2 mt-2">
+              <button onClick={searchMonsters}
+                className="font-bold mt-2 mr-2 button bg-goblin-green text-gold px-3 py-1 rounded hover:shadow-sm hover:shadow-amber-800">Search</button>
+              <button onClick={() => setShowLookup(false)}
+                className="font-bold bg-cancel-red button ml-2 hover:shadow-sm hover:shadow-amber-800 text-gold px-3 py-1 rounded ">Close</button>
+            </div>
 
-          {error && <p style={{ color: "red" }}>Error: {error}</p>}
+            {error && <p style={{ color: "red" }}>Error: {error}</p>}
 
-          <ul>
-            {searchResults.map((monster) => (
-              <li key={monster.index}>
-                <span>{monster.name}</span>
-                <button onClick={() => handleAddMonster(monster)}>Add</button>
-              </li>
-            ))}
-          </ul>
-        </div>
-        )}
-    </div>   
-  )
+            <ul className="flex flex-col items-center">
+              {searchResults.map((monster) => (
+                <li key={monster.index}
+                className="bg-cream border border-brown shadow-sm shadow-amber-800 rounded flex w-80 mt-2 p-4 items-center relative">
+                  <img src={monster.image}/>
+                  <span>{monster.name}</span>
+                  <button 
+                  className="absolute right-2 top-1 font-bold mt-2 mr-2 button bg-goblin-green text-gold px-3 py-1 rounded hover:shadow-sm hover:shadow-amber-800"
+                  onClick={() => handleAddMonster(monster)}>Add</button>
+                </li>
+              ))}
+            </ul>
+          </div>
+          )}
+      </div>   
+    )
+  }
 }
 
 MonstersList.propTypes = {

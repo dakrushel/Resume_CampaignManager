@@ -43,7 +43,6 @@ const CharacterList = ({ campaignID }) => {
   const fetchCharacters = async () => {
     try {
       if (!campaignID || !token) return;
-      setLoading(true);
       const data = await fetchCharactersByCampaign(campaignID, token);
       setCharacters(
         Array.isArray(data) ? data.map(normalizeCharacterSpells) : []
@@ -90,7 +89,7 @@ const CharacterList = ({ campaignID }) => {
                           
   return (
     <div className="p-4 bg-light-tan text-lg rounded-lg">
-      <h2 className="text-lg font-semibold mb-2">Player Characters</h2>
+      {/* <h2 className="text-lg font-semibold mb-2">Player Characters</h2> */}
 
       {loading ? (
         <p className="text-brown">Loading characters...</p>
@@ -101,7 +100,7 @@ const CharacterList = ({ campaignID }) => {
           No characters found for this campaign.
         </p>
       ) : (
-        <ul className="divide-y divide-gray-300">
+        <ul className="divide-y divide-amber-950">
           {characters.map((char) => (
             <li key={char._id} className="py-2">
               <button
@@ -110,13 +109,13 @@ const CharacterList = ({ campaignID }) => {
                     expandedCharacter === char._id ? null : char._id
                   )
                 }
-                className="w-full text-left font-semibold text-blue-600 hover:underline focus:outline-none"
+                className="w-full text-left font-semibold hover:underline focus:outline-none"
               >
                 {`${char.name}`} {expandedCharacter === char._id ? "▲" : "▼"}
               </button>
 
               {expandedCharacter === char._id && (
-                <div className="mt-2 p-4 border rounded-lg bg-gray-50">
+                <div className="mt-2 rounded-lg">
                   {/* {console.log("characterlist - character: ", char)} */}
                   <CharacterDisplay
                     character={char}
@@ -130,7 +129,7 @@ const CharacterList = ({ campaignID }) => {
         </ul>
       )}
       {expandedCharacter === "new" && (
-        <div className="mt-4 p-4 border rounded-lg bg-gray-50">
+        <div className="mt-2 rounded-lg">
           <CharacterDisplay
             character={blankCharacter}
             isNew={true}
@@ -141,7 +140,7 @@ const CharacterList = ({ campaignID }) => {
 
       <button
         onClick={() => setExpandedCharacter("new")}
-        className="mt-2 bg-goblin-green text-xl text-gold px-4 py-2 rounded-full shadow-sm shadow-amber-800"
+        className="mt-2 button bg-goblin-green text-xl text-gold px-4 py-2 rounded-full shadow-sm shadow-amber-800"
       >
         +
       </button>

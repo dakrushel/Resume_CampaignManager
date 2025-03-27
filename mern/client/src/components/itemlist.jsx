@@ -87,34 +87,43 @@ export default function ItemList({ parentLocationID, campaignID }) {
     if (error) return <p style={{ color: "red" }}>{error}</p>;
 
     return (
-        <div>
+        <div className="bg-light-tan text-brown rounded-lg p-4">
+            {items.length == 0 && !showLookup && <p className="text-lg">No items found here. How about adding some?</p>}
             <ul>
                 {items.map((item) => (
                     <Item key={item._id} id={item._id} parentLocationID={parentLocationID} campaignID={campaignID} itemName={item.itemReference} onRemove={handleRemove} />
                 ))}
             </ul>
-            <button
+            {!showLookup && <button
                 onClick={() => setShowLookup(true)}
                 className="mt-2 bg-goblin-green text-xl text-gold px-4 py-2 rounded-full shadow-sm shadow-amber-800"
             >
                 +
-            </button>
+            </button>}
             {showLookup && (
                 <div className="item-lookup">
+                    <h3 className="text-xl font-bold">Item Lookup</h3>
                     <input
                         type="text"
                         placeholder="Enter item name"
                         value={searchTerm}
+                        className="mt-2 rounded px-2 py-2 text-left placeholder:text-yellow-700 bg-cream border border-brown "
                         onChange={(e) => setSearchTerm(e.target.value)}
                     />
-                    <button onClick={searchItems}>Search</button>
-                    <button onClick={() => setShowLookup(false)}>Close</button>
+                    <div className="space-x-2">
+                        <button onClick={searchItems}
+                        className="font-bold mt-2 mr-2 button bg-goblin-green text-gold px-3 py-1 rounded hover:shadow-sm hover:shadow-amber-800">Search</button>
+                        <button onClick={() => setShowLookup(false)}
+                        className="font-bold bg-cancel-red button ml-2 hover:shadow-sm hover:shadow-amber-800 text-gold px-3 py-1 rounded ">Close</button>
+                    </div>
                     {error && <p style={{color: "red" }}>Error: {error}</p>}
-                    <ul>
+                    <ul className="flex flex-col items-center">
                         {searchResults.map((item) => (
-                            <li key={item.index}>
+                            <li key={item.index}
+                                className="bg-cream border border-brown shadow-sm shadow-amber-800 rounded flex w-80 mt-2 p-4 items-center relative">
                                 <span>{item.name}</span>
-                                <button onClick={() => handleAddItem(item)}>Add</button>
+                                <button className="absolute right-2 top-1 font-bold mt-2 mr-2 button bg-goblin-green text-gold px-3 py-1 rounded hover:shadow-sm hover:shadow-amber-800"
+                                onClick={() => handleAddItem(item)}>Add</button>
                             </li>
                         ))}
                     </ul>

@@ -43,12 +43,12 @@ export default function Item({ id, parentLocationID, campaignID, itemName, onRem
     if (error) return <li>Error loading {itemName}: {error}</li>;
 
     return (
-        <li className="border border-brown bg-cream p-3 rounded-md shadow-md">
-            <div className="flex items-center gap-2">
+        <li className="bg-cream p-3 rounded-md shadow-md shadow-amber-800">
+            <div className="flex flex-col items-center justify-center gap-2">
                 <button onClick={() => setExpanded(!expanded)} className="text-lg font-semibold flex items-center">
                     {expanded ? "▲" : "▼"} {item?.name || "Unknown"}
                 </button>
-                <button onClick={() => onRemove(id)} className="mt-2 bg-cancel-red text-gold px-3 py-1 rounded">
+                <button onClick={() => onRemove(id)} className="mt-2 bg-cancel-red button font-bold text-gold px-3 py-1 rounded">
                     Remove
                 </button>
             </div>

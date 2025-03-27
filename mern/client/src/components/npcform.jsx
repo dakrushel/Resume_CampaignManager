@@ -123,10 +123,11 @@ export default function NpcForm({ campaignID, parentLocationID, existingNpc, onS
     return (
         <div className="p-4 border-0 rounded-lg bg-cream shadow-md">
             <h2 className="text-xl font-bold">{existingNpc ? "Edit NPC" : "New NPC"}</h2>
-            {error && <p className="bg-cancel-red text-gold">{error}</p>}
+            {error && <p className="bg-light-tan text-red-800">{error}</p>}
 
-            <form onSubmit={handleSave} className="space-y-3">
-                <label>Name:</label>
+            <form onSubmit={handleSave} className="flex flex-col p-4">
+
+                <label className="font-bold text-lg">Name:</label>
                 <input
                     type="text"
                     name="charName"
@@ -134,157 +135,232 @@ export default function NpcForm({ campaignID, parentLocationID, existingNpc, onS
                     onChange={handleChange}
                     placeholder="NPC Name"
                     required
-                    className="border border-brown p-2 w-full rounded bg-cream"
+                    className="border border-brown p-2 w-full rounded bg-cream placeholder-yellow-700 outline-none 
+                    hover:shadow-sm hover:shadow-amber-800
+                    focus:shadow-sm focus:shadow-amber-600"
                 />
 
-                <label>Race:</label>
-                <input
-                    type="text"
-                    name="race"
-                    value={formData.race}
-                    onChange={handleChange}
-                    placeholder="Race"
-                    className="border border-brown p-2 w-full rounded bg-cream"
-                />
+                <div className="mt-4 flex space-x-4 align-middle">
+                  <div className="flex-1 flex-col">
+                    <label className="font-bold">Race:</label>
+                    <input
+                        type="text"
+                        name="race"
+                        value={formData.race}
+                        onChange={handleChange}
+                        placeholder="Elf, human, etc"
+                        className="border border-brown p-2 w-full rounded bg-cream placeholder-yellow-700 outline-none 
+                        hover:shadow-sm hover:shadow-amber-800
+                        focus:shadow-sm focus:shadow-amber-600"
+                    />
+                  </div>
 
-                <label>Age:</label>
-                <input
-                    type="number"
-                    name="age"
-                    value={formData.age}
-                    onChange={handleChange}
-                    placeholder="age"
-                    className="border border-brown p-2 w-full rounded bg-cream"
-                />
+                  <div className="flex-1 flex-col">
+                    <label className="font-bold">Age:</label>
+                    <input
+                        type="number"
+                        name="age"
+                        value={formData.age}
+                        onChange={handleChange}
+                        placeholder="age"
+                        className="border border-brown p-2 w-full rounded bg-cream placeholder-yellow-700 outline-none 
+                        hover:shadow-sm hover:shadow-amber-800
+                        focus:shadow-sm focus:shadow-amber-600"
+                    />
+                  </div>
 
-                <label>Gender:</label>
-                <input
-                    type="text"
-                    name="gender"
-                    value={formData.gender}
-                    onChange={handleChange}
-                    placeholder="gender"
-                    className="border border-brown p-2 w-full rounded bg-cream"
-                />
+                  <div className="flex-1 flex-col">
+                    <label className="font-bold">Gender:</label>
+                    <input
+                        type="text"
+                        name="gender"
+                        value={formData.gender}
+                        onChange={handleChange}
+                        placeholder="Gender"
+                        className="border border-brown p-2 w-full rounded bg-cream placeholder-yellow-700 outline-none 
+                        hover:shadow-sm hover:shadow-amber-800
+                        focus:shadow-sm focus:shadow-amber-600"
+                    />
+                  </div>
+                </div>
 
-                <label>Class:</label>
-                <input
-                    type="text"
-                    name="className"
-                    value={formData.className}
-                    onChange={handleChange}
-                    placeholder="Class"
-                    className="border border-brown p-2 w-full rounded bg-cream"
-                />
+                <div className="mt-4 flex space-x-4">
+                  <div className="flex-1 flex-col">
+                    <label className="font-bold">Class:</label>
+                    <input
+                        type="text"
+                        name="className"
+                        value={formData.className}
+                        onChange={handleChange}
+                        placeholder="Class"
+                        className="border border-brown p-2 w-full rounded bg-cream placeholder-yellow-700 outline-none 
+                        hover:shadow-sm hover:shadow-amber-800
+                        focus:shadow-sm focus:shadow-amber-600"
+                    />
+                  </div>
 
-                <label>Alignment:</label>
-                <input
-                    type="text"
-                    name="alignment"
-                    value={formData.alignment}
-                    onChange={handleChange}
-                    placeholder="Alignment"
-                    className="border border-brown p-2 w-full rounded bg-cream"
-                />
+                  <div className="flex-1 flex-col">
+                    <label className="font-bold">Alignment:</label>
+                    <input
+                        type="text"
+                        name="alignment"
+                        value={formData.alignment}
+                        onChange={handleChange}
+                        placeholder="Alignment"
+                        className="border border-brown p-2 w-full rounded bg-cream placeholder-yellow-700 outline-none 
+                        hover:shadow-sm hover:shadow-amber-800
+                        focus:shadow-sm focus:shadow-amber-600"
+                    />
+                  </div>
 
-                <label>Level:</label>
-                <input
-                    type="number"
-                    name="level"
-                    value={formData.level}
-                    onChange={handleChange}
-                    className="border border-brown p-2 w-full rounded bg-cream"
-                />
+                  <div className="flex-1 flex-col">
+                    <label className="font-bold">Level:</label>
+                    <input
+                        type="number"
+                        name="level"
+                        value={formData.level}
+                        onChange={handleChange}
+                        className="border border-brown p-2 w-full rounded bg-cream placeholder-yellow-700 outline-none 
+                        hover:shadow-sm hover:shadow-amber-800
+                        focus:shadow-sm focus:shadow-amber-600"
+                    />
+                  </div>
+                </div>
 
-                <label>Size:</label>
-                <input
-                    type="text"
-                    name="size"
-                    value={formData.size}
-                    onChange={handleChange}
-                    placeholder="size"
-                    className="border border-brown p-2 w-full rounded bg-cream"
-                />
 
-                <label>Speed:</label>
-                <input
-                    type="number"
-                    name="speed"
-                    value={formData.speed}
-                    onChange={handleChange}
-                    className="border border-brown p-2 w-full rounded bg-cream"
-                />
+                <div className="mt-4 flex space-x-4">
+                  <div className="flex-1 flex-col">
+                    <label className="font-bold">Size:</label>
+                    <input
+                        type="text"
+                        name="size"
+                        value={formData.size}
+                        onChange={handleChange}
+                        placeholder="Medium, Large, etc"
+                        className="border border-brown p-2 w-full rounded bg-cream placeholder-yellow-700 outline-none 
+                        hover:shadow-sm hover:shadow-amber-800
+                        focus:shadow-sm focus:shadow-amber-600"
+                    />
+                  </div>
 
+                  <div className="flex-1 flex-col">
+                    <label className="font-bold">Speed:</label>
+                    <input
+                        type="number"
+                        name="speed"
+                        value={formData.speed}
+                        onChange={handleChange}
+                        className="border border-brown p-2 w-full rounded bg-cream placeholder-yellow-700 outline-none 
+                        hover:shadow-sm hover:shadow-amber-800
+                        focus:shadow-sm focus:shadow-amber-600"
+                    />
+                  </div>
+                </div>
+
+                
                 {/* Stats */}
-                <h3 className="font-bold">Stats</h3>
-                {["strength", "dexterity", "constitution", "intelligence", "wisdom", "charisma"].map((stat) => (
-                    <div key={stat}>
-                        <label>{stat.toUpperCase()}:</label>
-                        <input
-                            type="number"
-                            name={stat}
-                            value={formData.stats[stat]}
-                            onChange={handleStatChange}
-                            className="border border-brown p-2 w-full rounded bg-cream"
-                        />
+                <h3 className="font-bold text-lg mt-4">Stats</h3>
+                    <div className="mt-2 flex space-x-4">
+                    {["strength", "dexterity", "constitution", "intelligence", "wisdom", "charisma"].map((stat) => (
+                        <div key={stat}>
+                            <label className="font-bold">{stat.toUpperCase()}:</label>
+                            <input
+                                type="number"
+                                name={stat}
+                                value={formData.stats[stat]}
+                                onChange={handleStatChange}
+                                className="border border-brown p-2 w-full rounded bg-cream placeholder-yellow-700 outline-none 
+                                hover:shadow-sm hover:shadow-amber-800
+                                focus:shadow-sm focus:shadow-amber-600"
+                            />
+                        </div>
+                    ))}
                     </div>
-                ))}
 
-                <label>Quirks:</label>
-                <input
-                    type="text"
-                    name="quirks"
-                    value={formData.quirks}
-                    onChange={handleChange}
-                    className="border border-brown p-2 w-full rounded bg-cream"
-                />
+                <h3 className="font-bold text-lg mt-4">Traits</h3>
+                <div className="mt-4 flex space-x-4">
+                  <div className="flex-1 flex-col">
+                    <label className="font-bold">Quirks:</label>
+                    <input
+                        type="text"
+                        name="quirks"
+                        placeholder="Only dances on Tuesday, believes the world is a donut, etc"
+                        value={formData.quirks}
+                        onChange={handleChange}
+                        className="border border-brown p-2 w-full rounded bg-cream placeholder-yellow-700 outline-none 
+                        hover:shadow-sm hover:shadow-amber-800
+                        focus:shadow-sm focus:shadow-amber-600"
+                    />
+                  </div>
 
-                <label>Features:</label>
-                <input
-                    type="text"
-                    name="features"
-                    value={formData.features}
-                    onChange={handleChange}
-                    className="border border-brown p-2 w-full rounded bg-cream"
-                />
+                  <div className="flex-1 flex-col">
+                    <label className="font-bold">Features:</label>
+                    <input
+                        type="text"
+                        name="features"
+                        placeholder="Tall, Strong, Wears an eyepatch, etc"
+                        value={formData.features}
+                        onChange={handleChange}
+                        className="border border-brown p-2 w-full rounded bg-cream placeholder-yellow-700 outline-none 
+                        hover:shadow-sm hover:shadow-amber-800
+                        focus:shadow-sm focus:shadow-amber-600"
+                    />
+                  </div>
+                </div>
 
-                <label>Vices:</label>
-                <input
-                    type="text"
-                    name="vices"
-                    value={formData.vices}
-                    onChange={handleChange}
-                    className="border border-brown p-2 w-full rounded bg-cream"
-                />
+                <div className="mt-4 flex space-x-4">
+                  <div className="flex-1 flex-col">
+                    <label className="font-bold">Vices:</label>
+                    <input
+                        type="text"
+                        name="vices"
+                        placeholder="Lustful, Greedy, etc"
+                        value={formData.vices}
+                        onChange={handleChange}
+                        className="border border-brown p-2 w-full rounded bg-cream placeholder-yellow-700 outline-none 
+                        hover:shadow-sm hover:shadow-amber-800
+                        focus:shadow-sm focus:shadow-amber-600"
+                    />
+                  </div>
 
-                <label>Virtues:</label>
-                <input
-                    type="text"
-                    name="virtues"
-                    value={formData.virtues}
-                    onChange={handleChange}
-                    className="border border-brown p-2 w-full rounded bg-cream"
-                />
+                  <div className="flex-1 flex-col">
+                    <label className="font-bold">Virtues:</label>
+                    <input
+                        type="text"
+                        name="virtues"
+                        value={formData.virtues}
+                        onChange={handleChange}
+                        placeholder="Patient, Kind, etc"
+                        className="border border-brown p-2 w-full rounded bg-cream placeholder-yellow-700 outline-none 
+                        hover:shadow-sm hover:shadow-amber-800
+                        focus:shadow-sm focus:shadow-amber-600"
+                    />
+                  </div>
 
-                <label>Ideals:</label>
-                <input
-                    type="text"
-                    name="ideals"
-                    value={formData.ideals}
-                    onChange={handleChange}
-                    placeholder="Ideals"
-                    className="border border-brown p-2 w-full rounded bg-cream"
-                />
+                  <div className="flex-1 flex-col">
+                    <label className="font-bold">Ideals:</label>
+                    <input
+                        type="text"
+                        name="ideals"
+                        value={formData.ideals}
+                        onChange={handleChange}
+                        placeholder="Ideals"
+                        className="border border-brown p-2 w-full rounded bg-cream placeholder-yellow-700 outline-none 
+                        hover:shadow-sm hover:shadow-amber-800
+                        focus:shadow-sm focus:shadow-amber-600"
+                    />
+                  </div>
+                </div>
 
-                <div className="flex space-x-2">
-                    <button type="submit" className={saving ? "bg-tan text-brown px-4 py-2 rounded" : "bg-goblin-green text-gold px-4 py-2 rounded"}>
+                <div className="flex mt-4 space-x-2">
+                    <button type="submit" className={saving ? "bg-tan text-brown px-4 py-2 rounded" : "bg-goblin-green button font-bold text-gold px-4 py-2 rounded"}>
                         {saving ? "Saving..." : "Save"}
                     </button>
-                    <button type="button" onClick={onCancel} className="bg-cancel-red text-gold px-4 py-2 rounded">
+                    <button type="button" onClick={onCancel} className="bg-cancel-red button font-bold text-gold px-4 py-2 rounded">
                         Cancel
                     </button>
                     {isNew && (
-                        <button type="button" onClick={generateNPC} className="bg-goblin-green text-gold px-4 py-2 rounded">
+                        <button type="button" onClick={generateNPC} className="bg-goblin-green button font-bold text-gold px-4 py-2 rounded">
                             Generate
                         </button>
                     )}

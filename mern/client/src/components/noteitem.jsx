@@ -61,7 +61,7 @@ export default function NoteItem({ note, campaignID, parentLocationID, onNoteUpd
                             onCancel={() => setEditMode(false)} />
                     ) : (
                         <>
-                            <p className="p-2 bg-light-tan rounded">{note.body}</p>
+                            <p className="p-4 bg-light-tan rounded text-left">{note.body}</p>
                             <button onClick={handleEditClick} className="font-bold mt-2 mr-2 button bg-goblin-green text-gold px-3 py-1 rounded hover:shadow-sm hover:shadow-amber-800">
                                 Edit
                             </button>

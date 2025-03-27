@@ -24,8 +24,8 @@ export default function NpcList({ parentLocationID, campaignID }) {
 
         try {
             const token = await getAccessTokenSilently({ audience: "https://campaignapi.com" });
-            const endpoint = `http://localhost:5050/npcs/location/${parentLocationID}`
-                // : `http://localhost:5050/npcs/campaign/${campaignID}`;
+            // this needs to somehow get all npcs for a campaign if no parent location id is specified
+            const endpoint = parentLocationID ? `http://localhost:5050/npcs/location/${parentLocationID}` : `http://localhost:5050/npcs/campaign/${campaignID}`;
 
             const response = await fetch(endpoint, {
                 headers: { Authorization: `Bearer ${token}` },

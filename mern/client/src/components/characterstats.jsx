@@ -88,7 +88,7 @@ const CharacterStats = ({
 
   // Form input styling
   const formStyle =
-    "w-full p-3 border border-brown rounded-lg outline-none bg-cream focus:shadow-amber-800 placeholder-yellow-700 focus:shadow-sm transition-colors";
+    "w-full p-3 border border-brown rounded-lg outline-none bg-cream transition-colors placeholder-yellow-700 outline-none hover:shadow-sm hover:shadow-amber-800 focus:shadow-sm focus:shadow-amber-600";
 
   // New useEffect for initialization
   useEffect(() => {
@@ -777,7 +777,7 @@ const CharacterStats = ({
               {selectedSpells.map((spell, index) => (
                 <div
                   key={index}
-                  className="p-4 border rounded shadow flex justify-between items-center"
+                  className="p-4 border border-brown bg-light-tan rounded shadow shadow-amber-800 flex flex-col justify-between items-center"
                 >
                   <div>
                     <h3
@@ -794,7 +794,7 @@ const CharacterStats = ({
                   <button
                     type="button"
                     onClick={() => removeSpellFromCharacter(index)}
-                    className="p-2 bg-cancel-red text-gold rounded button"
+                    className="p-2 bg-cancel-red font-bold text-gold rounded button"
                   >
                     Remove
                   </button>
@@ -882,7 +882,7 @@ const CharacterStats = ({
             <button
               type="button"
               onClick={onCancel}
-              className="mt-0 bg-cancel-red text-gold px-4 py-2 rounded shadow-sm shadow-amber-800"
+              className="mt-0 bg-cancel-red button text-gold px-4 py-2 rounded shadow-sm shadow-amber-800"
             >
               Cancel
             </button>

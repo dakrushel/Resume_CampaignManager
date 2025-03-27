@@ -20,6 +20,7 @@ import APISearch from "./components/search";
 import RulesLookUp from "./components/rulebook";
 import Home from "./components/home";
 import PlayerCharacters from "./components/playercharacters";
+import NonPlayerCharacters from "./components/nonplayercharacters";
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
@@ -40,7 +41,7 @@ ReactDOM.createRoot(document.getElementById("root")).render(
           <Route path="/campaigns/:id" element={<CampaignOverview />} />
           <Route path="/locations/:id" element={<LocationItem />} />
           <Route path="/notes" element={<Notes />} />
-          {/* <Route path="/characters" element={<CharacterOverview />} /> */}
+          <Route path="/characters" element={<NonPlayerCharacters />} />
           <Route path="/monsters" element={<MonsterItem />} />
           <Route path="/search" element={<APISearch />} />
           <Route path="/rules" element={<RulesLookUp />} />
